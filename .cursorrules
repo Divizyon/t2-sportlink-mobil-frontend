@@ -1,0 +1,82 @@
+# Cursor Rules for React Native with Expo
+
+## Project Structure
+
+- All React Native components should be in the `components` directory
+- Screens should be in the `screens` directory
+- Navigation configuration should be in the `navigation` directory
+- Utility functions should be in the `utils` directory
+- API calls should be in the `api` directory
+- Assets (images, fonts, etc.) should be in the `assets` directory
+- Redux/state management files should be in the `store` directory
+- Types and interfaces should be in the `types` directory
+- Constants should be in the `constants` directory
+
+## Coding Standards
+
+### General
+
+- Use TypeScript for type safety
+- Use functional components with hooks
+- Use ES6+ features
+- Use async/await for asynchronous operations
+- Avoid using `any` type
+- Use proper error handling with try/catch blocks
+- Use meaningful variable and function names
+- Keep components small and focused on a single responsibility
+- Extract reusable logic into custom hooks
+
+### React Native Specific
+
+- Use React Native's built-in components when possible
+- Prefer `FlatList` over `ScrollView` for long lists
+- Avoid inline styles
+- Use React Native's `Dimensions` API for responsive design
+- Handle platform-specific code with `Platform.OS`
+- Use React Native's `Animated` API for animations
+- Implement proper keyboard handling
+
+### Expo Specific
+
+- Use Expo SDK features when available
+- Follow Expo versioning guidelines
+- Use Expo's asset system for loading assets
+- Use Expo's font loading system
+- Implement proper permissions handling with Expo
+- Use Expo's notification system for push notifications
+
+### Navigation
+
+- Use Expo Router for navigation
+- Always use Expo Router for file-based routing
+- Follow Expo Router conventions for route organization
+
+### Performance
+
+- Implement proper memoization with `useMemo` and `useCallback`
+- Avoid unnecessary re-renders
+- Implement proper list rendering optimization
+
+### Security
+
+- Implement proper authentication
+- Secure sensitive data with Expo SecureStore
+- Validate user inputs
+- Implement proper error boundaries
+
+## Comments
+
+- Add JSDoc comments for functions and components
+- Comment complex logic
+- Avoid unnecessary comments for self-explanatory code
+
+## Dependencies
+
+- Keep dependencies up to date
+- Avoid unnecessary dependencies
+- Use yarn as package manager
+
+## Environment
+
+- Use environment variables for configuration
+- Use Expo's configuration system
