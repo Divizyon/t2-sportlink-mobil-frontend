@@ -1,0 +1,17 @@
+# Paket dizinleri
+node_modules/
+.expo/
+
+# Oluşturulan dosyalar
+dist/
+build/
+coverage/
+
+# Paket dosyaları
+package-lock.json
+yarn.lock
+package.json
+
+# Diğer özel dosyalar
+*.generated.*
+**/*.d.ts 
