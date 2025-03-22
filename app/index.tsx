@@ -10,16 +10,16 @@ export default function Index() {
   const { isDarkMode } = useThemeStore();
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}
       contentContainerStyle={styles.contentContainer}
     >
       <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#333' }]}>
         DeepVision Mobil Uygulaması
       </Text>
-      
+
       <ThemeToggle />
-      
+
       {isAuthenticated ? (
         <View style={styles.welcomeContainer}>
           <Text style={[styles.welcomeText, { color: isDarkMode ? '#fff' : '#333' }]}>
@@ -32,14 +32,14 @@ export default function Index() {
       ) : (
         <LoginForm />
       )}
-      
+
       <View style={styles.infoContainer}>
         <Text style={[styles.infoTitle, { color: isDarkMode ? '#fff' : '#333' }]}>
           Zustand Hakkında
         </Text>
         <Text style={[styles.infoText, { color: isDarkMode ? '#ccc' : '#666' }]}>
-          Zustand, React uygulamaları için basit ve hızlı bir state yönetim kütüphanesidir.
-          Redux'a göre daha az boilerplate kod gerektirir ve React hooks API'si ile uyumludur.
+          Zustand, React uygulamaları için basit ve hızlı bir state yönetim kütüphanesidir. Redux'a
+          göre daha az boilerplate kod gerektirir ve React hooks API'si ile uyumludur.
         </Text>
       </View>
     </ScrollView>
@@ -53,6 +53,22 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
+  infoContainer: {
+    borderColor: '#ddd',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 24,
+    padding: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -61,29 +77,13 @@ const styles = StyleSheet.create({
   },
   welcomeContainer: {
     backgroundColor: '#e6f7ff',
-    padding: 16,
     borderRadius: 8,
     marginVertical: 16,
+    padding: 16,
   },
   welcomeText: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
-  },
-  infoContainer: {
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
   },
 });
