@@ -40,4 +40,4 @@ export interface ThemeActions {
   setDarkMode: (isDark: boolean) => void;
 }
 
-export type ThemeStore = ThemeState & ThemeActions; 
+export type ThemeStore = ThemeState & ThemeActions;

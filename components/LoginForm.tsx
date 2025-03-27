@@ -38,119 +38,89 @@ const LoginForm = () => {
   };
 
   return (
-    <View style={[
-      styles.container,
-      { backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)' }
-    ]}>
-      <View style={styles.headerContainer}>
-        <Text style={[
-          styles.title,
-          { color: isDarkMode ? '#fff' : '#333' }
-        ]}>
-          Hoş Geldiniz
-        </Text>
-        <Text style={[
-          styles.subtitle,
-          { color: isDarkMode ? '#aaa' : '#666' }
-        ]}>
-          Hesabınıza giriş yapın
-        </Text>
-      </View>
 
-      <View style={styles.formContainer}>
-        <FormInput
-          control={control}
-          name="email"
-          label="E-posta"
-          placeholder="E-posta adresinizi girin"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          error={errors.email}
-        />
-        
-        <FormInput
-          control={control}
-          name="password"
-          label="Şifre"
-          placeholder="Şifrenizi girin"
-          secureTextEntry
-          error={errors.password}
-        />
-        
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-        
-        <FormButton
-          title="Giriş Yap"
-          onPress={handleSubmit(onSubmit)}
-          isLoading={isLoading}
-          style={styles.button}
-        />
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Giriş Yap</Text>
 
-      <Text style={[
-        styles.hint,
-        { color: isDarkMode ? '#aaa' : '#666' }
-      ]}>
-        Test için: e-posta "test@example.com", şifre "password"
-      </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Kullanıcı Adı"
+        value={username}
+        onChangeText={text => {
+          setUsername(text);
+          if (error) clearError();
+        }}
+        autoCapitalize="none"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Şifre"
+        value={password}
+        onChangeText={text => {
+          setPassword(text);
+          if (error) clearError();
+        }}
+        secureTextEntry
+      />
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      {isLoading ? (
+        <ActivityIndicator size="small" color="#0000ff" style={styles.loader} />
+      ) : (
+        <Button title="Giriş Yap" onPress={handleLogin} disabled={!username || !password} />
+      )}
+
+      <Text style={styles.hint}>Test için: kullanıcı adı "test", şifre "password"</Text>
+
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: width * 0.9,
-    maxWidth: 400,
-    padding: 24,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerContainer: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  formContainer: {
-    gap: 16,
-  },
-  errorContainer: {
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
-    padding: 12,
+
+    backgroundColor: '#fff',
     borderRadius: 8,
-    marginBottom: 16,
+    elevation: 2,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   errorText: {
-    color: '#ff0000',
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  button: {
-    marginTop: 8,
-    height: 48,
-    borderRadius: 24,
+    color: 'red',
+    marginBottom: 12,
   },
   hint: {
-    marginTop: 24,
-    fontSize: 13,
+    color: '#666',
+    fontSize: 12,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  input: {
+    borderColor: '#ddd',
+    borderRadius: 4,
+    borderWidth: 1,
+    height: 48,
+    marginBottom: 12,
+    paddingHorizontal: 10,
+  },
+  loader: {
+    marginVertical: 12,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+
     textAlign: 'center',
     opacity: 0.8,
   },
 });
 
+
 export default LoginForm;
+

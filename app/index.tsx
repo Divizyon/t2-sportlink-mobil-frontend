@@ -16,16 +16,16 @@ export default function Index() {
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }]}
       contentContainerStyle={styles.contentContainer}
     >
       <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#333' }]}>
         DeepVision Mobil Uygulaması
       </Text>
-      
+
       <ThemeToggle />
-      
+
       {isAuthenticated ? (
         <View style={styles.welcomeContainer}>
           <Text style={[styles.welcomeText, { color: isDarkMode ? '#fff' : '#333' }]}>
@@ -51,15 +51,17 @@ export default function Index() {
           </View>
         </>
       )}
-      
+
       <View style={styles.infoContainer}>
         <Text style={[styles.infoTitle, { color: isDarkMode ? '#fff' : '#333' }]}>
           React Hook Form ve Yup Hakkında
         </Text>
         <Text style={[styles.infoText, { color: isDarkMode ? '#ccc' : '#666' }]}>
+
           React Hook Form, performans odaklı, esnek ve kullanımı kolay form doğrulama kütüphanesidir.
           Yup ise JavaScript için şema oluşturma ve doğrulama kütüphanesidir.
           Bu iki kütüphane birlikte kullanıldığında, form doğrulama işlemleri çok daha kolay hale gelir.
+
         </Text>
       </View>
     </ScrollView>
@@ -73,6 +75,22 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
+  infoContainer: {
+    borderColor: '#ddd',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 24,
+    padding: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -81,9 +99,9 @@ const styles = StyleSheet.create({
   },
   welcomeContainer: {
     backgroundColor: '#e6f7ff',
-    padding: 16,
     borderRadius: 8,
     marginVertical: 16,
+
   },
   welcomeText: {
     fontSize: 18,
@@ -103,18 +121,12 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginTop: 24,
+
     padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
-  infoTitle: {
+  welcomeText: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
   },
 });
