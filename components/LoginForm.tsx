@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ActivityIndicator, Button } from 'react-native';
 import { useAuthStore, useThemeStore } from '../store';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { loginSchema, LoginFormData } from '../utils/validations/loginSchema';
-import FormInput from './form/FormInput';
-import FormButton from './form/FormButton';
+import { TextInput } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -38,49 +37,72 @@ const LoginForm = () => {
   };
 
   return (
-
     <View style={styles.container}>
       <Text style={styles.title}>Giriş Yap</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Kullanıcı Adı"
-        value={username}
-        onChangeText={text => {
-          setUsername(text);
-          if (error) clearError();
-        }}
-        autoCapitalize="none"
+      <Controller
+        control={control}
+        name="email"
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="E-posta"
+            value={value}
+            onChangeText={(text) => {
+              onChange(text);
+              if (error) clearError();
+            }}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+        )}
       />
+      {errors.email && (
+        <Text style={styles.errorText}>{errors.email.message}</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Şifre"
-        value={password}
-        onChangeText={text => {
-          setPassword(text);
-          if (error) clearError();
-        }}
-        secureTextEntry
+      )}
+
+      <Controller
+        control={control}
+        name="password"
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Şifre"
+            value={value}
+            onChangeText={(text) => {
+              onChange(text);
+              if (error) clearError();
+            }}
+            secureTextEntry
+            autoComplete="password"
+          />
+        )}
       />
+      {errors.password && (
+        <Text style={styles.errorText}>{errors.password.message}</Text>
+      )}
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {isLoading ? (
         <ActivityIndicator size="small" color="#0000ff" style={styles.loader} />
       ) : (
-        <Button title="Giriş Yap" onPress={handleLogin} disabled={!username || !password} />
+        <Button 
+          title="Giriş Yapp" 
+          onPress={handleSubmit(onSubmit)} 
+          disabled={isLoading} 
+        />
       )}
 
-      <Text style={styles.hint}>Test için: kullanıcı adı "test", şifre "password"</Text>
-
+      <Text style={styles.hint}>Test için: e-posta "test@example.com", şifre "password"</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-
     backgroundColor: '#fff',
     borderRadius: 8,
     elevation: 2,
@@ -115,12 +137,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
-
     textAlign: 'center',
     opacity: 0.8,
   },
 });
-
 
 export default LoginForm;
 
