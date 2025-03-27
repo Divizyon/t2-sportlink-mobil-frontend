@@ -1,27 +1,44 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useAuthStore } from '../store';
+import React from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { useAuthStore, useThemeStore } from '../store';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { loginSchema, LoginFormData } from '../utils/validations/loginSchema';
+import FormInput from './form/FormInput';
+import FormButton from './form/FormButton';
+
+const { width } = Dimensions.get('window');
 
 /**
  * Giriş formu bileşeni
- * Zustand auth store kullanarak giriş işlemlerini yönetir
+ * React Hook Form ve Yup kullanarak form doğrulama işlemlerini yönetir
  */
 const LoginForm = () => {
-  // Form state'i
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-
   // Auth store'dan state ve aksiyonları al
   const { isLoading, error, login, clearError } = useAuthStore();
+  const { isDarkMode } = useThemeStore();
+
+  // React Hook Form yapılandırması
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  });
 
   // Giriş işlemi
-  const handleLogin = async () => {
-    if (username.trim() && password.trim()) {
-      await login(username, password);
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      clearError();
+      await login(data.email, data.password);
+    } catch (err) {
+      // Hata durumu AuthStore içinde zaten yönetiliyor
     }
   };
 
   return (
+
     <View style={styles.container}>
       <Text style={styles.title}>Giriş Yap</Text>
 
@@ -56,12 +73,14 @@ const LoginForm = () => {
       )}
 
       <Text style={styles.hint}>Test için: kullanıcı adı "test", şifre "password"</Text>
+
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+
     backgroundColor: '#fff',
     borderRadius: 8,
     elevation: 2,
@@ -96,8 +115,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
+
     textAlign: 'center',
+    opacity: 0.8,
   },
 });
 
+
 export default LoginForm;
+

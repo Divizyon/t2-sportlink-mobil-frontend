@@ -3,11 +3,17 @@ import { Text, View, StyleSheet, ScrollView } from 'react-native';
 import ThemeToggle from '../components/ThemeToggle';
 import LoginForm from '../components/LoginForm';
 import { useAuthStore, useThemeStore } from '../store';
+import { router } from 'expo-router';
+import FormButton from '../components/form/FormButton';
 
 export default function Index() {
   // Zustand store'larından state'leri al
   const { isAuthenticated, user } = useAuthStore();
   const { isDarkMode } = useThemeStore();
+
+  const handleRegister = () => {
+    router.push('/register');
+  };
 
   return (
     <ScrollView
@@ -30,16 +36,32 @@ export default function Index() {
           </Text>
         </View>
       ) : (
-        <LoginForm />
+        <>
+          <LoginForm />
+          <View style={styles.registerContainer}>
+            <Text style={[styles.registerText, { color: isDarkMode ? '#ccc' : '#666' }]}>
+              Henüz hesabınız yok mu?
+            </Text>
+            <FormButton
+              title="Kayıt Ol"
+              variant="outline"
+              onPress={handleRegister}
+              style={styles.registerButton}
+            />
+          </View>
+        </>
       )}
 
       <View style={styles.infoContainer}>
         <Text style={[styles.infoTitle, { color: isDarkMode ? '#fff' : '#333' }]}>
-          Zustand Hakkında
+          React Hook Form ve Yup Hakkında
         </Text>
         <Text style={[styles.infoText, { color: isDarkMode ? '#ccc' : '#666' }]}>
-          Zustand, React uygulamaları için basit ve hızlı bir state yönetim kütüphanesidir. Redux'a
-          göre daha az boilerplate kod gerektirir ve React hooks API'si ile uyumludur.
+
+          React Hook Form, performans odaklı, esnek ve kullanımı kolay form doğrulama kütüphanesidir.
+          Yup ise JavaScript için şema oluşturma ve doğrulama kütüphanesidir.
+          Bu iki kütüphane birlikte kullanıldığında, form doğrulama işlemleri çok daha kolay hale gelir.
+
         </Text>
       </View>
     </ScrollView>
@@ -79,6 +101,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6f7ff',
     borderRadius: 8,
     marginVertical: 16,
+
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  registerContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  registerText: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  registerButton: {
+    minWidth: 120,
+  },
+  infoContainer: {
+    marginTop: 24,
+
     padding: 16,
   },
   welcomeText: {
