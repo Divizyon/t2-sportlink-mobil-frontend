@@ -60,6 +60,7 @@ const LoginForm = () => {
       />
       {errors.email && (
         <Text style={styles.errorText}>{errors.email.message}</Text>
+
       )}
 
       <Controller
@@ -89,7 +90,7 @@ const LoginForm = () => {
         <ActivityIndicator size="small" color="#0000ff" style={styles.loader} />
       ) : (
         <Button 
-          title="Giriş Yap" 
+          title="Giriş Yapp" 
           onPress={handleSubmit(onSubmit)} 
           disabled={isLoading} 
         />
