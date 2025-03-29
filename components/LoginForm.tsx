@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '../store';
+import { router } from 'expo-router';
 
 /**
  * Giriş formu bileşeni
@@ -12,7 +13,15 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
 
   // Auth store'dan state ve aksiyonları al
-  const { isLoading, error, login, clearError } = useAuthStore();
+  const { isLoading, error, login, clearError, isAuthenticated } = useAuthStore();
+
+  // Giriş durumu değiştiğinde çalışacak useEffect
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Kullanıcı giriş yapmışsa tab navigasyonuna yönlendir
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated]);
 
   // Giriş işlemi
   const handleLogin = async () => {
