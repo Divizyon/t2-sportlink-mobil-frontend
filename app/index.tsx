@@ -15,31 +15,20 @@ export default function Index() {
       contentContainerStyle={styles.contentContainer}
     >
       <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#333' }]}>
-        DeepVision Mobil Uygulaması
+        Sportlink Mobil Uygulaması
       </Text>
       
       <ThemeToggle />
       
-      {isAuthenticated ? (
-        <View style={styles.welcomeContainer}>
-          <Text style={[styles.welcomeText, { color: isDarkMode ? '#fff' : '#333' }]}>
-            Hoş geldiniz, {user?.username}!
-          </Text>
-          <Text style={[styles.infoText, { color: isDarkMode ? '#ccc' : '#666' }]}>
-            Başarıyla giriş yaptınız. Zustand state yönetimi çalışıyor.
-          </Text>
-        </View>
-      ) : (
-        <LoginForm />
-      )}
+      <LoginForm />
       
       <View style={styles.infoContainer}>
         <Text style={[styles.infoTitle, { color: isDarkMode ? '#fff' : '#333' }]}>
-          Zustand Hakkında
+          Sportlink Hakkında
         </Text>
         <Text style={[styles.infoText, { color: isDarkMode ? '#ccc' : '#666' }]}>
-          Zustand, React uygulamaları için basit ve hızlı bir state yönetim kütüphanesidir.
-          Redux'a göre daha az boilerplate kod gerektirir ve React hooks API'si ile uyumludur.
+          Sportlink, spor takımları için geliştirilmiş bir yönetim uygulamasıdır. Takım üyeleri, antrenörler
+          ve yöneticiler için etkinlik planlaması, iletişim ve performans takibi sağlar.
         </Text>
       </View>
     </ScrollView>
