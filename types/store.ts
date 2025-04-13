@@ -1,6 +1,7 @@
 /**
  * Store için tip tanımlamaları
  */
+import { RegisterFormData } from '../utils/validations/registerSchema';
 
 // Kullanıcı tipi örneği
 export interface User {
@@ -20,7 +21,8 @@ export interface AuthState {
 
 // Auth store aksiyonları
 export interface AuthActions {
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (data: RegisterFormData) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -38,4 +40,4 @@ export interface ThemeActions {
   setDarkMode: (isDark: boolean) => void;
 }
 
-export type ThemeStore = ThemeState & ThemeActions; 
+export type ThemeStore = ThemeState & ThemeActions;

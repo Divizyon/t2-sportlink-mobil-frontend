@@ -1,0 +1,17 @@
+# Paket dizinleri
+node_modules/
+.expo/
+
+# Oluşturulan dosyalar
+dist/
+build/
+coverage/
+
+# Yapılandırma dosyaları
+metro.config.js
+babel.config.js
+jest.config.js
+
+# Diğer dosyalar
+*.d.ts
+**/*.generated.* 
