@@ -287,14 +287,32 @@ export default function RouteDetailScreen({ id }: RouteDetailScreenProps) {
         <View style={[styles.infoCard, { backgroundColor: COLORS.card }]}>
           <Text style={[styles.routeName, { color: COLORS.text.dark }]}>{route.name}</Text>
           <View style={styles.tagsContainer}>
-            {route.tags.map((tag, index) => (
-              <View 
-                key={index} 
-                style={[styles.tag, { backgroundColor: COLORS.background }]}
-              >
-                <Text style={[styles.tagText, { color: COLORS.text.light }]}>#{tag}</Text>
+            {/* Tag'leri manuel olarak render et - Key sorununu çözmek için map kullanmadan */}
+            {route.tags.length > 0 && (
+              <View style={[styles.tag, { backgroundColor: COLORS.background }]}>
+                <Text style={[styles.tagText, { color: COLORS.text.light }]}>#{route.tags[0]}</Text>
               </View>
-            ))}
+            )}
+            {route.tags.length > 1 && (
+              <View style={[styles.tag, { backgroundColor: COLORS.background }]}>
+                <Text style={[styles.tagText, { color: COLORS.text.light }]}>#{route.tags[1]}</Text>
+              </View>
+            )}
+            {route.tags.length > 2 && (
+              <View style={[styles.tag, { backgroundColor: COLORS.background }]}>
+                <Text style={[styles.tagText, { color: COLORS.text.light }]}>#{route.tags[2]}</Text>
+              </View>
+            )}
+            {route.tags.length > 3 && (
+              <View style={[styles.tag, { backgroundColor: COLORS.background }]}>
+                <Text style={[styles.tagText, { color: COLORS.text.light }]}>#{route.tags[3]}</Text>
+              </View>
+            )}
+            {route.tags.length > 4 && (
+              <View style={[styles.tag, { backgroundColor: COLORS.background }]}>
+                <Text style={[styles.tagText, { color: COLORS.text.light }]}>#{route.tags[4]}</Text>
+              </View>
+            )}
           </View>
           
           <Text style={[styles.routeDescription, { color: COLORS.text.dark }]}>
@@ -337,17 +355,11 @@ export default function RouteDetailScreen({ id }: RouteDetailScreenProps) {
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: COLORS.text.light }]}>Popülerlik:</Text>
             <View style={styles.ratingContainer}>
-              {[...Array(5)].map((_, i) => (
-                <Text 
-                  key={i} 
-                  style={[
-                    styles.starIcon, 
-                    i < Math.floor(route.popularity) ? styles.goldStar : styles.grayStar
-                  ]}
-                >
-                  ★
-                </Text>
-              ))}
+              <Text style={[styles.starIcon, route.popularity >= 1 ? styles.goldStar : styles.grayStar]}>★</Text>
+              <Text style={[styles.starIcon, route.popularity >= 2 ? styles.goldStar : styles.grayStar]}>★</Text>
+              <Text style={[styles.starIcon, route.popularity >= 3 ? styles.goldStar : styles.grayStar]}>★</Text>
+              <Text style={[styles.starIcon, route.popularity >= 4 ? styles.goldStar : styles.grayStar]}>★</Text>
+              <Text style={[styles.starIcon, route.popularity >= 5 ? styles.goldStar : styles.grayStar]}>★</Text>
               <Text style={[styles.ratingText, { color: COLORS.text.dark }]}>
                 {route.popularity.toFixed(1)}
               </Text>

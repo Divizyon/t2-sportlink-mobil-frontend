@@ -87,17 +87,11 @@ export default function FacilitiesScreen() {
                     Puanı: {selectedFacility.rating} / 5
                   </Text>
                   <View style={styles.starsContainer}>
-                    {[...Array(5)].map((_, i) => (
-                      <Text 
-                        key={i} 
-                        style={[
-                          styles.starIcon, 
-                          i < Math.floor(selectedFacility.rating) ? styles.goldStar : styles.grayStar
-                        ]}
-                      >
-                        ★
-                      </Text>
-                    ))}
+                    <Text style={[styles.starIcon, selectedFacility.rating >= 1 ? styles.goldStar : styles.grayStar]}>★</Text>
+                    <Text style={[styles.starIcon, selectedFacility.rating >= 2 ? styles.goldStar : styles.grayStar]}>★</Text>
+                    <Text style={[styles.starIcon, selectedFacility.rating >= 3 ? styles.goldStar : styles.grayStar]}>★</Text>
+                    <Text style={[styles.starIcon, selectedFacility.rating >= 4 ? styles.goldStar : styles.grayStar]}>★</Text>
+                    <Text style={[styles.starIcon, selectedFacility.rating >= 5 ? styles.goldStar : styles.grayStar]}>★</Text>
                   </View>
                 </View>
                 <Text style={[styles.facilityAddress, { color: isDarkMode ? COLORS.neutral.white : COLORS.primary }]}>
