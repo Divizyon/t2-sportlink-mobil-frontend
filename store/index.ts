@@ -8,4 +8,4 @@ export { default as useThemeStore } from './slices/themeSlice';
 
 // İhtiyaç duyulduğunda diğer store'lar buraya eklenebilir
 // export { default as useSettingsStore } from './slices/settingsSlice';
-// export { default as useUserStore } from './slices/userSlice';
+// export { default as useUserStore } from './slices/userSlice'; 

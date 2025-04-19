@@ -25,41 +25,6 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Code Quality and Formatting
-
-Bu projede kod kalitesi ve formatlaması için ESLint ve Prettier kullanılmaktadır.
-
-### Kullanılabilir Komutlar
-
-Kod kalitesi ve formatlaması için aşağıdaki komutları kullanabilirsiniz:
-
-```bash
-# Kod linting kontrolü
-npm run lint
-
-# Otomatik lint düzeltmeleri
-npm run lint:fix
-
-# Kod formatı kontrolü
-npm run format:check
-
-# Otomatik kod formatlaması
-npm run format
-
-# Hem kod formatlaması hem de linting düzeltmeleri için
-npm run code:fix
-
-# Kod formatı ve linting kontrolü için
-npm run code:check
-```
-
-### VSCode Entegrasyonu
-
-VSCode kullanıyorsanız, `.vscode/settings.json` dosyası otomatik olarak ESLint ve Prettier entegrasyonunu sağlar. Dosyaları kaydederken otomatik olarak formatlama için aşağıdaki VSCode eklentilerini yüklemeniz önerilir:
-
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-- [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-
 ## Get a fresh project
 
 When you're ready, run:
