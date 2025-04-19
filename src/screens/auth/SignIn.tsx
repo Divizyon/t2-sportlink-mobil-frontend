@@ -17,35 +17,17 @@ import { Platform, ImageBackground, StyleSheet, TextInput, View, TouchableOpacit
 import { ArrowLeftIcon } from '@gluestack-ui/themed';
 import { FontAwesome } from '@expo/vector-icons';
 
-export default function SignUpScreen() {
-  const [name, setName] = useState('');
+/**
+ * Giriş yapma ekranı
+ */
+export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(true);
-  
-  const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [termsError, setTermsError] = useState('');
-  
-  // Focus durumlarını takip etmek için state'ler
-  const [nameFocused, setNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
-
-  const validateName = (nameValue: string): boolean => {
-    if (!nameValue.trim()) {
-      setNameError('Ad soyad gereklidir');
-      return false;
-    }
-    setNameError('');
-    return true;
-  };
 
   const validateEmail = (emailValue: string): boolean => {
     if (!emailValue) {
@@ -71,46 +53,33 @@ export default function SignUpScreen() {
     return true;
   };
 
-  const validateConfirmPassword = (confirmValue: string): boolean => {
-    if (!confirmValue) {
-      setConfirmPasswordError('Şifrenizi tekrar giriniz');
-      return false;
-    } else if (confirmValue !== password) {
-      setConfirmPasswordError('Şifreler eşleşmiyor');
-      return false;
-    }
-    setConfirmPasswordError('');
-    return true;
-  };
-
-  const handleSignUp = () => {
-    // Tüm alanları doğrula
-    const isNameValid = validateName(name);
+  const handleSignIn = () => {
+    // Her iki alanı da doğrula
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
     
-    if (isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
-      // TODO: Implement sign-up logic
-      console.log('Kayıt başarılı', { name, email, password });
-      // Kayıt başarılı olduğunda ana sayfaya yönlendir
-      router.replace('/home');
+    if (isEmailValid && isPasswordValid) {
+      // TODO: Implement sign-in logic
+      console.log('Giriş başarılı', { email, password });
+      // Giriş başarılı olduğunda doğrudan ana sayfaya yönlendir
+      router.replace('/home' as any);
     }
-  };
-
-  // Demo kayıt için hızlı işlem
-  const handleDemoSignUp = () => {
-    console.log('Demo kayıt işlemi gerçekleştirildi');
-    router.replace('/home');
   };
 
   const goBack = () => {
     router.back();
   };
 
+  // Demo girişi için hızlı giriş fonksiyonu
+  const handleDemoSignIn = () => {
+    // Demo kullanıcı bilgileri ile doğrudan giriş yap
+    console.log('Demo giriş yapıldı');
+    router.replace('/home' as any);
+  };
+
   return (
     <ImageBackground 
-      source={require('../assets/images/sportlink-bg.png')}
+      source={require('../../../assets/images/sportlink-bg.png')}
       style={styles.backgroundImage}
     >
       <KeyboardAvoidingView
@@ -121,7 +90,7 @@ export default function SignUpScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Box flex={1} padding={24} justifyContent="flex-start" paddingTop={40}>
+          <Box flex={1} padding={24} justifyContent="center" paddingTop={0} paddingBottom={80}>
             {/* Back button */}
             <Pressable 
               onPress={goBack} 
@@ -138,57 +107,28 @@ export default function SignUpScreen() {
             </Pressable>
             
             {/* Header */}
-            <Box marginTop={50} marginBottom={25}>
+            <Box marginBottom={25} marginTop={-15}>
               <Text style={styles.title}>
-                SportLink'e Kayıt Ol
+                SportLink'e Giriş Yap
               </Text>
               <Text style={styles.subtitle}>
-                Hesap oluşturarak tüm etkinliklere katılabilirsiniz
+                Hesabınıza giriş yaparak etkinliklere katılabilirsiniz
               </Text>
             </Box>
             
             {/* Form Card */}
             <Box
               style={styles.formCard}
+              alignSelf="center"
+              width="100%"
+              marginTop={10}
             >
               <VStack space="sm" width="100%">
-                {/* Name Field */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Ad Soyad</Text>
-                  <View style={[
-                    styles.textInputContainer,
-                    nameError ? styles.inputError : null,
-                    nameFocused ? styles.inputFocused : null
-                  ]}>
-                    <TextInput
-                      placeholder="Adınızı ve soyadınızı girin"
-                      placeholderTextColor="#AAA"
-                      style={styles.textInput}
-                      value={name}
-                      onChangeText={(text) => {
-                        setName(text);
-                        validateName(text);
-                      }}
-                      onFocus={() => setNameFocused(true)}
-                      onBlur={() => {
-                        setNameFocused(false);
-                        validateName(name);
-                      }}
-                      autoCapitalize="words"
-                    />
-                  </View>
-                  {nameError ? (
-                    <Text style={styles.errorText}>
-                      {nameError}
-                    </Text>
-                  ) : null}
-                </View>
-
                 {/* Email Field */}
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>E-posta</Text>
                   <View style={[
-                    styles.textInputContainer,
+                    styles.textInputContainer, 
                     emailError ? styles.inputError : null,
                     emailFocused ? styles.inputFocused : null
                   ]}>
@@ -199,6 +139,7 @@ export default function SignUpScreen() {
                       value={email}
                       onChangeText={(text) => {
                         setEmail(text);
+                        // Her değişiklikte doğrulama yap
                         validateEmail(text);
                       }}
                       onFocus={() => setEmailFocused(true)}
@@ -221,22 +162,19 @@ export default function SignUpScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Şifre</Text>
                   <View style={[
-                    styles.textInputContainer,
+                    styles.textInputContainer, 
                     passwordError ? styles.inputError : null,
                     passwordFocused ? styles.inputFocused : null
                   ]}>
                     <TextInput
-                      placeholder="Şifrenizi oluşturun"
+                      placeholder="Şifrenizi girin"
                       placeholderTextColor="#AAA"
                       style={styles.textInput}
                       value={password}
                       onChangeText={(text) => {
                         setPassword(text);
+                        // Her değişiklikte doğrulama yap
                         validatePassword(text);
-                        // Şifre değiştiğinde, eğer onay şifresi dolu ise onay şifresini de doğrula
-                        if (confirmPassword) {
-                          validateConfirmPassword(confirmPassword);
-                        }
                       }}
                       onFocus={() => setPasswordFocused(true)}
                       onBlur={() => {
@@ -263,73 +201,38 @@ export default function SignUpScreen() {
                   ) : null}
                 </View>
 
-                {/* Confirm Password Field */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Şifre Tekrar</Text>
-                  <View style={[
-                    styles.textInputContainer,
-                    confirmPasswordError ? styles.inputError : null,
-                    confirmPasswordFocused ? styles.inputFocused : null
-                  ]}>
-                    <TextInput
-                      placeholder="Şifrenizi tekrar girin"
-                      placeholderTextColor="#AAA"
-                      style={styles.textInput}
-                      value={confirmPassword}
-                      onChangeText={(text) => {
-                        setConfirmPassword(text);
-                        validateConfirmPassword(text);
-                      }}
-                      onFocus={() => setConfirmPasswordFocused(true)}
-                      onBlur={() => {
-                        setConfirmPasswordFocused(false);
-                        validateConfirmPassword(confirmPassword);
-                      }}
-                      secureTextEntry={!showConfirmPassword}
-                    />
-                    <TouchableOpacity 
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                      style={styles.eyeIcon}
-                    >
-                      <FontAwesome 
-                        name={showConfirmPassword ? "eye" : "eye-slash"} 
-                        size={20} 
-                        color="#AAA" 
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  {confirmPasswordError ? (
-                    <Text style={styles.errorText}>
-                      {confirmPasswordError}
-                    </Text>
-                  ) : null}
-                </View>
+                {/* Forgot Password */}
+                <TouchableOpacity style={styles.forgotPasswordContainer}>
+                  <Text style={styles.forgotPasswordText}>
+                    Şifremi Unuttum
+                  </Text>
+                </TouchableOpacity>
                 
-                {/* Sign Up Button */}
+                {/* Sign In Button */}
                 <TouchableOpacity
-                  style={styles.signUpButton}
-                  onPress={handleSignUp}
+                  style={styles.signInButton}
+                  onPress={handleSignIn}
                 >
-                  <Text style={styles.signUpButtonText}>Kayıt Ol</Text>
+                  <Text style={styles.signInButtonText}>Giriş Yap</Text>
                 </TouchableOpacity>
 
-                {/* Demo Kayıt Butonu */}
+                {/* Demo Giriş Butonu */}
                 <TouchableOpacity
                   style={styles.demoButton}
-                  onPress={handleDemoSignUp}
+                  onPress={handleDemoSignIn}
                 >
-                  <Text style={styles.demoButtonText}>Demo Kayıt</Text>
+                  <Text style={styles.demoButtonText}>Demo Giriş</Text>
                 </TouchableOpacity>
                 
-                {/* Sign In Link - taşındı */}
+                {/* Sign Up Link - taşındı */}
                 <Center marginTop={15}>
                   <HStack space="xs" alignItems="center">
-                    <Text style={styles.signInText2}>
-                      Zaten hesabınız var mı?
+                    <Text style={styles.signUpText2}>
+                      Hesabınız yok mu?
                     </Text>
-                    <TouchableOpacity onPress={() => router.push('/signin')}>
-                      <Text style={styles.signInLinkText2}>
-                        Giriş Yap
+                    <TouchableOpacity onPress={() => router.push('/auth/signup' as any)}>
+                      <Text style={styles.signUpLinkText2}>
+                        Kayıt Ol
                       </Text>
                     </TouchableOpacity>
                   </HStack>
@@ -418,16 +321,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '500',
   },
-  signUpButton: {
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  forgotPasswordText: {
+    color: '#44C26D',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  signInButton: {
     width: '100%',
     height: 48,
     backgroundColor: '#44C26D',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
-  signUpButtonText: {
+  signInButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
@@ -446,21 +359,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  signInText: {
+  signUpText: {
     color: 'white',
     fontSize: 15,
   },
-  signInLinkText: {
+  signUpLinkText: {
     color: '#44C26D',
     fontSize: 15,
     fontWeight: '900',
     marginLeft: 4,
   },
-  signInText2: {
+  signUpText2: {
     color: '#89939E',
     fontSize: 14,
   },
-  signInLinkText2: {
+  signUpLinkText2: {
     color: '#3066BE',
     fontSize: 14,
     fontWeight: '900',

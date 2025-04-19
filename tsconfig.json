@@ -5,12 +5,19 @@
     "baseUrl": ".",
     "types": ["@gluestack-ui/themed"],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "tailwind.config": [
-        "./tailwind.config.js"
-      ]
+      "@/*": ["./*"],
+      "@/src/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/screens/*": ["./src/screens/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/constants/*": ["./src/constants/*"],
+      "@/navigation/*": ["./src/navigation/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/store/*": ["./src/store/*"],
+      "@/assets/*": ["./assets/*"],
+      "tailwind.config": ["./tailwind.config.js"]
     }
   },
   "include": [

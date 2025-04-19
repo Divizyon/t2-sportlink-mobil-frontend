@@ -1,59 +1,54 @@
 import { Stack } from "expo-router";
-
-import "@/global.css";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
 import { config } from "@gluestack-ui/config";
+import "@/global.css";
 
-export default function Layout() {
+/**
+ * Ana uygulama layoutu
+ * Tüm ekranları kapsayan temel stack yapısı
+ */
+export default function RootLayout() {
   return (
     <GluestackUIProvider config={config}>
-      <Stack>
-        {/* Uygulama başlangıç ekranı */}
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Karşılama ekranı */}
         <Stack.Screen
           name="index"
           options={{
             headerShown: false,
           }}
         />
-        
-        {/* Giriş ve kayıt ekranları - header yok */}
+
+        {/* Auth navigasyonu */}
         <Stack.Screen
-          name="signin"
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        
-        <Stack.Screen
-          name="signup"
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        
-        {/* Ana sayfalar - header yok (kendi header'ları var) */}
-        <Stack.Screen
-          name="home"
+          name="auth"
           options={{
             headerShown: false,
           }}
         />
-        
-        {/* Harita sayfası */}
+
+        {/* Ana tab navigasyonu */}
         <Stack.Screen
-          name="map"
+          name="(tabs)"
           options={{
             headerShown: false,
           }}
         />
-        
-        {/* Tesisler sayfası */}
+
+        {/* Detay sayfaları ve diğer rotalar */}
         <Stack.Screen
-          name="facilities"
+          name="routes/[id]"
           options={{
-            headerShown: false,
+            headerShown: true,
+            headerTitle: "Rota Detayı",
+          }}
+        />
+
+        <Stack.Screen
+          name="facilities/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: "Tesis Detayı",
           }}
         />
       </Stack>

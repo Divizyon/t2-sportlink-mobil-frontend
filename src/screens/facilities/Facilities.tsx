@@ -1,37 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Modal, ScrollView, useColorScheme } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import SportFacilitiesMap from '../components/SportFacilitiesMap';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Renk paleti - Açık tema
-const LIGHT_COLORS = {
-  primary: "#44C26D",  // Ana renk - Yeşil
-  secondary: "#3066BE", // İkincil renk - Mavi
-  background: "#F5F7FA", // Arka plan - Açık gri
-  text: {
-    dark: "#1D2B4E", // Koyu metin
-    light: "#89939E", // Açık metin
-  },
-  white: "#FFFFFF",
-  lightGray: "#F0F2F5",
-  divider: "#E1E4E8",
-};
-
-// Renk paleti - Koyu tema
-const DARK_COLORS = {
-  primary: "#4BD07D",  // Ana renk - Daha parlak yeşil
-  secondary: "#4080DD", // İkincil renk - Daha parlak mavi
-  background: "#15202B", // Twitter benzeri koyu mavi arka plan
-  text: {
-    dark: "#FFFFFF", // Beyaz metin
-    light: "#8899A6", // Açık gri metin
-  },
-  white: "#192734", // Kart arka planı
-  lightGray: "#253341", // Ayırıcı, girdi arka planı
-  divider: "#38444D", // Ayırıcı çizgi
-};
+import SportFacilitiesMap from '@/src/components/maps/SportFacilitiesMap';
+import useThemeStore from '../../../store/slices/themeSlice';
+import { COLORS } from '@/src/constants';
 
 // Tesis detayı için tip tanımı
 interface SportFacility {
@@ -51,36 +24,12 @@ interface SportFacility {
  * Harita üzerinde spor tesislerini gösterir ve seçilen tesis hakkında detaylı bilgi sunar
  */
 export default function FacilitiesScreen() {
-  const systemColorScheme = useColorScheme();
-  // Tema durumu
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Theme store'dan tema bilgisini al
+  const { isDarkMode } = useThemeStore();
   
-  // Renk temasını belirle
-  const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
-
   // Seçilen tesis ve modal durumu
   const [selectedFacility, setSelectedFacility] = useState<SportFacility | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // Uygulama başladığında tema tercihini yükle
-  useEffect(() => {
-    loadThemePreference();
-  }, []);
-  
-  // Tema tercihini yükle
-  const loadThemePreference = async () => {
-    try {
-      const themePreference = await AsyncStorage.getItem('themePreference');
-      if (themePreference !== null) {
-        setIsDarkMode(themePreference === 'dark');
-      } else {
-        // Eğer tercih kaydedilmemişse sistem temasını kullan
-        setIsDarkMode(systemColorScheme === 'dark');
-      }
-    } catch (error) {
-      console.log('Tema yüklenirken hata:', error);
-    }
-  };
 
   // Bir tesis seçildiğinde çalışacak olan fonksiyon
   const handleFacilitySelect = (facility: SportFacility) => {
@@ -94,10 +43,10 @@ export default function FacilitiesScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: COLORS.background }]}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#15202B' : COLORS.neutral.silver }]}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
-      <View style={[styles.header, { backgroundColor: COLORS.white }]}>
-        <Text style={[styles.title, { color: COLORS.text.dark }]}>Spor Tesisleri</Text>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#192734' : COLORS.neutral.white }]}>
+        <Text style={[styles.title, { color: isDarkMode ? COLORS.neutral.white : COLORS.primary }]}>Spor Tesisleri</Text>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => router.back()}
@@ -117,24 +66,24 @@ export default function FacilitiesScreen() {
         onRequestClose={closeModal}
       >
         <View style={[styles.modalOverlay, { backgroundColor: isDarkMode ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)' }]}>
-          <View style={[styles.modalContent, { backgroundColor: COLORS.white }]}>
+          <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#192734' : COLORS.neutral.white }]}>
             <TouchableOpacity 
-              style={[styles.closeButton, { backgroundColor: COLORS.lightGray }]} 
+              style={[styles.closeButton, { backgroundColor: isDarkMode ? '#253341' : COLORS.neutral.silver }]} 
               onPress={closeModal}
             >
-              <Text style={[styles.closeButtonText, { color: COLORS.text.dark }]}>X</Text>
+              <Text style={[styles.closeButtonText, { color: isDarkMode ? COLORS.neutral.white : COLORS.primary }]}>X</Text>
             </TouchableOpacity>
             
             {selectedFacility && (
               <ScrollView style={styles.facilityDetails}>
-                <Text style={[styles.facilityName, { color: COLORS.text.dark }]}>
+                <Text style={[styles.facilityName, { color: isDarkMode ? COLORS.neutral.white : COLORS.primary }]}>
                   {selectedFacility.name}
                 </Text>
-                <Text style={[styles.facilityType, { color: COLORS.text.light }]}>
+                <Text style={[styles.facilityType, { color: isDarkMode ? COLORS.neutral.dark : COLORS.secondary }]}>
                   {selectedFacility.type}
                 </Text>
                 <View style={styles.ratingContainer}>
-                  <Text style={[styles.ratingText, { color: COLORS.text.dark }]}>
+                  <Text style={[styles.ratingText, { color: isDarkMode ? COLORS.neutral.white : COLORS.primary }]}>
                     Puanı: {selectedFacility.rating} / 5
                   </Text>
                   <View style={styles.starsContainer}>
@@ -151,23 +100,23 @@ export default function FacilitiesScreen() {
                     ))}
                   </View>
                 </View>
-                <Text style={[styles.facilityAddress, { color: COLORS.text.dark }]}>
+                <Text style={[styles.facilityAddress, { color: isDarkMode ? COLORS.neutral.white : COLORS.primary }]}>
                   Adres: {selectedFacility.address}
                 </Text>
                 
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity style={[styles.actionButton, { backgroundColor: COLORS.secondary }]}>
+                  <TouchableOpacity style={[styles.actionButton, { backgroundColor: COLORS.accent }]}>
                     <Text style={styles.actionButtonText}>Rezervasyon Yap</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[
                     styles.actionButton, 
                     styles.secondaryButton, 
                     { 
-                      backgroundColor: COLORS.white, 
-                      borderColor: COLORS.secondary 
+                      backgroundColor: isDarkMode ? '#192734' : COLORS.neutral.white,
+                      borderColor: COLORS.accent
                     }
                   ]}>
-                    <Text style={[styles.secondaryButtonText, { color: COLORS.secondary }]}>Favorilere Ekle</Text>
+                    <Text style={[styles.secondaryButtonText, { color: COLORS.accent }]}>Favorilere Ekle</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -248,41 +197,44 @@ const styles = StyleSheet.create({
   },
   facilityType: {
     fontSize: 18,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
   },
   ratingText: {
     fontSize: 16,
-    marginBottom: 5,
+    marginRight: 10,
   },
   starsContainer: {
     flexDirection: 'row',
   },
   starIcon: {
     fontSize: 20,
-    marginRight: 5,
+    marginRight: 3,
   },
   goldStar: {
     color: '#FFD700',
   },
   grayStar: {
-    color: '#D3D3D3',
+    color: '#C4C4C4',
   },
   facilityAddress: {
     fontSize: 16,
-    marginBottom: 20,
     lineHeight: 22,
+    marginBottom: 20,
   },
   actionButtons: {
-    marginVertical: 15,
+    marginTop: 15,
+    marginBottom: 30,
   },
   actionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 10,
   },
   actionButtonText: {
