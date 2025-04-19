@@ -1,11 +1,11 @@
 import React from 'react';
-import MapScreen from '../../src/screens/maps/Map';
+import EventsScreen from '../../src/screens/maps/Events';
 
 /**
  * Etkinlikler tab ekranı
- * Tüm etkinlikleri listeler ve harita üzerinde gösterir
- * (Geçici olarak mevcut harita ekranını kullanıyoruz)
+ * Tüm etkinlikleri harita üzerinde ve liste olarak gösterir
+ * Kullanıcıya yakın etkinlikleri mesafeye göre sıralar
  */
 export default function EventsTab() {
-  return <MapScreen />;
+  return <EventsScreen />;
 } 
