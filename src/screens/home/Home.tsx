@@ -165,6 +165,23 @@ export default function HomeScreen() {
     <BellIcon size="md" color={themeColors.text.dark} />
   );
 
+  // Etkinlik oluşturma ikonu
+  const CreateEventIcon = () => (
+    <HStack space="md" alignItems="center">
+      <Pressable 
+        onPress={() => console.log('Bildirimler')}
+        mr="$3"
+      >
+        <BellIcon size="md" color={themeColors.text.dark} />
+      </Pressable>
+      <Pressable 
+        onPress={() => router.push('/create-event' as any)}
+      >
+        <Ionicons name="add-circle-outline" size={24} color={themeColors.text.dark} />
+      </Pressable>
+    </HStack>
+  );
+
   // Özel ikonlar
   const MapPinIconComponent = () => (
     <Ionicons name="location-outline" size={18} color={COLORS.accent} />
@@ -200,34 +217,13 @@ export default function HomeScreen() {
       {/* Özel Header bileşenini kullan */}
       <Header 
         showLogo={true}
-        rightComponent={<NotificationIcon />}
-        onRightPress={() => console.log('Bildirimler')}
+        rightComponent={<CreateEventIcon />}
       />
       
       <ScrollView style={{ flex: 1, padding: 16 }} showsVerticalScrollIndicator={false}>
         {/* Karşılama Mesajı */}
         <WelcomeMessage username="Ahmet" />
         
-        {/* Hızlı Etkinlik Oluşturma Butonu */}
-        <Box 
-          width="100%" 
-          alignItems="center" 
-          marginBottom="$6" 
-          marginTop="$2"
-        >
-          <Button
-            size="lg"
-            variant="solid"
-            borderRadius="$full"
-            backgroundColor={COLORS.accent}
-            onPress={() => router.push('/create-event' as any)}
-            width="80%"
-          >
-            <Ionicons name="add-circle-outline" size={20} color="white" style={{ marginRight: 8 }} />
-            <ButtonText fontSize="$md">Etkinlik Oluştur</ButtonText>
-          </Button>
-        </Box>
-
         {/* Aktivite Özeti Kartı */}
         <Box
           borderRadius="$xl"
@@ -317,115 +313,6 @@ export default function HomeScreen() {
           </HStack>
         </Box>
 
-        {/* Katıldığım/İlgilendiğim Etkinlikler */}
-        <Box marginBottom="$6">
-          <HStack 
-            justifyContent="space-between" 
-            alignItems="center" 
-            marginBottom="$4"
-          >
-            <HStack space="sm" alignItems="center">
-              <CalendarIconComponent />
-              <Text 
-                fontSize="$lg" 
-                fontWeight="$bold"
-                color={themeColors.text.dark}
-              >
-                Etkinliklerim
-              </Text>
-            </HStack>
-            
-            <Pressable onPress={() => router.push('/my-events' as any)}>
-              <HStack alignItems="center">
-                <Text 
-                  fontSize="$sm" 
-                  color={themeColors.secondary}
-                  marginRight="$1"
-                >
-                  Tümünü Gör
-                </Text>
-                <ChevronRightIcon size="sm" color={themeColors.secondary} />
-              </HStack>
-            </Pressable>
-          </HStack>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 20 }}
-          >
-            {participatingEvents.map(event => (
-              <Pressable 
-                key={event.id}
-                onPress={() => router.push(`/events/${event.id}` as any)}
-                marginRight="$4"
-              >
-                <Box
-                  width={250}
-                  borderRadius="$xl"
-                  overflow="hidden"
-                  backgroundColor={themeColors.card}
-                  shadowColor="#000"
-                  shadowOffset={{ width: 0, height: 2 }}
-                  shadowOpacity={0.1}
-                  shadowRadius={4}
-                  elevation={2}
-                >
-                  <Box position="relative">
-                    <Image 
-                      source={{ uri: event.image }} 
-                      style={{ width: '100%', height: 120 }}
-                      resizeMode="cover"
-                    />
-                    <Badge
-                      position="absolute"
-                      top={10}
-                      right={10}
-                      variant="solid"
-                      action={event.status === 'katılıyor' ? 'success' : 'info'}
-                      borderRadius="$full"
-                    >
-                      <BadgeText fontSize="$2xs" fontWeight="$bold">
-                        {event.status === 'katılıyor' ? 'Katılıyorsunuz' : 'İlgileniyorsunuz'}
-                      </BadgeText>
-                    </Badge>
-                  </Box>
-                  <Box padding="$4">
-                    <Text 
-                      fontSize="$md" 
-                      fontWeight="$bold" 
-                      marginBottom="$1"
-                      color={themeColors.text.dark}
-                    >
-                      {event.title}
-                    </Text>
-                    <Text 
-                      fontSize="$sm" 
-                      fontWeight="$medium" 
-                      marginBottom="$2.5"
-                      color={themeColors.primary}
-                    >
-                      {event.type}
-                    </Text>
-                    <Text 
-                      fontSize="$xs" 
-                      marginBottom="$1"
-                      color={themeColors.text.light}
-                    >
-                      📍 {event.location}
-                    </Text>
-                    <Text 
-                      fontSize="$xs" 
-                      color={themeColors.text.light}
-                    >
-                      🗓️ {event.date}
-                    </Text>
-                  </Box>
-                </Box>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </Box>
         
         {/* Önemli Duyurular */}
         <Box marginBottom="$6">

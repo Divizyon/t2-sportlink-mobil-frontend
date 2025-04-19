@@ -9,7 +9,7 @@
   - [x] Lint ve format komutlarının oluşturulması
   - [x] README.md güncellenmesi 
 
-- [ ] USM-15 Uygulama için ikon bileşenlerinin oluşturulması
+- [x] USM-15 Uygulama için ikon bileşenlerinin oluşturulması
   - [x] MapPinIcon bileşeni
   - [x] CalendarIcon bileşeni
   - [x] NewsIcon bileşeni 

@@ -3,7 +3,7 @@ import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../src/constants";
 import { View, Platform, Dimensions } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeStore } from "../../store/slices/themeSlice";
+import { useThemeStore } from "../../store";
 
 /**
  * Tab navigasyonu için layout
@@ -63,7 +63,6 @@ export default function TabLayout() {
         // Tab ekranları arasında geçiş yaparken animasyon
         tabBarHideOnKeyboard: true, // Klavye açıkken gizle
         // Animasyon ayarları
-        animationEnabled: true, 
         tabBarAllowFontScaling: false, // Font ölçeklemesini engelle
       }}
     >

@@ -172,29 +172,33 @@ export default function MapScreen() {
             />
           )}
           
-          {/* Rotalar */}
-          {routes.map((route) => (
-            <React.Fragment key={route.id}>
-              <Polyline
-                coordinates={route.points}
-                strokeColor={selectedRoute && selectedRoute.id === route.id ? COLORS.accent : COLORS.secondary}
-                strokeWidth={selectedRoute && selectedRoute.id === route.id ? 4 : 2}
-              />
-              {/* Başlangıç noktası */}
-              <Marker
-                coordinate={route.points[0]}
-                title={route.name}
-                description={`${route.distance} km - ${route.duration} dk`}
-                pinColor={COLORS.success}
-              />
-              {/* Bitiş noktası */}
-              <Marker
-                coordinate={route.points[route.points.length - 1]}
-                title={`${route.name} Bitiş`}
-                description={`${route.type} - ${route.difficulty}`}
-                pinColor={COLORS.danger}
-              />
-            </React.Fragment>
+          {/* Rotalar ve Markerlar her biri ayrı ayrı render ediliyor */}
+          {routes.map(route => (
+            <Polyline
+              coordinates={route.points}
+              strokeColor={selectedRoute && selectedRoute.id === route.id ? COLORS.accent : COLORS.secondary}
+              strokeWidth={selectedRoute && selectedRoute.id === route.id ? 4 : 2}
+            />
+          ))}
+          
+          {/* Başlangıç noktaları */}
+          {routes.map(route => (
+            <Marker
+              coordinate={route.points[0]}
+              title={route.name}
+              description={`${route.distance} km - ${route.duration} dk`}
+              pinColor={COLORS.success}
+            />
+          ))}
+          
+          {/* Bitiş noktaları */}
+          {routes.map(route => (
+            <Marker
+              coordinate={route.points[route.points.length - 1]}
+              title={`${route.name} Bitiş`}
+              description={`${route.type} - ${route.difficulty}`}
+              pinColor={COLORS.danger}
+            />
           ))}
         </MapView>
       </View>
