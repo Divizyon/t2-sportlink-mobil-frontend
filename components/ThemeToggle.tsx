@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
-import { useThemeStore } from '../store';
+import useThemeStore from '../store/slices/themeSlice';
 
 /**
  * Tema değiştirme bileşeni
