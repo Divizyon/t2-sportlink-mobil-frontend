@@ -56,6 +56,7 @@ const useAuthStore = create<AuthStore>((set) => ({
   clearError: () => {
     set({ error: null });
   },
+  
 }));
 
 export default useAuthStore; 
