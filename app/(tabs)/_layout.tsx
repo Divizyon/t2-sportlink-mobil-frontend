@@ -1,13 +1,28 @@
 import { Tabs } from "expo-router";
 import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../src/constants";
-import { View } from "react-native";
+import { View, TouchableOpacity } from "react-native";
+import { router, usePathname } from "expo-router";
 
 /**
  * Tab navigasyonu için layout
  * Ana sayfa, Etkinlikler, Bul, Bildirimler ve Hesabım sekmeleri
  */
 export default function TabLayout() {
+  const pathname = usePathname();
+  
+  // Bul butonuna her tıklamada doğrudan find sayfasına yönlendirme
+  const handleFindPress = () => {
+    // Şu anki rota find ise ve başka bir ekranda değilsek
+    // (mesela find içinde tümünü gör ekranı açıksa) sıfırla
+    if (pathname.includes('/find')) {
+      router.replace('/(tabs)/find');
+    } else {
+      // Diğer sayfalardaysak find sayfasına yönlendir
+      router.navigate('/(tabs)/find');
+    }
+  };
+  
   return (
     <Tabs
       screenOptions={{
@@ -69,6 +84,17 @@ export default function TabLayout() {
               <Ionicons name="search" size={26} color="white" />
             </View>
           ),
+          tabBarButton: (props) => {
+            return (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleFindPress}
+                style={props.style}
+              >
+                {props.children}
+              </TouchableOpacity>
+            );
+          },
         }}
       />
       
