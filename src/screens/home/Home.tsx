@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,7 +25,7 @@ import {
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import useThemeStore from '../../../store/slices/themeSlice';
 import { COLORS } from '../../constants/colors';
-import { Header, WelcomeMessage } from '../../components';
+import { Header, WelcomeMessage, CreateEventModal } from '../../components';
 
 // Tema renk konfigürasyonları
 const getThemeColors = (isDark: boolean) => {
@@ -159,6 +159,14 @@ const announcements = [
 export default function HomeScreen() {
   const { isDarkMode } = useThemeStore();
   const themeColors = getThemeColors(isDarkMode);
+  
+  // Modal durumu
+  const [modalVisible, setModalVisible] = useState(false);
+  
+  // modalVisible değişikliklerini izlemek için
+  useEffect(() => {
+    console.log('Modal durumu değişti:', modalVisible);
+  }, [modalVisible]);
 
   // Bildirim ikonunu bileşen olarak oluştur
   const NotificationIcon = () => (
@@ -175,7 +183,11 @@ export default function HomeScreen() {
         <BellIcon size="md" color={themeColors.text.dark} />
       </Pressable>
       <Pressable 
-        onPress={() => router.push('/create-event' as any)}
+        hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+        onPress={() => {
+          console.log('Modal açılıyor...');
+          setModalVisible(true);
+        }}
       >
         <Ionicons name="add-circle-outline" size={24} color={themeColors.text.dark} />
       </Pressable>
@@ -208,6 +220,19 @@ export default function HomeScreen() {
       default:
         return <Ionicons name="information-circle-outline" size={16} color={COLORS.accent} />;
     }
+  };
+
+  // Etkinlik oluşturma işlemi
+  const handleCreateEvent = (eventData: any) => {
+    console.log('Etkinlik oluşturuldu:', eventData);
+    // Burada yeni etkinlik verilerini işleyebilirsiniz
+    // Örneğin, bir API'ye gönderebilir veya yerel bir state'e kaydedebilirsiniz
+  };
+
+  // Modal kapatma
+  const handleCloseModal = () => {
+    console.log("Modal kapatılıyor...");
+    setModalVisible(false);
   };
 
   return (
@@ -627,6 +652,15 @@ export default function HomeScreen() {
           </ScrollView>
         </Box>
       </ScrollView>
+      
+      {/* Etkinlik Oluşturma Modalı */}
+      {modalVisible && (
+        <CreateEventModal
+          visible={modalVisible}
+          onClose={handleCloseModal}
+          onCreateEvent={handleCreateEvent}
+        />
+      )}
     </Box>
   );
 }
