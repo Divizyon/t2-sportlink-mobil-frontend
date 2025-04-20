@@ -21,7 +21,7 @@ export interface AuthState {
 
 // Auth store aksiyonları
 export interface AuthActions {
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   register: (data: RegisterFormData) => Promise<void>;
   logout: () => void;
   clearError: () => void;
@@ -40,4 +40,4 @@ export interface ThemeActions {
   setDarkMode: (isDark: boolean) => void;
 }
 
-export type ThemeStore = ThemeState & ThemeActions;
+export type ThemeStore = ThemeState & ThemeActions; 

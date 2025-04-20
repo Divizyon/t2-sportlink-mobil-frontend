@@ -5,7 +5,7 @@ import { RegisterFormData } from '../../utils/validations/registerSchema';
 /**
  * Kimlik doğrulama için Zustand store
  */
-const useAuthStore = create<AuthStore>(set => ({
+const useAuthStore = create<AuthStore>((set) => ({
   // State
   user: null,
   isAuthenticated: false,
@@ -13,28 +13,28 @@ const useAuthStore = create<AuthStore>(set => ({
   error: null,
 
   // Actions
-  login: async (email: string, password: string) => {
+  login: async (username: string, password: string) => {
     set({ isLoading: true, error: null });
-
+    
     try {
       // Burada gerçek API çağrısı yapılacak
       // Örnek olarak simüle ediyoruz
       await new Promise(resolve => setTimeout(resolve, 1000));
-
+      
       // Başarılı giriş simülasyonu
-      if (email === 'test@example.com' && password === 'password') {
+      if (username === 'test' && password === 'password') {
         set({
           user: {
             id: '1',
-            username: 'test_user',
-            email: email,
+            username,
+            email: 'test@example.com',
           },
           isAuthenticated: true,
           isLoading: false,
         });
       } else {
         set({
-          error: 'Geçersiz e-posta veya şifre',
+          error: 'Geçersiz kullanıcı adı veya şifre',
           isLoading: false,
         });
       }
@@ -52,13 +52,13 @@ const useAuthStore = create<AuthStore>(set => ({
     try {
       // Burada gerçek API çağrısı yapılacak
       // Örnek olarak simüle ediyoruz
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Başarılı kayıt simülasyonu
       set({
         user: {
-          id: '2',
-          username: data.fullName.split(' ')[0].toLowerCase(),
+          id: '1',
+          username: data.fullName,
           email: data.email,
         },
         isAuthenticated: true,
@@ -83,6 +83,7 @@ const useAuthStore = create<AuthStore>(set => ({
   clearError: () => {
     set({ error: null });
   },
+  
 }));
 
-export default useAuthStore;
+export default useAuthStore; 

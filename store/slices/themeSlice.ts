@@ -9,19 +9,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 const useThemeStore = create<ThemeStore>()(
   persist(
-    set => ({
+    (set) => ({
       // State
       isDarkMode: false,
 
       // Actions
-      toggleTheme: () => set(state => ({ isDarkMode: !state.isDarkMode })),
+      toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       setDarkMode: (isDark: boolean) => set({ isDarkMode: isDark }),
     }),
     {
       name: 'theme-storage', // AsyncStorage'da saklanacak anahtar
       storage: createJSONStorage(() => AsyncStorage),
-    },
-  ),
+    }
+  )
 );
 
-export default useThemeStore;
+export default useThemeStore; 

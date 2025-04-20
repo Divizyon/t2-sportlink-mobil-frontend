@@ -1,6 +1,6 @@
 const definePlugin = require('babel-plugin-transform-define');
 
-module.exports = function(api) {
+module.exports = function (api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
@@ -8,7 +8,7 @@ module.exports = function(api) {
       [
         'transform-define',
         {
-          "process.env.EXPO_OS": "ios",
+          'process.env.EXPO_OS': 'ios',
         },
       ],
     ],
