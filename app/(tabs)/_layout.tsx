@@ -1,8 +1,19 @@
 import { Tabs } from 'expo-router';
 import { FontAwesome, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../src/constants';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
+
+// Tab bar için stil değişkenleri
+const tabBarActiveTintColor = COLORS.primary;
+const tabBarInactiveTintColor = COLORS.neutral.dark;
+const tabBarBackground = '#FFFFFF';
+const tabBarBorderColor = '#E8E8E8';
+const tabBarHeight = 60;
+const bottomPadding = Platform.OS === 'ios' ? 20 : 8;
+const tabIconSize = 24;
+const centralButtonSize = 56;
+const isSmallDevice = Dimensions.get('window').width < 375;
 
 /**
  * Tab navigasyonu için layout
