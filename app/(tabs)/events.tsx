@@ -17,6 +17,8 @@ interface Event {
   dateObj?: Date; // Tarih nesnesi eklenecek
 }
 
+
+
 // Spor kategorileri
 interface Category {
   id: string;
