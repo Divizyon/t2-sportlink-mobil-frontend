@@ -68,10 +68,22 @@
     "@types/react": "~18.3.12",
     "@types/react-native": "^0.72.8",
     "@types/react-test-renderer": "^18.3.0",
+<<<<<<< HEAD
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-native": "^5.0.0",
+
+=======
     "babel-plugin-inline-dotenv": "^1.7.0",
     "babel-plugin-transform-define": "^2.1.4",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "gluestack-ui": "^0.7.22",
+>>>>>>> develop
     "jest": "^29.2.1",
     "jest-expo": "~52.0.6",
     "jscodeshift": "^0.15.2",
