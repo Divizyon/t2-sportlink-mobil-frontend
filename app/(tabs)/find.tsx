@@ -980,6 +980,7 @@ export default function FindTab() {
                     </Pressable>
                   ))}
               </ScrollView>
+              
             ) : (
               <Center style={styles.emptyStateContainer}>
                 <Ionicons
