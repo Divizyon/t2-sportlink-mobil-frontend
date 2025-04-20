@@ -6,4 +6,5 @@ import WelcomeScreen from '@/src/screens/auth/Welcome';
  */
 export default function WelcomeIndex() {
   return <WelcomeScreen />;
+  
 }
