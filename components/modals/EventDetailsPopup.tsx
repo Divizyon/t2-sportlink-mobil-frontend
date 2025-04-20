@@ -16,19 +16,23 @@ import {
 } from '@gluestack-ui/themed';
 
 // Event type definition
-interface Event {
-  id: number;
+export interface Event {
+  id: string | number;
   title: string;
   location: string;
   distance: string;
   date: string;
-  participants: string;
+  participants?: string;
+  participantCount?: number;
+  maxParticipants?: number;
   sportType: string;
-  creator: string;
+  creator?: string;
+  creatorName?: string;
   // Harita için opsiyonel koordinatlar
   location_latitude?: number;
   location_longitude?: number;
   description?: string;
+  time?: string;
 }
 
 interface EventDetailsPopupProps {
@@ -38,10 +42,13 @@ interface EventDetailsPopupProps {
   isDarkMode: boolean;
   showMap?: boolean;
   isJoined?: boolean; // Etkinliğe katılma durumu
-  onJoin?: (eventId: number) => void; // Etkinliğe katılma olayı
-  onLeave?: (eventId: number) => void; // Etkinlikten ayrılma olayı
+  onJoin?: (eventId: string) => void; // Etkinliğe katılma olayı
+  onLeave?: (eventId: string) => void; // Etkinlikten ayrılma olayı
 }
 
+/**
+ * Etkinlik detaylarını gösteren popup bileşeni
+ */
 const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
   event,
   visible,
@@ -68,7 +75,7 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
     if (event) {
       // Dışarıdan gelen onJoin prop'unu kullan
       if (onJoin) {
-        onJoin(event.id);
+        onJoin(event.id.toString());
       }
 
       setJoinSuccess(true);
@@ -100,7 +107,7 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
     if (event) {
       // Dışarıdan gelen onLeave prop'unu kullan
       if (onLeave) {
-        onLeave(event.id);
+        onLeave(event.id.toString());
       }
 
       setLeaveSuccess(true);
@@ -130,6 +137,16 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
   if (!event) {
     return null;
   }
+
+  // Katılımcı bilgisi gösterimi
+  const participantsText =
+    event.participants ||
+    (event.participantCount !== undefined && event.maxParticipants !== undefined
+      ? `${event.participantCount}/${event.maxParticipants}`
+      : '0/0');
+
+  // Etkinliği oluşturan kişi gösterimi
+  const creatorText = event.creator || event.creatorName || 'Anonim';
 
   // Varsayılan konum (İstanbul merkezi)
   const defaultLocation = {
@@ -220,8 +237,7 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
     eventDescriptionContainer: {
       marginTop: 6,
       marginBottom: 10,
-      padding: 10,
-      backgroundColor: 'rgba(0, 0, 0, 0.03)',
+      padding: 12,
       borderRadius: 10,
       marginHorizontal: -5,
     },
@@ -247,11 +263,11 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
     },
     mapContainer: {
       width: '100%',
-      height: 180,
+      height: 200,
       borderRadius: 12,
       overflow: 'hidden',
-      marginTop: 10,
-      marginBottom: 10,
+      marginTop: 16,
+      marginBottom: 20,
     },
     map: {
       width: '100%',
@@ -349,8 +365,10 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
 
             <ScrollView
               style={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              bounces={false}
+              showsVerticalScrollIndicator={true}
+              bounces={true}
+              alwaysBounceVertical={true}
+              contentContainerStyle={{ paddingBottom: 20 }}
             >
               <Badge style={styles.eventBadge}>
                 <Text style={styles.eventBadgeText}>{event.sportType}</Text>
@@ -378,7 +396,7 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
                     { color: isDarkMode ? COLORS.neutral.light : COLORS.neutral.dark },
                   ]}
                 >
-                  {event.date}
+                  {event.date} {event.time ? event.time : ''}
                 </Text>
               </HStack>
 
@@ -412,7 +430,7 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
                     { color: isDarkMode ? COLORS.neutral.light : COLORS.neutral.dark },
                   ]}
                 >
-                  Katılımcılar: {event.participants}
+                  Katılımcılar: {participantsText}
                 </Text>
               </HStack>
 
@@ -429,13 +447,18 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
                     { color: isDarkMode ? COLORS.neutral.light : COLORS.neutral.dark },
                   ]}
                 >
-                  Oluşturan: {event.creator}
+                  Oluşturan: {creatorText}
                 </Text>
               </HStack>
 
               {/* Etkinlik Açıklaması */}
               {event.description && (
-                <Box style={styles.eventDescriptionContainer}>
+                <Box
+                  style={[
+                    styles.eventDescriptionContainer,
+                    { backgroundColor: isDarkMode ? '#26364d' : 'rgba(0, 0, 0, 0.03)' },
+                  ]}
+                >
                   <HStack style={styles.eventDetailRow}>
                     <Ionicons
                       name="information-circle-outline"
@@ -498,56 +521,41 @@ const EventDetailsPopup: React.FC<EventDetailsPopupProps> = ({
                           { backgroundColor: isDarkMode ? '#1E293B' : COLORS.neutral.white },
                         ]}
                       >
-                        <Ionicons
-                          name={
-                            event.sportType === 'Futbol'
-                              ? 'football'
-                              : event.sportType === 'Basketbol'
-                                ? 'basketball'
-                                : event.sportType === 'Tenis'
-                                  ? 'tennisball'
-                                  : event.sportType === 'Voleybol'
-                                    ? 'baseball'
-                                    : event.sportType === 'Koşu'
-                                      ? 'walk'
-                                      : event.sportType === 'Bisiklet'
-                                        ? 'bicycle'
-                                        : 'calendar'
-                          }
-                          size={18}
-                          color={COLORS.accent}
-                        />
+                        <Ionicons name="location" size={18} color={COLORS.accent} />
                       </Center>
                     </Marker>
                   </MapView>
                 </Box>
               )}
 
-              {/* Altta buton için boşluk bırak */}
-              <Box height={80} />
+              {/* Alt kısımdan yükseklik boşluğu */}
+              <View style={{ height: 100 }} />
             </ScrollView>
 
-            {/* Katılma/Ayrılma butonu */}
-            <Box
+            {/* Alt buton (Katıl veya Ayrıl) */}
+            <View
               style={[
                 styles.buttonContainer,
                 {
-                  backgroundColor: isDarkMode
-                    ? 'rgba(30, 41, 59, 0.95)'
-                    : 'rgba(255, 255, 255, 0.95)',
+                  backgroundColor: isDarkMode ? '#1E293B' : COLORS.neutral.white,
+                  borderTopColor: isDarkMode ? '#334155' : 'rgba(0, 0, 0, 0.05)',
                 },
               ]}
             >
               <Pressable
                 style={[
                   styles.joinButton,
-                  { backgroundColor: localIsJoined ? '#FF5252' : COLORS.accent },
+                  {
+                    backgroundColor: localIsJoined ? '#FF5252' : COLORS.accent,
+                  },
                 ]}
                 onPress={localIsJoined ? handleLeave : handleJoin}
               >
-                <Text style={styles.joinButtonText}>{localIsJoined ? 'Ayrıl' : 'Katıl'}</Text>
+                <Text style={styles.joinButtonText}>
+                  {localIsJoined ? 'Etkinlikten Ayrıl' : 'Etkinliğe Katıl'}
+                </Text>
               </Pressable>
-            </Box>
+            </View>
           </Pressable>
         )}
       </Pressable>

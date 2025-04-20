@@ -5,10 +5,7 @@ export const loginSchema = yup.object({
     .string()
     .required('E-posta adresi zorunludur')
     .email('Geçerli bir e-posta adresi giriniz'),
-  password: yup
-    .string()
-    .required('Şifre zorunludur')
-    .min(6, 'Şifre en az 6 karakter olmalıdır'),
+  password: yup.string().required('Şifre zorunludur').min(6, 'Şifre en az 6 karakter olmalıdır'),
 });
 
-export type LoginFormData = yup.InferType<typeof loginSchema>; 
+export type LoginFormData = yup.InferType<typeof loginSchema>;

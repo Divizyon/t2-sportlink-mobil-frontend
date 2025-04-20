@@ -1,7 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, SafeAreaView, StatusBar as RNStatusBar, ScrollView, TextInput, ImageBackground, Linking, Platform, Dimensions, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar as RNStatusBar,
+  ScrollView,
+  TextInput,
+  ImageBackground,
+  Linking,
+  Platform,
+  Dimensions,
+  Modal,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { COLORS } from '../../src/constants';
+import useThemeStore from '../../store/slices/themeSlice';
+import EventDetailsPopup from '../../components/modals/EventDetailsPopup';
 
 // Etkinlik için tip tanımı
 interface Event {
@@ -15,9 +34,13 @@ interface Event {
   attendees: number;
   featured?: boolean;
   dateObj?: Date; // Tarih nesnesi eklenecek
+  // EventDetailsPopup için gerekli alanlar
+  sportType: string;
+  participantCount?: number;
+  maxParticipants?: number;
+  creatorName?: string;
+  description?: string;
 }
-
-
 
 // Spor kategorileri
 interface Category {
@@ -34,6 +57,7 @@ interface Category {
 export default function EventsTab() {
   // Router tanımı
   const router = useRouter();
+  const { isDarkMode } = useThemeStore();
 
   // Aktif kategori
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -41,12 +65,16 @@ export default function EventsTab() {
   const [searchText, setSearchText] = useState<string>('');
   // Filtrelenmiş etkinlikler
   const [filteredResults, setFilteredResults] = useState<Event[]>([]);
-  
+
   // Tarih filtreleme için state'ler
   const [showDateFilterModal, setShowDateFilterModal] = useState(false);
   const [selectedMonthsFor2025, setSelectedMonthsFor2025] = useState<number[]>([]);
   const [selectedMonthsFor2026, setSelectedMonthsFor2026] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(2025); // Varsayılan yıl 2025
+
+  // Popup için gerekli stateler
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showEventPopup, setShowEventPopup] = useState(false);
 
   // Spor kategorileri
   const categories: Category[] = [
@@ -60,25 +88,45 @@ export default function EventsTab() {
     { id: 'cycling', name: 'Bisiklet', icon: 'bicycle-outline', color: '#607d8b' },
     { id: 'martial-arts', name: 'Dövüş Sporları', icon: 'fitness-outline', color: '#795548' },
   ];
-  
+
   // Türkçe ay isimleri
   const monthNames = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık',
   ];
-  
+
   // Tarih stringini Date objesine çevirme fonksiyonu
   const convertStringToDate = (dateStr: string): Date => {
     const months: { [key: string]: number } = {
-      'Ocak': 0, 'Şubat': 1, 'Mart': 2, 'Nisan': 3, 'Mayıs': 4, 'Haziran': 5,
-      'Temmuz': 6, 'Ağustos': 7, 'Eylül': 8, 'Ekim': 9, 'Kasım': 10, 'Aralık': 11
+      Ocak: 0,
+      Şubat: 1,
+      Mart: 2,
+      Nisan: 3,
+      Mayıs: 4,
+      Haziran: 5,
+      Temmuz: 6,
+      Ağustos: 7,
+      Eylül: 8,
+      Ekim: 9,
+      Kasım: 10,
+      Aralık: 11,
     };
-    
+
     const parts = dateStr.split(' ');
     const day = parseInt(parts[0]);
     const month = months[parts[1]];
     const year = parseInt(parts[2]);
-    
+
     return new Date(year, month, day);
   };
 
@@ -92,7 +140,13 @@ export default function EventsTab() {
       location: 'İstanbul, 15 Temmuz Şehitler Köprüsü',
       image: 'https://picsum.photos/id/1025/500/300',
       category: 'Atletizm',
-      attendees: 356
+      attendees: 356,
+      sportType: 'Atletizm',
+      participantCount: 356,
+      maxParticipants: 500,
+      creatorName: 'İstanbul Büyükşehir Belediyesi',
+      description:
+        'İstanbul Maratonu, Asya ve Avrupa kıtalarını birbirine bağlayan dünyadaki tek maraton. Her yıl binlerce koşucunun katıldığı bu etkinlik, hem profesyonel sporcuları hem de amatör koşucuları bir araya getiriyor.',
     },
     {
       id: '2',
@@ -102,7 +156,13 @@ export default function EventsTab() {
       location: 'Atatürk Olimpiyat Stadyumu',
       image: 'https://picsum.photos/id/106/500/300',
       category: 'Futbol',
-      attendees: 1278
+      attendees: 1278,
+      sportType: 'Futbol',
+      participantCount: 1278,
+      maxParticipants: 2000,
+      creatorName: 'Türkiye Futbol Federasyonu',
+      description:
+        "Türkiye Milli Takımı'nın Hırvatistan ile oynayacağı bu önemli maç, Dünya Kupası eleme grubu içerisinde kritik bir öneme sahip. Tüm futbolseverler bu heyecanlı karşılaşmayı kaçırmamalı.",
     },
     {
       id: '3',
@@ -112,7 +172,13 @@ export default function EventsTab() {
       location: 'Ülker Sports Arena',
       image: 'https://picsum.photos/id/43/500/300',
       category: 'Basketbol',
-      attendees: 845
+      attendees: 845,
+      sportType: 'Basketbol',
+      participantCount: 845,
+      maxParticipants: 1000,
+      creatorName: 'Fenerbahçe Spor Kulübü',
+      description:
+        "EuroLeague'in bu önemli karşılaşmasında Fenerbahçe, evinde Barcelona'yı ağırlıyor. Avrupa'nın en prestijli basketbol organizasyonundaki bu maç, basketbol tutkunları için kaçırılmayacak bir fırsat.",
     },
     {
       id: '4',
@@ -122,7 +188,13 @@ export default function EventsTab() {
       location: 'VakıfBank Spor Sarayı',
       image: 'https://picsum.photos/id/116/500/300',
       category: 'Voleybol',
-      attendees: 623
+      attendees: 623,
+      sportType: 'Voleybol',
+      participantCount: 623,
+      maxParticipants: 800,
+      creatorName: 'VakıfBank Spor Kulübü',
+      description:
+        "CEV Şampiyonlar Ligi'nde VakıfBank, güçlü rakibi Milano'yu ağırlıyor. Avrupa'nın en önemli voleybol turnuvasında yer alan bu karşılaşma, voleybol tutkunları için büyük bir heyecan yaratıyor.",
     },
     {
       id: '5',
@@ -133,7 +205,13 @@ export default function EventsTab() {
       image: 'https://i.imgur.com/replaced-with-tennis-image.jpg',
       category: 'Tenis',
       attendees: 14582,
-      featured: true
+      featured: true,
+      sportType: 'Tenis',
+      participantCount: 14582,
+      maxParticipants: 15000,
+      creatorName: 'Wimbledon',
+      description:
+        "Dünyanın en prestijli tenis turnuvası Wimbledon'da final heyecanı. Çim kortta oynanan bu özel turnuvanın finali, tenis tarihine geçecek bir karşılaşma olacak.",
     },
     {
       id: '6',
@@ -143,7 +221,13 @@ export default function EventsTab() {
       location: 'Burhan Felek Yüzme Havuzu',
       image: 'https://picsum.photos/id/40/500/300',
       category: 'Yüzme',
-      attendees: 184
+      attendees: 184,
+      sportType: 'Yüzme',
+      participantCount: 184,
+      maxParticipants: 300,
+      creatorName: 'Türkiye Yüzme Federasyonu',
+      description:
+        'Türkiye Yüzme Şampiyonası, ülkenin dört bir yanından gelen yetenekli yüzücüleri bir araya getiriyor. Farklı kategorilerde düzenlenen yarışmalar büyük heyecana sahne olacak.',
     },
     {
       id: '7',
@@ -153,7 +237,13 @@ export default function EventsTab() {
       location: 'Belgrad Ormanı',
       image: 'https://picsum.photos/id/146/500/300',
       category: 'Bisiklet',
-      attendees: 275
+      attendees: 275,
+      sportType: 'Bisiklet',
+      participantCount: 275,
+      maxParticipants: 400,
+      creatorName: 'İstanbul Bisiklet Kulübü',
+      description:
+        'İstanbul Bisiklet Festivali, doğa ile iç içe muhteşem bir parkurda gerçekleşiyor. Hem profesyonel bisikletçilere hem de amatörlere açık olan bu etkinlik, bisiklet tutkunları için kaçırılmayacak bir fırsat.',
     },
     {
       id: '8',
@@ -163,15 +253,21 @@ export default function EventsTab() {
       location: 'Sinan Erdem Spor Salonu',
       image: 'https://picsum.photos/id/201/500/300',
       category: 'Dövüş Sporları',
-      attendees: 563
+      attendees: 563,
+      sportType: 'Dövüş Sporları',
+      participantCount: 563,
+      maxParticipants: 700,
+      creatorName: 'Fight Club Türkiye',
+      description:
+        "MMA Fight Night İstanbul, Türkiye'nin ve dünyanın en iyi dövüşçülerini bir araya getiriyor. Gecede birbirinden heyecanlı maçlar sizi bekliyor.",
     },
   ]);
-  
+
   // Etkinliklere tarih objesi ekle
   useEffect(() => {
     const eventsWithDate = events.map(event => ({
       ...event,
-      dateObj: convertStringToDate(event.date)
+      dateObj: convertStringToDate(event.date),
     }));
     setEvents(eventsWithDate);
   }, []);
@@ -184,40 +280,48 @@ export default function EventsTab() {
   // Tüm seçili aylara göre filtreleme
   useEffect(() => {
     // Önce kategori filtrelemesi yap
-    let categoryFiltered = activeCategory === 'all' 
-      ? events 
-      : events.filter(event => {
-          const categoryObj = categories.find(cat => cat.id === activeCategory);
-          return categoryObj ? event.category === categoryObj.name : true;
-        });
-    
+    let categoryFiltered =
+      activeCategory === 'all'
+        ? events
+        : events.filter(event => {
+            const categoryObj = categories.find(cat => cat.id === activeCategory);
+            return categoryObj ? event.category === categoryObj.name : true;
+          });
+
     // Sonra arama filtrelemesi yap
     if (searchText.trim() !== '') {
       const searchLower = searchText.toLowerCase();
       categoryFiltered = categoryFiltered.filter(
-        event => 
-          event.title.toLowerCase().includes(searchLower) || 
+        event =>
+          event.title.toLowerCase().includes(searchLower) ||
           event.category.toLowerCase().includes(searchLower) ||
-          event.location.toLowerCase().includes(searchLower)
+          event.location.toLowerCase().includes(searchLower),
       );
     }
-    
+
     // Tarih filtrelemesi yap - seçilen yıla göre ay filtresi uygula
     const activeSelectedMonths = getSelectedMonths();
     if (activeSelectedMonths.length > 0) {
       categoryFiltered = categoryFiltered.filter(event => {
         if (!event.dateObj) return true;
-        
+
         // Seçilen ay ve yıla göre filtrele
         const eventMonth = event.dateObj.getMonth();
         const eventYear = event.dateObj.getFullYear();
-        
+
         return activeSelectedMonths.includes(eventMonth) && eventYear === selectedYear;
       });
     }
-    
+
     setFilteredResults(categoryFiltered);
-  }, [searchText, activeCategory, events, selectedMonthsFor2025, selectedMonthsFor2026, selectedYear]);
+  }, [
+    searchText,
+    activeCategory,
+    events,
+    selectedMonthsFor2025,
+    selectedMonthsFor2026,
+    selectedYear,
+  ]);
 
   // Bir ayın seçili olup olmadığını kontrol et
   const isMonthSelected = (monthIndex: number): boolean => {
@@ -263,15 +367,29 @@ export default function EventsTab() {
   const navigateToMap = () => {
     router.push('/map');
   };
-  
+
+  // Etkinlik detaylarını gösterme fonksiyonu
+  const handleShowEventDetails = (event: Event) => {
+    setSelectedEvent(event);
+    setShowEventPopup(true);
+  };
+
+  // Popup'ı kapatma fonksiyonu
+  const handleCloseEventPopup = () => {
+    setShowEventPopup(false);
+  };
+
   // Etkinlik kartı bileşeni
   const renderEventCard = ({ item }: { item: Event }) => {
     // Tenis etkinliği için özel kart tasarımı
     if (item.category === 'Tenis' && item.featured) {
       return (
-        <TouchableOpacity style={[styles.card, styles.featuredCard]}>
-          <ImageBackground 
-            source={require('../../assets/images/yoga.jpg')} 
+        <TouchableOpacity
+          style={[styles.card, styles.featuredCard]}
+          onPress={() => handleShowEventDetails(item)}
+        >
+          <ImageBackground
+            source={require('../../assets/images/yoga.jpg')}
             style={styles.featuredCardImage}
             imageStyle={styles.featuredCardImageStyle}
           >
@@ -307,10 +425,10 @@ export default function EventsTab() {
         </TouchableOpacity>
       );
     }
-    
+
     // Normal etkinlik kartı
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity style={styles.card} onPress={() => handleShowEventDetails(item)}>
         <Image source={{ uri: item.image }} style={styles.cardImage} />
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle}>{item.title}</Text>
@@ -349,7 +467,7 @@ export default function EventsTab() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Spor Etkinlikleri</Text>
       </View>
-      
+
       {/* Arama Çubuğu */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
@@ -366,34 +484,42 @@ export default function EventsTab() {
               <Ionicons name="close-circle" size={18} color="#999" />
             </TouchableOpacity>
           )}
-          
+
           {/* Tarih filtreleme butonu */}
-          <TouchableOpacity 
-            onPress={() => setShowDateFilterModal(true)} 
+          <TouchableOpacity
+            onPress={() => setShowDateFilterModal(true)}
             style={styles.actionButton}
           >
-            <Ionicons 
-              name="calendar-outline" 
-              size={22} 
-              color={(selectedMonthsFor2025.length > 0 || selectedMonthsFor2026.length > 0) ? "#e91e63" : "#2196f3"} 
+            <Ionicons
+              name="calendar-outline"
+              size={22}
+              color={
+                selectedMonthsFor2025.length > 0 || selectedMonthsFor2026.length > 0
+                  ? '#e91e63'
+                  : '#2196f3'
+              }
             />
             {(selectedMonthsFor2025.length > 0 || selectedMonthsFor2026.length > 0) && (
               <View style={styles.filterActiveDot} />
             )}
           </TouchableOpacity>
-          
+
           {/* Harita butonu */}
           <TouchableOpacity onPress={navigateToMap} style={styles.actionButton}>
             <Ionicons name="map-outline" size={22} color="#2196f3" />
           </TouchableOpacity>
         </View>
       </View>
-      
+
       {/* Aktif tarih filtresi gösterimi */}
       {(selectedMonthsFor2025.length > 0 || selectedMonthsFor2026.length > 0) && (
         <View style={styles.activeFilterContainer}>
           <Text style={styles.activeFilterText}>
-            Tarih: {getSelectedMonths().map(monthIndex => monthNames[monthIndex]).join(', ')} {selectedYear}
+            Tarih:{' '}
+            {getSelectedMonths()
+              .map(monthIndex => monthNames[monthIndex])
+              .join(', ')}{' '}
+            {selectedYear}
           </Text>
           <TouchableOpacity onPress={clearDateFilter} style={styles.clearFilterButton}>
             <Ionicons name="close-circle" size={18} color="#e91e63" />
@@ -413,23 +539,23 @@ export default function EventsTab() {
               key={category.id}
               style={[
                 styles.categoryCircleButton,
-                activeCategory === category.id && { borderColor: category.color, borderWidth: 2 }
+                activeCategory === category.id && { borderColor: category.color, borderWidth: 2 },
               ]}
               onPress={() => setActiveCategory(category.id)}
             >
-              <View 
+              <View
                 style={[
-                  styles.iconContainer, 
+                  styles.iconContainer,
                   { backgroundColor: category.color },
-                  activeCategory === category.id && styles.activeIconContainer
+                  activeCategory === category.id && styles.activeIconContainer,
                 ]}
               >
                 <Ionicons name={category.icon as any} size={28} color="white" />
               </View>
-              <Text 
+              <Text
                 style={[
                   styles.categoryCircleText,
-                  activeCategory === category.id && { color: category.color, fontWeight: '700' }
+                  activeCategory === category.id && { color: category.color, fontWeight: '700' },
                 ]}
               >
                 {category.name}
@@ -441,13 +567,30 @@ export default function EventsTab() {
     </View>
   );
 
+  // find.tsx deki gibi Join/Leave özellikleri ekleyelim
+  const isEventJoined = (eventId: string): boolean => {
+    // Bu örnek için rastgele bir değer döndürüyoruz
+    // Gerçek uygulamada bir state veya API'dan kontrol edilir
+    return eventId === '2' || eventId === '5'; // Örnek olarak bu iki etkinliğe katılmış olalım
+  };
+
+  const joinEvent = (eventId: string) => {
+    console.log(`Etkinliğe katılındı: ${eventId}`);
+    // Burada gerçek uygulamada API'ya istek gönderilir
+  };
+
+  const leaveEvent = (eventId: string) => {
+    console.log(`Etkinlikten ayrılındı: ${eventId}`);
+    // Burada gerçek uygulamada API'ya istek gönderilir
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <RNStatusBar barStyle="dark-content" backgroundColor="#f8f8f8" />
-      
+
       <FlatList
         data={filteredResults}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={renderEventCard}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
@@ -459,7 +602,7 @@ export default function EventsTab() {
           </View>
         }
       />
-      
+
       {/* Tarih Filtreleme Modal */}
       <Modal
         animationType="slide"
@@ -467,9 +610,9 @@ export default function EventsTab() {
         visible={showDateFilterModal}
         onRequestClose={() => setShowDateFilterModal(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={() => setShowDateFilterModal(false)}
         >
           <View style={styles.modalContainer}>
@@ -481,31 +624,37 @@ export default function EventsTab() {
                     <Ionicons name="close" size={24} color="#666" />
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.yearSelector}>
                   <Text style={styles.selectorLabel}>Yıl:</Text>
                   <View style={styles.yearPickerContainer}>
-                    <TouchableOpacity 
-                      onPress={() => handleYearChange(2025)} 
-                      style={[
-                        styles.yearOption, 
-                        selectedYear === 2025 && styles.selectedOption
-                      ]}
+                    <TouchableOpacity
+                      onPress={() => handleYearChange(2025)}
+                      style={[styles.yearOption, selectedYear === 2025 && styles.selectedOption]}
                     >
-                      <Text style={selectedYear === 2025 ? styles.selectedOptionText : styles.optionText}>2025</Text>
+                      <Text
+                        style={
+                          selectedYear === 2025 ? styles.selectedOptionText : styles.optionText
+                        }
+                      >
+                        2025
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      onPress={() => handleYearChange(2026)} 
-                      style={[
-                        styles.yearOption, 
-                        selectedYear === 2026 && styles.selectedOption
-                      ]}
+                    <TouchableOpacity
+                      onPress={() => handleYearChange(2026)}
+                      style={[styles.yearOption, selectedYear === 2026 && styles.selectedOption]}
                     >
-                      <Text style={selectedYear === 2026 ? styles.selectedOptionText : styles.optionText}>2026</Text>
+                      <Text
+                        style={
+                          selectedYear === 2026 ? styles.selectedOptionText : styles.optionText
+                        }
+                      >
+                        2026
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
-                
+
                 <View style={styles.monthSelector}>
                   <Text style={styles.selectorLabel}>Ay: (Birden fazla seçebilirsiniz)</Text>
                   <View style={styles.monthGrid}>
@@ -514,37 +663,44 @@ export default function EventsTab() {
                         key={index}
                         style={[
                           styles.monthOption,
-                          isMonthSelected(index) && styles.selectedOption
+                          isMonthSelected(index) && styles.selectedOption,
                         ]}
                         onPress={() => toggleMonthSelection(index)}
                       >
-                        <Text style={isMonthSelected(index) ? styles.selectedOptionText : styles.optionText}>
+                        <Text
+                          style={
+                            isMonthSelected(index) ? styles.selectedOptionText : styles.optionText
+                          }
+                        >
                           {month}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </View>
-                
+
                 <View style={styles.selectedMonthsContainer}>
                   {getSelectedMonths().length > 0 ? (
                     <Text style={styles.selectedMonthsText}>
-                      Seçilen aylar ({selectedYear}): {getSelectedMonths().map(monthIndex => monthNames[monthIndex]).join(', ')}
+                      Seçilen aylar ({selectedYear}):{' '}
+                      {getSelectedMonths()
+                        .map(monthIndex => monthNames[monthIndex])
+                        .join(', ')}
                     </Text>
                   ) : (
                     <Text style={styles.noSelectionText}>{selectedYear} için ay seçilmedi</Text>
                   )}
                 </View>
-                
+
                 <View style={styles.modalActions}>
-                  <TouchableOpacity 
-                    style={[styles.modalActionButton, { backgroundColor: '#f5f5f5' }]} 
+                  <TouchableOpacity
+                    style={[styles.modalActionButton, { backgroundColor: '#f5f5f5' }]}
                     onPress={clearDateFilter}
                   >
                     <Text style={{ color: '#666', fontWeight: '600' }}>Temizle</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.modalActionButton, { backgroundColor: '#2196f3' }]} 
+                  <TouchableOpacity
+                    style={[styles.modalActionButton, { backgroundColor: '#2196f3' }]}
                     onPress={() => setShowDateFilterModal(false)}
                   >
                     <Text style={{ color: 'white', fontWeight: '600' }}>Uygula</Text>
@@ -555,6 +711,18 @@ export default function EventsTab() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Etkinlik Detay Popup */}
+      <EventDetailsPopup
+        event={selectedEvent as any}
+        visible={showEventPopup}
+        onClose={handleCloseEventPopup}
+        isDarkMode={isDarkMode}
+        showMap={true}
+        isJoined={selectedEvent ? isEventJoined(selectedEvent.id) : false}
+        onJoin={joinEvent}
+        onLeave={leaveEvent}
+      />
     </SafeAreaView>
   );
 }
@@ -970,4 +1138,4 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
   },
-}); 
+});

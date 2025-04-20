@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Button,
-  ButtonText,
   Text,
   VStack,
   HStack,
@@ -13,9 +11,12 @@ import {
   Center,
 } from '@gluestack-ui/themed';
 import { router } from 'expo-router';
-import { Platform, ImageBackground, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import { Platform, ImageBackground, StyleSheet, TextInput, View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { ArrowLeftIcon } from '@gluestack-ui/themed';
 import { FontAwesome } from '@expo/vector-icons';
+import { useAuthStore } from '../../../store';
+import { API_URL } from '../../../api/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Kayıt olma ekranı
@@ -33,13 +34,19 @@ export default function SignUpScreen() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [termsError, setTermsError] = useState('');
   
   // Focus durumlarını takip etmek için state'ler
   const [nameFocused, setNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+  
+  // Loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Auth store'dan kayıt işlemleri ve durum bilgilerini al (artık direkt fetch kullanacağız)
+  const { clearError } = useAuthStore();
 
   const validateName = (nameValue: string): boolean => {
     if (!nameValue.trim()) {
@@ -86,25 +93,23 @@ export default function SignUpScreen() {
     return true;
   };
 
-  const handleSignUp = () => {
-    // Tüm alanları doğrula
-    const isNameValid = validateName(name);
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
-    
-    if (isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
-      // TODO: Implement sign-up logic
-      console.log('Kayıt başarılı', { name, email, password });
-      // Kayıt başarılı olduğunda ana sayfaya yönlendir
-      router.replace('/home' as any);
-    }
+  const handleSignUp = async () => {
+    // Şu an için, kayıt işlemi yerine giriş ekranına yönlendir
+    Alert.alert(
+      "Kayıt İşlemi",
+      "Şu an için kayıt işlemi devre dışı bırakılmıştır. Giriş ekranına yönlendiriliyorsunuz.",
+      [
+        { 
+          text: "Tamam", 
+          onPress: () => router.push('/auth/signin' as any)
+        }
+      ]
+    );
   };
 
-  // Demo kayıt için hızlı işlem
-  const handleDemoSignUp = () => {
-    console.log('Demo kayıt işlemi gerçekleştirildi');
-    router.replace('/home' as any);
+  // Demo giriş için doğrudan giriş sayfasına yönlendir
+  const handleDemoSignUp = async () => {
+    router.push('/auth/signin' as any);
   };
 
   const goBack = () => {
@@ -159,7 +164,7 @@ export default function SignUpScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Ad Soyad</Text>
                   <View style={[
-                    styles.textInputContainer,
+                    styles.textInputContainer, 
                     nameError ? styles.inputError : null,
                     nameFocused ? styles.inputFocused : null
                   ]}>
@@ -191,7 +196,7 @@ export default function SignUpScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>E-posta</Text>
                   <View style={[
-                    styles.textInputContainer,
+                    styles.textInputContainer, 
                     emailError ? styles.inputError : null,
                     emailFocused ? styles.inputFocused : null
                   ]}>
@@ -224,7 +229,7 @@ export default function SignUpScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Şifre</Text>
                   <View style={[
-                    styles.textInputContainer,
+                    styles.textInputContainer, 
                     passwordError ? styles.inputError : null,
                     passwordFocused ? styles.inputFocused : null
                   ]}>
@@ -270,7 +275,7 @@ export default function SignUpScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Şifre Tekrar</Text>
                   <View style={[
-                    styles.textInputContainer,
+                    styles.textInputContainer, 
                     confirmPasswordError ? styles.inputError : null,
                     confirmPasswordFocused ? styles.inputFocused : null
                   ]}>
@@ -307,21 +312,38 @@ export default function SignUpScreen() {
                     </Text>
                   ) : null}
                 </View>
-                
+
+                {/* Server Error */}
+                {error ? (
+                  <Text style={styles.serverErrorText}>
+                    {error}
+                  </Text>
+                ) : null}
+
+                <Text style={styles.noteText}>
+                  Not: Şu an kayıt işlemi geçici olarak devre dışıdır. Test etmek için giriş ekranını kullanabilirsiniz.
+                </Text>
+
                 {/* Sign Up Button */}
                 <TouchableOpacity
                   style={styles.signUpButton}
                   onPress={handleSignUp}
+                  disabled={isLoading}
                 >
-                  <Text style={styles.signUpButtonText}>Kayıt Ol</Text>
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.signUpButtonText}>Giriş Ekranına Git</Text>
+                  )}
                 </TouchableOpacity>
 
                 {/* Demo Kayıt Butonu */}
                 <TouchableOpacity
                   style={styles.demoButton}
                   onPress={handleDemoSignUp}
+                  disabled={isLoading}
                 >
-                  <Text style={styles.demoButtonText}>Demo Kayıt</Text>
+                  <Text style={styles.demoButtonText}>Demo Giriş</Text>
                 </TouchableOpacity>
                 
                 {/* Sign In Link - taşındı */}
@@ -354,7 +376,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 40,
+    top: 20,
     left: 20,
     zIndex: 1,
   },
@@ -420,6 +442,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
     fontWeight: '500',
+  },
+  serverErrorText: {
+    color: '#e74c3c',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 5,
+    fontWeight: '500',
+  },
+  noteText: {
+    color: '#3066BE',
+    fontSize: 14,
+    textAlign: 'center',
+    marginVertical: 10,
+    fontStyle: 'italic',
   },
   signUpButton: {
     width: '100%',

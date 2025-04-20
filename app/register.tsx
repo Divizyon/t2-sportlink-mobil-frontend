@@ -1,16 +1,36 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore, useThemeStore } from '../store';
 import { router } from 'expo-router';
 import RegisterForm from '../components/RegisterForm';
 import FormButton from '../components/form/FormButton';
+import { RegisterFormData } from '../utils/validations/registerSchema';
 
+/**
+ * Register rotası - signup sayfasına yönlendirir
+ */
 export default function Register() {
-  const { register, isLoading, error } = useAuthStore();
+  const { register, isLoading, error, isAuthenticated } = useAuthStore();
   const { isDarkMode } = useThemeStore();
 
-  // Kayıt başarılı olduğunda, ana sayfaya yönlendirilecek
-  // Bu isAuthenticated değiştiğinde App.tsx içinde yönlendirme ile hallediliyor
+  // Kullanıcı zaten giriş yapmışsa ana sayfaya yönlendir
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('map' as any);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    router.replace('auth/signup' as any);
+  }, []);
+
+  const handleRegister = async (data: RegisterFormData) => {
+    try {
+      await register(data);
+    } catch (err) {
+      console.error('Kayıt hatası:', err);
+    }
+  };
 
   const handleBackToLogin = () => {
     router.back();
@@ -22,11 +42,11 @@ export default function Register() {
       contentContainerStyle={styles.contentContainer}
     >
       <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#333' }]}>
-        DeepVision Uygulaması
+        SportLink Uygulaması
       </Text>
       
       <RegisterForm 
-        onRegister={register}
+        onRegister={handleRegister}
         isLoading={isLoading}
         error={error || undefined}
       />
