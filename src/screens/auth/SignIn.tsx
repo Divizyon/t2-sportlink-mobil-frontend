@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Center,
 } from '@gluestack-ui/themed';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   Platform,
   ImageBackground,
@@ -64,6 +64,18 @@ export default function SignInScreen() {
 
   // Auth store'dan giriş işlemleri ve durum bilgilerini al (artık direkt fetch kullanacağız)
   const { clearError } = useAuthStore();
+
+  // URL parametrelerini al
+  const params = useLocalSearchParams();
+
+  // Eğer URL parametrelerinde email varsa, başlangıç değeri olarak kullan
+  useEffect(() => {
+    if (params.email && typeof params.email === 'string') {
+      setEmail(params.email);
+      // Email parametresi geldiğinde validasyon da yapalım
+      validateEmail(params.email);
+    }
+  }, [params]);
 
   const validateEmail = (emailValue: string): boolean => {
     if (!emailValue) {

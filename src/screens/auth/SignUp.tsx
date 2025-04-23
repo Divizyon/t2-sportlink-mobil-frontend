@@ -204,16 +204,19 @@ export default function SignUpScreen() {
             });
           }
 
-          // Başarılı mesajı göster ve onay sonrası yönlendir
+          // Başarılı mesajı göster ve onay sonrası giriş sayfasına yönlendir
           Alert.alert(
             'Kayıt Başarılı',
-            `Hoş geldiniz, ${first_name}! Hesabınız başarıyla oluşturuldu.`,
+            `Hoş geldiniz, ${first_name}! Hesabınız başarıyla oluşturuldu. Lütfen giriş yapın.`,
             [
               {
-                text: 'Tamam',
+                text: 'Giriş Yap',
                 onPress: () => {
-                  // Ana sayfaya yönlendir
-                  router.replace('/(tabs)/home' as any);
+                  // Giriş sayfasına yönlendir ve email bilgisini aktar
+                  router.push({
+                    pathname: '/auth/signin' as any,
+                    params: { email },
+                  });
                 },
               },
             ],
