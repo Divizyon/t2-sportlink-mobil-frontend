@@ -92,7 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="find"
         options={{
-          title: 'Bul',
+          title: '',
           tabBarIcon: ({ color, size }) => (
             <View
               style={{

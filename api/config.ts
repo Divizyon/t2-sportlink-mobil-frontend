@@ -3,9 +3,13 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// API URL'si - doğrudan localhost:3000 kullan
+// API URL'si - Gerçek cihaz IP adresi ile güncellendi
 export const API_URL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:3000/api/v1' : 'http://localhost:3000/api/v1';
+  // Hata mesajında görünen IP adresine göre güncellenmiştir
+  Platform.OS === 'android' ? 'http://10.205.145.202:3000/api' : 'http://localhost:3000/api';
+// Alternatif değerler:
+// Emülatör: 'http://10.0.2.2:3000/api/'
+// Gerçek cihaz: 'http://BİLGİSAYARIN_IP_ADRESİ:3000/api/'
 
 console.log('API URL:', API_URL); // Debugging için
 

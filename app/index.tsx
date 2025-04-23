@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAuthStore } from '../store';
 import { Redirect } from 'expo-router';
 import WelcomeScreen from '@/src/screens/auth/Welcome';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +27,7 @@ import useThemeStore from '../../../store/slices/themeSlice';
 import { COLORS } from '../../constants/colors';
 import { Header, WelcomeMessage } from '../../components';
 import EventDetailsPopup from '../../../components/modals/EventDetailsPopup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Tema renk konfigürasyonları
 const getThemeColors = (isDark: boolean) => {
@@ -192,6 +193,23 @@ export default function HomeScreen() {
   // Popup için state'ler
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [showEventPopup, setShowEventPopup] = useState(false);
+  const [userName, setUserName] = useState('Kullanıcı');
+
+  // Kullanıcı adını AsyncStorage'dan al
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const storedUserName = await AsyncStorage.getItem('userName');
+        if (storedUserName) {
+          setUserName(storedUserName);
+        }
+      } catch (error) {
+        console.error('Kullanıcı adı alınırken hata:', error);
+      }
+    };
+
+    fetchUserName();
+  }, []);
 
   // Etkinlik popup'ını aç
   const handleShowEventDetails = (event: any) => {
@@ -274,7 +292,7 @@ export default function HomeScreen() {
 
       <ScrollView style={{ flex: 1, padding: 16 }} showsVerticalScrollIndicator={false}>
         {/* Karşılama Mesajı */}
-        <WelcomeMessage username="Ahmet" />
+        <WelcomeMessage username={userName} />
 
         {/* Aktivite Özeti Kartı */}
         <Box

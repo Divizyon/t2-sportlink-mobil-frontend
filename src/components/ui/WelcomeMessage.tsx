@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, HStack, Text, VStack } from '@gluestack-ui/themed';
+import { Box, Text, VStack } from '@gluestack-ui/themed';
 import { COLORS } from '../../constants/colors';
 import useThemeStore from '../../../store/slices/themeSlice';
 
@@ -8,7 +8,7 @@ interface WelcomeMessageProps {
    * Kullanıcı adı
    */
   username?: string;
-  
+
   /**
    * Karşılama için alternatif mesaj
    */
@@ -23,22 +23,19 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
   customMessage,
 }) => {
   const { isDarkMode } = useThemeStore();
-  
+
   // Günün zamanına göre selamlama
   const getGreetingByTime = (): string => {
     const hour = new Date().getHours();
-    
+
     if (hour >= 5 && hour < 12) return 'Günaydın';
     if (hour >= 12 && hour < 18) return 'İyi günler';
     return 'İyi akşamlar';
   };
-  
+
   // Günün adı
   const getDayName = (): string => {
-    const days = [
-      'Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 
-      'Perşembe', 'Cuma', 'Cumartesi'
-    ];
+    const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
     return days[new Date().getDay()];
   };
 
@@ -46,6 +43,9 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
     <Box
       paddingVertical="$4"
       paddingHorizontal="$4"
+      borderRadius="$lg"
+      backgroundColor={isDarkMode ? COLORS.neutral.dark + '20' : COLORS.neutral.white + '80'}
+      marginBottom="$2"
     >
       <VStack>
         <Text
@@ -58,6 +58,7 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
         <Text
           fontSize="$sm"
           color={isDarkMode ? COLORS.neutral.dark : COLORS.neutral.dark}
+          marginTop="$1"
         >
           Bugün {getDayName()}, harika bir gün seni bekliyor.
         </Text>
@@ -66,4 +67,4 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
   );
 };
 
-export default WelcomeMessage; 
+export default WelcomeMessage;

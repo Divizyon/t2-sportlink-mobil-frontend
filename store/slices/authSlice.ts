@@ -12,7 +12,7 @@ import { router } from 'expo-router';
  */
 const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    set => ({
       // State
       user: null,
       isAuthenticated: false,
@@ -22,22 +22,32 @@ const useAuthStore = create<AuthStore>()(
       // Actions
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const response = await authService.login(email, password);
-          
+
           if (response.success && response.data) {
-            // Token'ı AsyncStorage'a kaydet
-            await AsyncStorage.setItem('authToken', response.data.token);
-            
+            // Önce state'i güncelle ve sayfa yönlendirmesini başlat
             set({
               user: response.data.user,
               isAuthenticated: true,
               isLoading: false,
             });
-            
-            // Giriş başarılı olduğunda direkt ana sayfaya yönlendir
-            router.replace('/(tabs)/home' as any);
+
+            // Sayfa yönlendirmesini başlat (replace yerine navigate kullanarak daha hızlı)
+            router.navigate('/(tabs)/home' as any);
+
+            // Token'ı AsyncStorage'a kaydet (bunu bloke etmeden arkaplanda yap)
+            AsyncStorage.setItem('authToken', response.data.token).catch(err => {
+              console.error('Token kaydedilirken hata oluştu:', err);
+            });
+
+            // Kullanıcı adını da kaydet
+            if (response.data.user && response.data.user.name) {
+              AsyncStorage.setItem('userName', response.data.user.name).catch(err => {
+                console.error('Kullanıcı adı kaydedilirken hata oluştu:', err);
+              });
+            }
           } else {
             set({
               error: response.message || 'Giriş yapılamadı',
@@ -49,7 +59,7 @@ const useAuthStore = create<AuthStore>()(
           if (error instanceof Error) {
             errorMessage = error.message;
           }
-          
+
           set({
             error: errorMessage,
             isLoading: false,
@@ -59,22 +69,32 @@ const useAuthStore = create<AuthStore>()(
 
       register: async (data: RegisterFormData) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const response = await authService.register(data);
-          
+
           if (response.success && response.data) {
-            // Token'ı AsyncStorage'a kaydet
-            await AsyncStorage.setItem('authToken', response.data.token);
-            
+            // Önce state'i güncelle ve sayfa yönlendirmesini başlat
             set({
               user: response.data.user,
               isAuthenticated: true,
               isLoading: false,
             });
-            
-            // Kayıt başarılı olduğunda direkt ana sayfaya yönlendir 
-            router.replace('/(tabs)/home' as any);
+
+            // Sayfa yönlendirmesini başlat (replace yerine navigate kullanarak daha hızlı)
+            router.navigate('/(tabs)/home' as any);
+
+            // Token'ı AsyncStorage'a kaydet (bunu bloke etmeden arkaplanda yap)
+            AsyncStorage.setItem('authToken', response.data.token).catch(err => {
+              console.error('Token kaydedilirken hata oluştu:', err);
+            });
+
+            // Kullanıcı adını da kaydet
+            if (response.data.user && response.data.user.name) {
+              AsyncStorage.setItem('userName', response.data.user.name).catch(err => {
+                console.error('Kullanıcı adı kaydedilirken hata oluştu:', err);
+              });
+            }
           } else {
             set({
               error: response.message || 'Kayıt yapılamadı',
@@ -86,7 +106,7 @@ const useAuthStore = create<AuthStore>()(
           if (error instanceof Error) {
             errorMessage = error.message;
           }
-          
+
           set({
             error: errorMessage,
             isLoading: false,
@@ -95,17 +115,24 @@ const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        // Token'ı AsyncStorage'dan sil
-        await AsyncStorage.removeItem('authToken');
-        
+        // State'i hemen güncelle ve yönlendirmeyi başlat
         set({
           user: null,
           isAuthenticated: false,
           error: null,
         });
-        
+
         // Çıkış yapınca başlangıç ekranına yönlendir
-        router.replace('/' as any);
+        router.navigate('/' as any);
+
+        // Token ve kullanıcı adını AsyncStorage'dan sil (bunu bloke etmeden arkaplanda yap)
+        AsyncStorage.removeItem('authToken').catch(err => {
+          console.error('Token silinirken hata oluştu:', err);
+        });
+
+        AsyncStorage.removeItem('userName').catch(err => {
+          console.error('Kullanıcı adı silinirken hata oluştu:', err);
+        });
       },
 
       clearError: () => {
@@ -115,12 +142,12 @@ const useAuthStore = create<AuthStore>()(
     {
       name: 'auth-storage', // AsyncStorage'da saklanacak anahtar
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );
 
-export default useAuthStore; 
+export default useAuthStore;

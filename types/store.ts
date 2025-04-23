@@ -8,6 +8,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  name: string; // Kullanıcının adı
   // Diğer kullanıcı özellikleri
 }
 
@@ -40,4 +41,4 @@ export interface ThemeActions {
   setDarkMode: (isDark: boolean) => void;
 }
 
-export type ThemeStore = ThemeState & ThemeActions; 
+export type ThemeStore = ThemeState & ThemeActions;

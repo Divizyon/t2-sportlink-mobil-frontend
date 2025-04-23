@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { registerSchema, RegisterFormData } from '../utils/validations/registerSchema';
 import FormInput from './form/FormInput';
@@ -22,19 +22,22 @@ const RegisterForm = ({ onRegister, isLoading, error }: RegisterFormProps) => {
   const { isDarkMode } = useThemeStore();
 
   // React Hook Form yapılandırması
-  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
-    resolver: yupResolver(registerSchema),
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: yupResolver<RegisterFormData>(registerSchema),
     defaultValues: {
       fullName: '',
       email: '',
       password: '',
-      confirmPassword: '',
-      acceptTerms: false
-    }
+      acceptTerms: false,
+    },
   });
 
   // Kayıt işlemi
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit: SubmitHandler<RegisterFormData> = async data => {
     try {
       await onRegister(data);
     } catch (err) {
@@ -43,17 +46,9 @@ const RegisterForm = ({ onRegister, isLoading, error }: RegisterFormProps) => {
   };
 
   return (
-    <View style={[
-      styles.container, 
-      { backgroundColor: isDarkMode ? '#1e1e1e' : '#fff' }
-    ]}>
-      <Text style={[
-        styles.title, 
-        { color: isDarkMode ? '#fff' : '#333' }
-      ]}>
-        Hesap Oluştur
-      </Text>
-      
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#1e1e1e' : '#fff' }]}>
+      <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#333' }]}>Hesap Oluştur</Text>
+
       <FormInput
         control={control}
         name="fullName"
@@ -62,7 +57,7 @@ const RegisterForm = ({ onRegister, isLoading, error }: RegisterFormProps) => {
         autoCapitalize="words"
         error={errors.fullName}
       />
-      
+
       <FormInput
         control={control}
         name="email"
@@ -72,7 +67,7 @@ const RegisterForm = ({ onRegister, isLoading, error }: RegisterFormProps) => {
         autoCapitalize="none"
         error={errors.email}
       />
-      
+
       <FormInput
         control={control}
         name="password"
@@ -81,27 +76,16 @@ const RegisterForm = ({ onRegister, isLoading, error }: RegisterFormProps) => {
         secureTextEntry
         error={errors.password}
       />
-      
-      <FormInput
-        control={control}
-        name="confirmPassword"
-        label="Şifre Tekrarı"
-        placeholder="Şifrenizi tekrar girin"
-        secureTextEntry
-        error={errors.confirmPassword}
-      />
-      
+
       <FormCheckbox
         control={control}
         name="acceptTerms"
         label="Kullanım koşullarını kabul ediyorum"
         error={errors.acceptTerms}
       />
-      
-      {error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : null}
-      
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
       <FormButton
         title="Kayıt Ol"
         onPress={handleSubmit(onSubmit)}
@@ -113,14 +97,22 @@ const RegisterForm = ({ onRegister, isLoading, error }: RegisterFormProps) => {
 };
 
 const styles = StyleSheet.create({
+  button: {
+    marginTop: 8,
+  },
   container: {
-    padding: 16,
     borderRadius: 8,
+    elevation: 2,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+  },
+  errorText: {
+    color: '#ff0000',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   title: {
     fontSize: 20,
@@ -128,14 +120,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  errorText: {
-    color: '#ff0000',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  button: {
-    marginTop: 8,
-  },
 });
 
-export default RegisterForm; 
+export default RegisterForm;
