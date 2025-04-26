@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -9,7 +9,6 @@ import {
   StatusBar,
   Animated,
   Dimensions,
-  Image,
   RefreshControl
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
@@ -19,7 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Event } from '../../types/eventTypes/event.types';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export const EventsScreen: React.FC = () => {
   const { theme } = useThemeStore();
@@ -39,12 +38,24 @@ export const EventsScreen: React.FC = () => {
   } = useEventStore();
   
   // Filtre durumu
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'upcoming'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed' | 'upcoming'>('all');
   
   // Animasyon değerleri
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
   const scaleFabAnim = useRef(new Animated.Value(0)).current;
+  
+  // Sıralanmış etkinlikler - En yeni oluşturulanlar önce gösterilir
+  const sortedEvents = useMemo(() => {
+    if (!events || events.length === 0) return [];
+    
+    // Tarihe göre sırala (en yeni oluşturulanlar önce)
+    return [...events].sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [events]);
   
   // Component mount edildiğinde etkinlikleri getir
   useEffect(() => {
@@ -91,15 +102,17 @@ export const EventsScreen: React.FC = () => {
   
   // Etkinlikleri yükle
   const loadEvents = async () => {
-    let params: any = { page: 1 };
+    let params: any = { page: 1, limit: 20 };
     
     // Filtreye göre parametreleri ayarla
     if (activeFilter === 'active') {
       params.status = 'active';
+    } else if (activeFilter === 'completed') {
+      params.status = 'completed';
     } else if (activeFilter === 'upcoming') {
       // Yaklaşan etkinlikler için bugünden sonraki tarihi filtrele
-      const today = new Date().toISOString().split('T')[0];
-      params.startDate = today;
+      const today = new Date();
+      params.startDate = today.toISOString().split('T')[0];
     }
     
     await fetchEvents(params);
@@ -109,8 +122,6 @@ export const EventsScreen: React.FC = () => {
   const handleRefresh = () => {
     loadEvents();
   };
-  
-  
   
   // Etkinliğe tıklama - detay sayfasına git
   const handleEventPress = (event: Event) => {
@@ -129,7 +140,7 @@ export const EventsScreen: React.FC = () => {
     const filters = [
       { key: 'all', label: 'Tümü', icon: 'grid-outline' },
       { key: 'active', label: 'Aktif', icon: 'flame-outline' },
-      { key: 'upcoming', label: 'Yaklaşan', icon: 'calendar-outline' }
+      { key: 'upcoming', label: 'Yaklaşan', icon: 'calendar-outline' },
     ];
     
     return (
@@ -147,7 +158,7 @@ export const EventsScreen: React.FC = () => {
                 },
                 activeFilter === filter.key && styles.activeFilterButton
               ]}
-              onPress={() => setActiveFilter(filter.key as 'all' | 'active' | 'upcoming')}
+              onPress={() => setActiveFilter(filter.key as any)}
             >
               <Ionicons 
                 name={filter.icon as any}
@@ -165,6 +176,44 @@ export const EventsScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           ))}
+        </View>
+      </View>
+    );
+  };
+  
+  // Etkinlik istatistiklerini render et
+  const renderEventStats = () => {
+    return (
+      <View style={styles.statsContainer}>
+        <View style={[styles.statItem, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
+          <Text style={[styles.statCount, { color: theme.colors.accent }]}>
+            {totalEvents || 0}
+          </Text>
+          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
+            Toplam Etkinlik
+          </Text>
+        </View>
+        
+        <View style={[styles.statItem, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
+          <Text style={[styles.statCount, { color: theme.colors.accent }]}>
+            {sortedEvents.filter(e => e.status === 'active').length}
+          </Text>
+          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
+            Aktif
+          </Text>
+        </View>
+        
+        <View style={[styles.statItem, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
+          <Text style={[styles.statCount, { color: theme.colors.accent }]}>
+            {sortedEvents.filter(e => {
+              const eventDate = new Date(e.event_date);
+              const today = new Date();
+              return eventDate > today;
+            }).length}
+          </Text>
+          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
+            Yaklaşan
+          </Text>
         </View>
       </View>
     );
@@ -194,6 +243,17 @@ export const EventsScreen: React.FC = () => {
         </View>
       </Animated.View>
       
+      {/* Stats Summary */}
+      <Animated.View 
+        style={{ 
+          opacity: fadeAnim, 
+          transform: [{ translateY: slideAnim }],
+          marginBottom: 12
+        }}
+      >
+        {renderEventStats()}
+      </Animated.View>
+      
       {/* Filter tabs */}
       <Animated.View 
         style={{ 
@@ -206,7 +266,7 @@ export const EventsScreen: React.FC = () => {
       
       {/* Event List */}
       <EventList
-        events={events}
+        events={sortedEvents}
         isLoading={isLoading}
         onRefresh={handleRefresh}
         onEventPress={handleEventPress}
@@ -278,6 +338,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
     opacity: 0.7,
   },
+  statsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  statItem: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  statCount: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
   filterScrollContainer: {
     paddingHorizontal: 24,
     marginBottom: 16,
@@ -285,6 +366,7 @@ const styles = StyleSheet.create({
   filterWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   filterButton: {
     flexDirection: 'row',
@@ -293,6 +375,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 50,
     marginRight: 12,
+    marginBottom: 8,
   },
   activeFilterButton: {
     shadowColor: '#000',

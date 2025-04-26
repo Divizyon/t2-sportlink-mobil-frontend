@@ -38,12 +38,14 @@ export const CreateEventScreen: React.FC = () => {
     location_latitude: 37.8716,  // Konya koordinatları
     location_longitude: 32.4846,
     max_participants: 10,
-    status: 'active' as EventStatus
+    status: 'active' as EventStatus,
+    is_private: false,
+    invitation_code: ''
   });
 
   // UI için ekstra state'ler
   const [isPrivate, setIsPrivate] = useState(false);
-  const [invitationCode, setInvitationCode] = useState<string | null>(null);
+  const [invitationCode, setInvitationCode] = useState<string>('');
   const [startTimeDisplay, setStartTimeDisplay] = useState('18:00');
   const [endTimeDisplay, setEndTimeDisplay] = useState('20:00');
 
@@ -183,9 +185,29 @@ export const CreateEventScreen: React.FC = () => {
   };
 
   // Form alanlarını güncelleme
-  const handleChange = (name: keyof EventCreateRequest, value: string | number) => {
+  const handleChange = (name: keyof EventCreateRequest, value: string | number | boolean) => {
     setFormData({ ...formData, [name]: value });
     setFormErrors({ ...formErrors, [name]: '' });
+  };
+
+  // Özel etkinlik durumu değişikliğini izle
+  const handlePrivateToggle = () => {
+    const newIsPrivate = !isPrivate;
+    setIsPrivate(newIsPrivate);
+    setFormData({ ...formData, is_private: newIsPrivate });
+    
+    // Eğer özel etkinlik kapatılırsa invitation_code'u temizle
+    if (!newIsPrivate) {
+      setInvitationCode('');
+      setFormData(prev => ({ ...prev, invitation_code: '' }));
+    }
+  };
+
+  // Davet kodu değişikliği
+  const handleInvitationCodeChange = (text: string) => {
+    setInvitationCode(text);
+    setFormData(prev => ({ ...prev, invitation_code: text }));
+    setFormErrors({ ...formErrors, invitation_code: '' });
   };
 
   // Spor kategorisi seçme
@@ -205,6 +227,11 @@ export const CreateEventScreen: React.FC = () => {
     if (!formData.event_date) errors.event_date = 'Tarih seçmelisiniz';
     if (!formData.location_name.trim()) errors.location_name = 'Konum adı girmelisiniz';
     if (formData.max_participants <= 0) errors.max_participants = 'Geçerli bir katılımcı sayısı girmelisiniz';
+
+    // Özel etkinlik için davet kodu kontrolü
+    if (formData.is_private && !formData.invitation_code.trim() ) {
+      errors.invitation_code = 'Özel etkinlik için davet kodu girmelisiniz';
+    }
 
     // Parse time from ISO format for comparison
     const startTime = new Date(formData.start_time);
@@ -484,6 +511,59 @@ export const CreateEventScreen: React.FC = () => {
     );
   };
 
+  // Özel etkinlik toggle bileşeni
+  const renderPrivateEventToggle = () => {
+    return (
+      <View style={styles.privateEventContainer}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+          Etkinlik Türü
+        </Text>
+        
+        <View style={styles.toggleContainer}>
+          <Text style={[styles.toggleLabel, { color: theme.colors.text }]}>
+            Özel Etkinlik
+          </Text>
+          
+          <TouchableOpacity 
+            style={[
+              styles.toggleButton, 
+              { 
+                backgroundColor: isPrivate ? theme.colors.accent : '#E0E0E0',
+                borderWidth: 1,
+                borderColor: isPrivate ? theme.colors.accent : '#CCCCCC'
+              }
+            ]}
+            onPress={handlePrivateToggle}
+          >
+            <View style={[
+              styles.toggleIndicator, 
+              { 
+                backgroundColor: isPrivate ? 'white' : '#999999',
+                transform: [{ translateX: isPrivate ? 20 : 0 }] 
+              }
+            ]} />
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={[styles.toggleDescription, { color: theme.colors.textSecondary }]}>
+          {isPrivate 
+            ? 'Sadece davet kodunu bilen katılımcılar etkinliğe katılabilir' 
+            : 'Herkes etkinliğe katılabilir'}
+        </Text>
+        
+        {isPrivate && (
+          <InputField
+            label="Davet Kodu"
+            placeholder="Özel etkinlik için davet kodu girin"
+            value={invitationCode}
+            onChangeText={handleInvitationCodeChange}
+            error={formErrors.invitation_code}
+          />
+        )}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
@@ -599,6 +679,9 @@ export const CreateEventScreen: React.FC = () => {
             keyboardType="numeric"
             error={formErrors.max_participants}
           />
+          
+          {/* Özel Etkinlik Toggle */}
+          {renderPrivateEventToggle()}
           
           {/* Oluştur Butonu */}
           <TouchableOpacity
@@ -791,5 +874,43 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
+  },
+  privateEventContainer: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  toggleButton: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    padding: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  toggleIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+  },
+  toggleDescription: {
+    fontSize: 14,
+    marginBottom: 16,
   },
 });

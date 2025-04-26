@@ -39,6 +39,8 @@ export interface Event {
   average_rating?: number;
   is_joined?: boolean;
   is_creator?: boolean;
+  is_private?: boolean; // Özel etkinlik mi?
+  invitation_code?: string; // Davet kodu (özel etkinlikler için)
 }
 
 /**
@@ -56,6 +58,8 @@ export interface EventCreateRequest {
   location_longitude: number;
   max_participants: number;
   status?: EventStatus;
+  is_private?: boolean; // Özel etkinlik mi?
+  invitation_code?: string; // Davet kodu (özel etkinlikler için)
 }
 
 /**

@@ -16,7 +16,7 @@ import { formatDate, formatTimeRange } from '../../utils/dateUtils';
 const { width } = Dimensions.get('window');
 
 interface EventCardProps {
-  event: Event;
+  event: any;
   onPress?: () => void;
   style?: ViewStyle;
   showJoinStatus?: boolean;
@@ -30,29 +30,131 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const { theme } = useThemeStore();
   
-  // Güvenlik kontrolleri
+  // Güvenlik kontrolleri ve API yanıtına uygun değerleri ayarla
   const safeEvent = {
     ...event,
-    current_participants: event.current_participants || 0,
+    participants: event.participants || [],
+    participant_count: event._count?.participants || event.participants?.length || 0,
     max_participants: event.max_participants || 0,
-    status: event.status || 'active'
+    status: event.status || 'active',
+    creator: event.creator || {},
+    sport: event.sport || { name: '', icon: '' },
+    is_private: event.is_private || false
   };
   
-  const isEventFull = safeEvent.current_participants >= safeEvent.max_participants;
+  const isEventFull = safeEvent.participant_count >= safeEvent.max_participants;
   
+  // API yapısına göre kullanıcının katılma durumunu belirle
+  // API yanıtında kullanıcının katılma durumunu kontrol et
+  const isUserParticipant = false; // API'den gelecek
+  const isUserCreator = event.creator_id === "currentUserId"; // API'den gelecek
+
   // Spor etkinliği için uygun ikonu belirle
-  const getSportIcon = (sportType: string = '') => {
-    const type = (sportType || '').toLowerCase();
-    if (type.includes('futbol')) return 'football-outline';
-    if (type.includes('basketbol')) return 'basketball-outline'; 
-    if (type.includes('voleybol')) return 'baseball-outline';
-    if (type.includes('tenis')) return 'tennisball-outline';
-    if (type.includes('yüzme')) return 'water-outline';
-    if (type.includes('koşu') || type.includes('kosu')) return 'walk-outline';
-    if (type.includes('bisiklet')) return 'bicycle-outline';
-    if (type.includes('e-spor') || type.includes('espor')) return 'game-controller-outline';
-    if (type.includes('masa tenisi')) return 'tennisball-outline';
+  const getSportIcon = (sport: any) => {
+    if (!sport) return 'fitness-outline';
+    
+    // Spor ismini al (api yanıtına göre)
+    const sportName = sport.name?.toLowerCase() || '';
+    const sportIcon = sport.icon || '';
+    
+    // API'den gelen icon değerini kontrol et
+    if (sportIcon && sportIcon !== 'default-icon') {
+      if (sportIcon.includes('football')) return 'football-outline';
+      if (sportIcon.includes('basketball')) return 'basketball-outline';
+      return 'fitness-outline';
+    }
+    
+    // Sport adına göre standart ikon belirle
+    if (sportName.includes('futbol')) return 'football-outline';
+    if (sportName.includes('basketbol')) return 'basketball-outline'; 
+    if (sportName.includes('voleybol')) return 'baseball-outline';
+    if (sportName.includes('tenis')) return 'tennisball-outline';
+    if (sportName.includes('yüzme')) return 'water-outline';
+    if (sportName.includes('koşu') || sportName.includes('kosu')) return 'walk-outline';
+    if (sportName.includes('bisiklet')) return 'bicycle-outline';
+    if (sportName.includes('e-spor') || sportName.includes('espor')) return 'game-controller-outline';
+    if (sportName.includes('masa tenisi')) return 'tennisball-outline';
     return 'fitness-outline'; // Varsayılan
+  };
+  
+  // Katılımcıların avatarlarını göster
+  const renderParticipantAvatars = () => {
+    const maxVisibleAvatars = 3;
+    const participants = safeEvent.participants || [];
+    const totalParticipants = safeEvent.participant_count;
+    
+    // Gösterilecek katılımcıları belirle
+    const visibleParticipants = participants.slice(0, maxVisibleAvatars);
+    
+    return (
+      <View style={styles.participantsIconContainer}>
+        {/* Katılımcılar varsa en fazla 3 avatar göster */}
+        {visibleParticipants.length > 0 && visibleParticipants.map((participant :any, index:any) => (
+          <View 
+            key={participant.user_id || index}
+            style={[
+              styles.participantAvatar,
+              { 
+                backgroundColor: theme.colors.accent,
+                left: index * -8,
+                zIndex: maxVisibleAvatars - index,
+              }
+            ]}
+          >
+            {participant.user?.profile_picture ? (
+              <Image source={{ uri: participant.user.profile_picture }} style={styles.avatarImage} />
+            ) : (
+              <Ionicons name="person" size={10} color="white" />
+            )}
+          </View>
+        ))}
+        
+        {/* Eğer katılımcı yoksa veya hiç gösterilen katılımcı yoksa */}
+        {visibleParticipants.length === 0 && (
+          <View 
+            style={[
+              styles.participantAvatar,
+              { 
+                backgroundColor: theme.colors.accent,
+                zIndex: 3,
+              }
+            ]}
+          >
+            <Ionicons name="person" size={10} color="white" />
+          </View>
+        )}
+        
+        {/* Ek katılımcıları +X şeklinde göster */}
+        {totalParticipants > maxVisibleAvatars && (
+          <View 
+            style={[
+              styles.participantAvatarMore,
+              { 
+                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)',
+                left: (maxVisibleAvatars - 1) * -8 + 8,
+                zIndex: 0,
+              }
+            ]}
+          >
+            <Text style={[styles.moreText, { color: theme.colors.text }]}>
+              +{totalParticipants - maxVisibleAvatars}
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+  
+  // Oluşturucu bilgisini formatla
+  const getCreatorName = () => {
+    if (!safeEvent.creator) return 'Kullanıcı';
+    
+    const firstName = safeEvent.creator.first_name || '';
+    const lastName = safeEvent.creator.last_name || '';
+    const username = safeEvent.creator.username || '';
+    
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || username || 'Kullanıcı';
   };
   
   return (
@@ -61,7 +163,12 @@ export const EventCard: React.FC<EventCardProps> = ({
         styles.container, 
         { 
           backgroundColor: theme.colors.cardBackground || theme.colors.background,
-          borderColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+          borderColor: safeEvent.is_private 
+            ? theme.colors.accent 
+            : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+          borderWidth: safeEvent.is_private ? 2 : 1,
+          shadowColor: safeEvent.is_private ? theme.colors.accent : '#000',
+          shadowOpacity: safeEvent.is_private ? 0.1 : 0.05,
         },
         style
       ]} 
@@ -71,7 +178,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* Kategori/Spor Türü İkonu */}
       <View style={[styles.sportIconContainer, { backgroundColor: theme.colors.accent + '20' }]}>
         <Ionicons 
-          name={getSportIcon(safeEvent.category)} 
+          name={getSportIcon(safeEvent.sport)} 
           size={20} 
           color={theme.colors.accent} 
         />
@@ -85,15 +192,6 @@ export const EventCard: React.FC<EventCardProps> = ({
         >
           {safeEvent.title}
         </Text>
-        
-        {safeEvent.average_rating !== undefined && (
-          <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={14} color="#FFD700" />
-            <Text style={[styles.ratingText, { color: theme.colors.text }]}>
-              {safeEvent.average_rating.toFixed(1)}
-            </Text>
-          </View>
-        )}
       </View>
       
       {/* Status Badge */}
@@ -110,6 +208,22 @@ export const EventCard: React.FC<EventCardProps> = ({
             {getStatusText(safeEvent.status)}
           </Text>
         </View>
+        
+        {/* Özel etkinlik rozeti */}
+        {safeEvent.is_private && (
+          <View style={[
+            styles.privateBadge, 
+            { 
+              backgroundColor: theme.colors.accent + '15',
+              borderColor: theme.colors.accent, 
+            }
+          ]}>
+            <Ionicons name="lock-closed" size={10} color={theme.colors.accent} style={styles.privateIcon} />
+            <Text style={[styles.privateText, { color: theme.colors.accent }]}>
+              Özel Etkinlik
+            </Text>
+          </View>
+        )}
       </View>
       
       {/* Divider */}
@@ -152,49 +266,29 @@ export const EventCard: React.FC<EventCardProps> = ({
       <View style={styles.footer}>
         {/* Participants */}
         <View style={styles.participantsContainer}>
-          <View style={styles.participantsIconContainer}>
-            {Array.from({ length: Math.max(0, Math.min(3, safeEvent.current_participants || 0)) }).map((_, index) => (
-              <View 
-                key={index}
-                style={[
-                  styles.participantAvatar,
-                  { 
-                    backgroundColor: theme.colors.accent,
-                    left: index * -8,
-                    zIndex: 3 - index,
-                  }
-                ]}
-              >
-                {safeEvent.creator_avatar && index === 0 ? (
-                  <Image source={{ uri: safeEvent.creator_avatar }} style={styles.avatarImage} />
-                ) : (
-                  <Ionicons name="person" size={10} color="white" />
-                )}
-              </View>
-            ))}
-          </View>
+          {renderParticipantAvatars()}
           
           <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-            {safeEvent.current_participants}/{safeEvent.max_participants}
+            {safeEvent.participant_count}/{safeEvent.max_participants}
           </Text>
         </View>
         
         {/* Join status badges */}
         {showJoinStatus && (
           <View style={styles.joinStatusContainer}>
-            {safeEvent.is_joined && (
+            {isUserParticipant && (
               <View style={[styles.joinBadge, { backgroundColor: theme.colors.accent + '15' }]}>
                 <Text style={[styles.joinBadgeText, { color: theme.colors.accent }]}>Katıldınız</Text>
               </View>
             )}
             
-            {safeEvent.is_creator && (
+            {isUserCreator && (
               <View style={[styles.joinBadge, { backgroundColor: theme.colors.primary + '15' }]}>
                 <Text style={[styles.joinBadgeText, { color: theme.colors.primary }]}>Düzenleyiciniz</Text>
               </View>
             )}
             
-            {isEventFull && !safeEvent.is_joined && !safeEvent.is_creator && (
+            {isEventFull && !isUserParticipant && !isUserCreator && (
               <View style={[styles.joinBadge, { backgroundColor: theme.colors.error + '15' }]}>
                 <Text style={[styles.joinBadgeText, { color: theme.colors.error }]}>Dolu</Text>
               </View>
@@ -204,21 +298,14 @@ export const EventCard: React.FC<EventCardProps> = ({
       </View>
       
       {/* Creator info */}
-      {safeEvent.creator_name && (
+      {safeEvent.creator && (
         <View style={styles.creatorSection}>
           <View style={styles.creatorContainer}>
-            {safeEvent.creator_avatar ? (
-              <Image 
-                source={{ uri: safeEvent.creator_avatar }} 
-                style={styles.creatorAvatar} 
-              />
-            ) : (
-              <View style={[styles.creatorAvatarPlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
-                <Ionicons name="person" size={12} color={theme.colors.accent} />
-              </View>
-            )}
+            <View style={[styles.creatorAvatarPlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
+              <Ionicons name="person" size={12} color={theme.colors.accent} />
+            </View>
             <Text style={[styles.creatorName, { color: theme.colors.text }]}>
-              {safeEvent.creator_name}
+              {getCreatorName()}
             </Text>
           </View>
         </View>
@@ -304,6 +391,9 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -321,6 +411,23 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  privateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginLeft: 8,
+  },
+  privateIcon: {
+    marginRight: 4,
+  },
+  privateText: {
     fontSize: 12,
     fontWeight: '600',
   },
@@ -369,6 +476,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'white',
+  },
+  participantAvatarMore: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  moreText: {
+    fontSize: 8,
+    fontWeight: 'bold',
   },
   avatarImage: {
     width: 18,

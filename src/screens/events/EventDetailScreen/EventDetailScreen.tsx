@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -12,7 +12,10 @@ import {
   StatusBar,
   Dimensions,
   Linking,
-  Share
+  Share,
+  Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +23,7 @@ import { useThemeStore } from '../../../store/appStore/themeStore';
 import { useEventStore } from '../../../store/eventStore/eventStore';
 import { useAuthStore } from '../../../store/userStore/authStore';
 import { formatDate, formatTimeRange, formatDateTime } from '../../../utils/dateUtils';
+import { colors } from '../../../constants/colors/colors';
 
 // Route param tipini tanımla
 type EventDetailRouteParams = {
@@ -42,7 +46,7 @@ export const EventDetailScreen: React.FC = () => {
   // Event store'dan etkinlik durumunu ve metotları al
   const { 
     currentEvent, 
-    isLoading, 
+    isLoading,
     error, 
     message,
     fetchEventDetail,
@@ -50,7 +54,8 @@ export const EventDetailScreen: React.FC = () => {
     leaveEvent,
     deleteEvent,
     clearError,
-    clearMessage
+    clearMessage,
+    clearLoading
   } = useEventStore();
   
   // Aksiyon durumları
@@ -58,9 +63,19 @@ export const EventDetailScreen: React.FC = () => {
   const [isLeaving, setIsLeaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
+  // Davet kodu modalı için state'ler
+  const [invitationCodeModalVisible, setInvitationCodeModalVisible] = useState(false);
+  const [invitationCode, setInvitationCode] = useState('');
+  const [invitationCodeError, setInvitationCodeError] = useState('');
+  
   // Component mount edildiğinde etkinlik detayını getir
   useEffect(() => {
     loadEventDetail();
+    
+    // Component unmount olduğunda yükleme durumunu temizle
+    return () => {
+      clearLoading();
+    };
   }, [eventId]);
   
   // Hata veya mesaj durumunda uyarı göster
@@ -90,13 +105,59 @@ export const EventDetailScreen: React.FC = () => {
   const handleJoinEvent = async () => {
     if (!currentEvent) return;
     
+    // Özel etkinlikse davet kodu modalını göster
+    if (currentEvent.is_private) {
+      setInvitationCodeModalVisible(true);
+      return;
+    }
+    
+    // Normal etkinlik için katılma işlemini başlat
     setIsJoining(true);
     const success = await joinEvent(eventId);
     setIsJoining(false);
+  };
+  
+  // Davet kodu ile etkinliğe katılma
+  const handleJoinPrivateEvent = async () => {
+    if (!currentEvent) return;
     
-    if (success) {
-      loadEventDetail();
+    // Davet kodu boşsa hata göster
+    if (!invitationCode.trim()) {
+      setInvitationCodeError('Lütfen davet kodunu giriniz');
+      return;
     }
+    
+    // Katılım işlemini başlat
+    setIsJoining(true);
+    
+    try {
+      // Davet kodunu da gönder
+      const result = await joinEvent(eventId, { invitation_code: invitationCode });
+      
+      // Sonuca göre işlem yap
+      if (!result) {
+        // joinEvent zaten false döndüğünde eventStore'da error state'i set edilmiş olacak
+        // Modalı kapatma, kullanıcının tekrar denemesine izin ver
+        setInvitationCodeError(error || 'Geçersiz davet kodu. Lütfen tekrar deneyin.');
+      } else {
+        // Başarılı olursa modalı kapat ve mesajı temizle
+        setInvitationCodeModalVisible(false);
+        setInvitationCode('');
+        setInvitationCodeError('');
+      }
+    } catch (err) {
+      console.error("Etkinliğe katılma hatası:", err);
+      setInvitationCodeError('Bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsJoining(false);
+    }
+  };
+  
+  // Davet kodu modalını kapat
+  const handleCloseInvitationCodeModal = () => {
+    setInvitationCodeModalVisible(false);
+    setInvitationCode('');
+    setInvitationCodeError('');
   };
   
   // Etkinlikten ayrıl
@@ -115,10 +176,6 @@ export const EventDetailScreen: React.FC = () => {
             setIsLeaving(true);
             const success = await leaveEvent(eventId);
             setIsLeaving(false);
-            
-            if (success) {
-              loadEventDetail();
-            }
           }
         }
       ]
@@ -186,6 +243,80 @@ export const EventDetailScreen: React.FC = () => {
     navigation.navigate('EventMapScreen', { eventId: currentEvent.id });
   };
   
+  // Davet kodu modalını render et
+  const renderInvitationCodeModal = () => {
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={invitationCodeModalVisible}
+        onRequestClose={handleCloseInvitationCodeModal}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={handleCloseInvitationCodeModal}
+        >
+          <View style={[styles.modalContainer, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Özel Etkinlik
+              </Text>
+              <TouchableOpacity onPress={handleCloseInvitationCodeModal}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Ionicons name="lock-closed" size={50} color={theme.colors.accent} style={styles.lockIcon} />
+              
+              <Text style={[styles.modalText, { color: theme.colors.text }]}>
+                Bu özel bir etkinliktir. Katılmak için organizatörden aldığınız davet kodunu girmeniz gerekmektedir.
+              </Text>
+              
+              <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
+                  Davet Kodu
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    { 
+                      borderColor: invitationCodeError 
+                        ? theme.colors.error 
+                        : theme.colors.border,
+                      color: theme.colors.text,
+                      backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white'
+                    }
+                  ]}
+                  placeholder="Davet kodunu giriniz"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  value={invitationCode}
+                  onChangeText={(text) => {
+                    setInvitationCode(text);
+                    setInvitationCodeError('');
+                  }}
+                />
+                {invitationCodeError ? (
+                  <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                    {invitationCodeError}
+                  </Text>
+                ) : null}
+              </View>
+              
+              <TouchableOpacity
+                style={[styles.joinButton, { backgroundColor: theme.colors.accent }]}
+                onPress={handleJoinPrivateEvent}
+              >
+                <Text style={styles.joinButtonText}>Katıl</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+  
   // İçerik yükleniyorsa
   if (isLoading && !currentEvent) {
     return (
@@ -218,99 +349,131 @@ export const EventDetailScreen: React.FC = () => {
   
   if (!currentEvent) return null; // TypeScript için kontrol
   
+  // Sayısal değerleri doğru formatta parse et
+  const currentParticipants = parseInt(String(currentEvent.current_participants), 10) || 0;
+  const maxParticipants = parseInt(String(currentEvent.max_participants), 10) || 1;
+  
   const isEventCreator = currentEvent.creator_id === user?.id;
-  const isEventFull = currentEvent.current_participants >= currentEvent.max_participants;
+  const isEventFull = currentParticipants >= maxParticipants;
   const canJoin = !currentEvent.is_joined && !isEventFull && currentEvent.status === 'active';
+  
+  // İlerleme çubuğu yüzdesi (0-100 arasında sınırlandırılmış)
+  const progressPercentage = Math.min(
+    Math.max((currentParticipants / maxParticipants) * 100, 0), 
+    100
+  );
+  
+  // Kalan katılımcı sayısı
+  const remainingSpots = Math.max(maxParticipants - currentParticipants, 0);
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar 
-        barStyle="light-content" 
+        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} 
         backgroundColor="transparent" 
         translucent 
       />
       
-      {/* Header Bölümü */}
-      <View style={styles.headerContainer}>
-        <View
-          style={[styles.headerGradient, { backgroundColor: theme.colors.primary }]}
-        >
-          <SafeAreaView style={styles.headerSafeArea}>
-            <View style={styles.headerControls}>
-              <TouchableOpacity 
-                style={styles.headerButton} 
-                onPress={handleGoBack}
-              >
-                <Ionicons name="arrow-back" size={24} color="white" />
-              </TouchableOpacity>
-
-              <View style={styles.headerActions}>
-                <TouchableOpacity 
-                  style={styles.headerButton}
-                  onPress={handleShareEvent}
-                >
-                  <Ionicons name="share-social-outline" size={24} color="white" />
-                </TouchableOpacity>
-                
-                {isEventCreator && (
-                  <TouchableOpacity 
-                    style={styles.headerButton}
-                    onPress={handleEditEvent}
-                  >
-                    <Ionicons name="create-outline" size={24} color="white" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-            
-            <View style={styles.headerContent}>
-              <View style={[styles.statusBadge, { 
-                backgroundColor: getStatusColor(currentEvent.status, theme.colors)
-              }]}>
-                <Text style={styles.statusText}>
-                  {getStatusText(currentEvent.status)}
-                </Text>
-              </View>
-
-              <Text style={styles.headerTitle} numberOfLines={2}>
-                {currentEvent.title}
-              </Text>
-              
-              <View style={styles.headerMeta}>
-                <View style={styles.dateTimeContainer}>
-                  <Ionicons name="calendar" size={18} color="white" />
-                  <Text style={styles.dateTimeText}>
-                    {formatDate(currentEvent.event_date)}
-                  </Text>
-                </View>
-                
-                <View style={styles.dateTimeContainer}>
-                  <Ionicons name="time" size={18} color="white" />
-                  <Text style={styles.dateTimeText}>
-                    {formatTimeRange(currentEvent.start_time, currentEvent.end_time)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </SafeAreaView>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={handleGoBack}>
+          <Ionicons name="chevron-back" size={28} color={theme.colors.text} />
+        </TouchableOpacity>
+        
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.iconButton} onPress={handleShareEvent}>
+            <Ionicons name="share-social-outline" size={22} color={theme.colors.text} />
+          </TouchableOpacity>
+          
+          {isEventCreator && (
+            <TouchableOpacity style={styles.iconButton} onPress={handleEditEvent}>
+              <Ionicons name="create-outline" size={22} color={theme.colors.text} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
       
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Katılımcı Durumu Kart */}
-        <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.participantsHeader}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+        {/* Etkinlik Başlığı ve Status Badge */}
+        <View style={styles.titleContainer}>
+          <View style={styles.badgeRow}>
+            <View style={[styles.statusBadge, { 
+              backgroundColor: getStatusColor(currentEvent.status, theme.colors)
+            }]}>
+              <Text style={styles.statusText}>
+                {getStatusText(currentEvent.status)}
+              </Text>
+            </View>
+            
+            <View style={[styles.sportBadge, { backgroundColor: theme.colors.accent + '20' }]}>
+              <Text style={[styles.sportText, { color: theme.colors.accent }]}>
+                {currentEvent.sport_name || 'Spor'}
+              </Text>
+            </View>
+            
+            {/* Özel etkinlik rozeti */}
+            {currentEvent.is_private && (
+              <View style={[styles.privateBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+                <Ionicons name="lock-closed" size={12} color={theme.colors.primary} style={styles.privateIcon} />
+                <Text style={[styles.privateText, { color: theme.colors.primary }]}>
+                  Özel Etkinlik
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            {currentEvent.title}
+          </Text>
+          
+          {/* Tarih ve Saat Bilgisi */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoItem}>
+              <Ionicons name="calendar-outline" size={18} color={theme.colors.accent} />
+              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+                {formatDate(currentEvent.event_date)}
+              </Text>
+            </View>
+            
+            <View style={styles.infoItem}>
+              <Ionicons name="time-outline" size={18} color={theme.colors.accent} />
+              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+                {formatTimeRange(currentEvent.start_time, currentEvent.end_time)}
+              </Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Özel etkinlik bilgisi */}
+        {currentEvent.is_private && !currentEvent.is_joined && !isEventCreator && (
+          <View style={[styles.section, { 
+            backgroundColor: theme.colors.primary + '10', 
+            borderWidth: 1, 
+            borderColor: theme.colors.primary + '30',
+            marginBottom: 16
+          }]}>
+            <View style={styles.privateEventInfoContainer}>
+              <Ionicons name="information-circle" size={24} color={theme.colors.primary} />
+              <Text style={[styles.privateEventInfoText, { color: theme.colors.text }]}>
+                Bu özel bir etkinliktir. Katılmak için organizatörden aldığınız davet kodunu girmeniz gerekecektir.
+              </Text>
+            </View>
+          </View>
+        )}
+        
+        {/* Katılımcı Bilgisi */}
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="people-outline" size={22} color={theme.colors.accent} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               Katılımcılar
             </Text>
-            
-            <View style={styles.participantsCount}>
-              <Text style={[styles.participantsText, { color: theme.colors.text }]}>
-                {currentEvent.current_participants}/{currentEvent.max_participants}
+            <View style={styles.participantsCountBadge}>
+              <Text style={styles.participantsCountText}>
+                {currentParticipants}/{maxParticipants}
               </Text>
             </View>
           </View>
@@ -319,15 +482,15 @@ export const EventDetailScreen: React.FC = () => {
             <View 
               style={[
                 styles.progressBar, 
-                { backgroundColor: theme.colors.border }
+                { backgroundColor: theme.colors.light }
               ]}
             >
               <View 
                 style={[
                   styles.progressFill, 
                   { 
-                    backgroundColor: isEventFull ? theme.colors.error : theme.colors.success,
-                    width: `${(currentEvent.current_participants / currentEvent.max_participants) * 100}%` 
+                    backgroundColor: isEventFull ? theme.colors.error : theme.colors.accent,
+                    width: `${progressPercentage}%` 
                   }
                 ]}
               />
@@ -337,16 +500,16 @@ export const EventDetailScreen: React.FC = () => {
           <Text style={[styles.participantsStatus, { color: theme.colors.textSecondary }]}>
             {isEventFull 
               ? 'Bu etkinliğin kontenjanı dolmuştur.' 
-              : `${currentEvent.max_participants - currentEvent.current_participants} kişilik yer kaldı`
+              : `${remainingSpots} kişilik yer kaldı`
             }
           </Text>
         </View>
         
-        {/* Konum Kart */}
-        <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="location" size={22} color={theme.colors.accent} />
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+        {/* Konum Bilgisi */}
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="location-outline" size={22} color={theme.colors.accent} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               Konum
             </Text>
           </View>
@@ -355,32 +518,32 @@ export const EventDetailScreen: React.FC = () => {
             {currentEvent.location_name}
           </Text>
           
-          <View style={styles.mapButtons}>
+          <View style={styles.mapBtnContainer}>
             <TouchableOpacity 
-              style={[styles.mapButton, { backgroundColor: theme.colors.primary }]}
+              style={[styles.mapBtn, { backgroundColor: theme.colors.primary }]}
               onPress={handleViewMap}
             >
               <Ionicons name="map-outline" size={18} color="white" />
-              <Text style={styles.mapButtonText}>Haritada Gör</Text>
+              <Text style={styles.mapBtnText}>Haritada Gör</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.mapButton, { backgroundColor: theme.colors.accent }]}
+              style={[styles.mapBtn, { backgroundColor: theme.colors.accent }]}
               onPress={handleOpenMap}
             >
               <Ionicons name="navigate-outline" size={18} color="white" />
-              <Text style={styles.mapButtonText}>Yol Tarifi</Text>
+              <Text style={styles.mapBtnText}>Yol Tarifi</Text>
             </TouchableOpacity>
           </View>
         </View>
         
-        {/* Etkinlik Oluşturucu Kart */}
+        {/* Organizatör Bilgisi */}
         {currentEvent.creator_name && (
-          <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="person" size={22} color={theme.colors.accent} />
-              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-                Etkinlik Sahibi
+          <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="person-outline" size={22} color={theme.colors.accent} />
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Organizatör
               </Text>
             </View>
             
@@ -410,44 +573,45 @@ export const EventDetailScreen: React.FC = () => {
           </View>
         )}
         
-        {/* Etkinlik Açıklaması Kart */}
-        <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="information-circle" size={22} color={theme.colors.accent} />
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-              Etkinlik Detayları
+        {/* Etkinlik Açıklaması */}
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="information-circle-outline" size={22} color={theme.colors.accent} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Etkinlik Açıklaması
             </Text>
           </View>
           
-          <Text style={[styles.descriptionText, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.description, { color: theme.colors.text }]}>
             {currentEvent.description}
           </Text>
         </View>
         
-        {/* Değerlendirme Kart */}
+        {/* Değerlendirme */}
         {currentEvent.average_rating !== undefined && (
-          <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="star" size={22} color="#FFD700" />
-              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-                Etkinlik Değerlendirmesi
+          <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="star-outline" size={22} color={theme.colors.accent} />
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Değerlendirme
               </Text>
             </View>
             
             <View style={styles.ratingContainer}>
-              <View style={styles.starsContainer}>
+              <View style={styles.stars}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Ionicons 
                     key={star} 
-                    name={star <= Math.round(currentEvent.average_rating as any) ? "star" : "star-outline"} 
-                    size={30} 
+                    name={star <= Math.round(currentEvent.average_rating || 0) ? "star" : "star-outline"} 
+                    size={24} 
                     color="#FFD700" 
+                    style={styles.starIcon}
                   />
                 ))}
               </View>
               
               <Text style={[styles.ratingText, { color: theme.colors.text }]}>
-                {currentEvent.average_rating.toFixed(1)}/5.0
+                {(currentEvent.average_rating || 0).toFixed(1)}/5.0
               </Text>
             </View>
             
@@ -456,7 +620,7 @@ export const EventDetailScreen: React.FC = () => {
               onPress={() => navigation.navigate('RateEvent', { eventId: currentEvent.id })}
             >
               <Text style={[styles.rateButtonText, { color: theme.colors.accent }]}>
-                Değerlendirme Yap
+                Bu Etkinliği Değerlendir
               </Text>
             </TouchableOpacity>
           </View>
@@ -464,69 +628,74 @@ export const EventDetailScreen: React.FC = () => {
       </ScrollView>
       
       {/* Alt butonlar */}
-      <View style={[styles.footer, { 
-        backgroundColor: theme.mode === 'dark' ? theme.colors.cardBackground : 'rgba(255, 255, 255, 0.95)',
-        borderTopColor: theme.colors.border
-      }]}>
-        {isEventCreator ? (
-          <TouchableOpacity 
-            style={[styles.deleteButton, { backgroundColor: theme.colors.error }]}
-            onPress={handleDeleteEvent}
-            disabled={isDeleting}
-          >
-            {isDeleting ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <>
-                <Ionicons name="trash-outline" size={20} color="white" />
-                <Text style={styles.actionButtonText}>Etkinliği Sil</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        ) : currentEvent.is_joined ? (
-          <TouchableOpacity 
-            style={[styles.leaveButton, { backgroundColor: theme.colors.error }]}
-            onPress={handleLeaveEvent}
-            disabled={isLeaving}
-          >
-            {isLeaving ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <>
-                <Ionicons name="exit-outline" size={20} color="white" />
-                <Text style={styles.actionButtonText}>Etkinlikten Ayrıl</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[
-              styles.joinButton, 
-              { 
-                backgroundColor: canJoin ? theme.colors.accent : theme.mode === 'dark' ? '#555555' : theme.colors.silver,
-                opacity: canJoin ? 1 : 0.6
-              }
-            ]}
-            onPress={handleJoinEvent}
-            disabled={!canJoin || isJoining}
-          >
-            {isJoining ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <>
-                <Ionicons 
-                  name={isEventFull ? "close-circle-outline" : "checkmark-circle-outline"} 
-                  size={20} 
-                  color="white" 
-                />
-                <Text style={styles.actionButtonText}>
-                  {isEventFull ? 'Etkinlik Dolu' : 'Etkinliğe Katıl'}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+      <SafeAreaView>
+        <View style={[styles.footer, { 
+          backgroundColor: theme.mode === 'dark' ? theme.colors.cardBackground : theme.colors.background,
+          borderTopColor: theme.colors.border
+        }]}>
+          {isEventCreator ? (
+            <TouchableOpacity 
+              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
+              onPress={handleDeleteEvent}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={20} color="white" />
+                  <Text style={styles.actionButtonText}>Etkinliği Sil</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : currentEvent.is_joined ? (
+            <TouchableOpacity 
+              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
+              onPress={handleLeaveEvent}
+              disabled={isLeaving}
+            >
+              {isLeaving ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons name="exit-outline" size={20} color="white" />
+                  <Text style={styles.actionButtonText}>Etkinlikten Ayrıl</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={[
+                styles.actionButton, 
+                { 
+                  backgroundColor: canJoin ? theme.colors.accent : theme.colors.dark,
+                  opacity: canJoin ? 1 : 0.7
+                }
+              ]}
+              onPress={handleJoinEvent}
+              disabled={!canJoin || isJoining}
+            >
+              {isJoining ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons 
+                    name={canJoin ? (currentEvent.is_private ? "key-outline" : "checkmark-circle-outline") : "close-circle-outline"} 
+                    size={20} 
+                    color="white" 
+                  />
+                  <Text style={styles.actionButtonText}>
+                    {isEventFull ? 'Etkinlik Dolu' : (currentEvent.is_private ? 'Davet Kodu ile Katıl' : 'Etkinliğe Katıl')}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </SafeAreaView>
+      
+      {/* Davet kodu modalı */}
+      {renderInvitationCodeModal()}
     </SafeAreaView>
   );
 };
@@ -561,7 +730,7 @@ const getStatusText = (status: string) => {
     default:
       return status;
   }
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -578,137 +747,151 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-  headerContainer: {
-    width: '100%',
-    height: 220,
-  },
-  headerGradient: {
-    flex: 1,
-    paddingTop: StatusBar.currentHeight,
-  },
-  headerSafeArea: {
-    flex: 1,
-  },
-  headerControls: {
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingTop: Platform.OS === 'ios' ? 8 : StatusBar.currentHeight + 8,
+    paddingBottom: 8,
+    zIndex: 10,
   },
-  headerButton: {
+  backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 4,
   },
   headerActions: {
     flexDirection: 'row',
   },
-  headerContent: {
-    flex: 1,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginLeft: 8,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    marginVertical: 8,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
-  headerMeta: {
+  titleContainer: {
+    marginBottom: 16,
+    paddingTop: 8,
+  },
+  badgeRow: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginBottom: 12,
   },
-  dateTimeContainer: {
+  statusBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  statusText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  sportBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  sportText: {
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 16,
   },
-  dateTimeText: {
-    color: 'white',
+  infoText: {
+    fontSize: 14,
     marginLeft: 6,
-    fontWeight: '500',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  card: {
-    borderRadius: 12,
+  section: {
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  cardTitle: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 8,
+    flex: 1,
   },
-  participantsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+  participantsCountBadge: {
+    backgroundColor: colors.accent + '20',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
   },
-  participantsCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  participantsText: {
-    fontSize: 16,
-    fontWeight: '700',
+  participantsCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.accent,
   },
   progressContainer: {
     marginVertical: 8,
   },
   progressBar: {
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     width: '100%',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
   participantsStatus: {
     fontSize: 14,
     marginTop: 4,
-    textAlign: 'right',
+    textAlign: 'center',
   },
   locationName: {
     fontSize: 16,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  mapButtons: {
+  mapBtnContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  mapButton: {
+  mapBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     flex: 0.48,
   },
-  mapButtonText: {
+  mapBtnText: {
     color: 'white',
     fontWeight: '600',
     marginLeft: 6,
@@ -746,7 +929,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
-  descriptionText: {
+  description: {
     fontSize: 16,
     lineHeight: 24,
   },
@@ -754,20 +937,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  starsContainer: {
+  stars: {
     flexDirection: 'row',
   },
+  starIcon: {
+    marginRight: 4,
+  },
   ratingText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   rateButton: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     alignSelf: 'center',
   },
   rateButtonText: {
@@ -776,54 +962,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 16,
     borderTopWidth: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
   },
-  deleteButton: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  leaveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  joinButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
   actionButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  statusText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 12,
   },
   backButton: {
     marginTop: 20,
@@ -835,5 +989,106 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: width * 0.85,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalBody: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  lockIcon: {
+    marginBottom: 16,
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  input: {
+    width: '100%',
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  joinButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  joinButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  privateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  privateIcon: {
+    marginRight: 4,
+  },
+  privateText: {
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  privateEventInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  privateEventInfoText: {
+    marginLeft: 12,
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

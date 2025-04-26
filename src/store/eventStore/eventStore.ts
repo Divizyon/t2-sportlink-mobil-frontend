@@ -41,7 +41,7 @@ interface EventState {
   createEvent: (data: EventCreateRequest) => Promise<boolean>;
   updateEvent: (eventId: string, data: EventUpdateRequest) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
-  joinEvent: (eventId: string) => Promise<boolean>;
+  joinEvent: (eventId: string, options?: { invitation_code?: string }) => Promise<boolean>;
   leaveEvent: (eventId: string) => Promise<boolean>;
   rateEvent: (eventId: string, data: EventRatingRequest) => Promise<boolean>;
   fetchMyEvents: (params?: any) => Promise<void>;
@@ -278,11 +278,14 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
   
   // Etkinliğe katıl
-  joinEvent: async (eventId: string) => {
+  joinEvent: async (eventId: string, options?: { invitation_code?: string }) => {
     try {
       set({ isLoading: true, error: null, message: null });
       
-      const response = await eventService.joinEvent(eventId);
+      // Davet kodu varsa özel API endpoint'i kullan
+      const response = options?.invitation_code 
+        ? await eventService.joinPrivateEvent(eventId, options.invitation_code)
+        : await eventService.joinEvent(eventId);
       
       if (response.success) {
         // Etkinliği myEvents listesine ekle
@@ -310,20 +313,55 @@ export const useEventStore = create<EventState>((set, get) => ({
         });
         return true;
       } else {
+        // API'den gelen hata mesajını düzgün şekilde göster
         set({ 
-          error: response.error || 'Etkinliğe katılma işlemi başarısız oldu.', 
+          error: response.message || 'Etkinliğe katılma işlemi başarısız oldu.', 
           isLoading: false 
         });
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Hata mesajını daha anlaşılır hale getir
+      let errorMessage = 'Etkinliğe katılırken bir hata oluştu.';
+      
+      // Axios hatası mı kontrol et
+      if (error.response) {
+        // API'nin döndüğü hata mesajı varsa onu kullan
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else {
+          // HTTP durum koduna göre hata mesajı oluştur
+          switch (error.response.status) {
+            case 400:
+              errorMessage = 'Geçersiz istek. Lütfen tekrar deneyin.';
+              break;
+            case 401:
+              errorMessage = 'Oturum süresi dolmuş olabilir. Lütfen tekrar giriş yapın.';
+              break;
+            case 403:
+              errorMessage = 'Geçersiz davet kodu. Lütfen doğru kodu girdiğinizden emin olun.';
+              break;
+            case 404:
+              errorMessage = 'Etkinlik bulunamadı.';
+              break;
+            case 409:
+              errorMessage = 'Bu etkinliğe zaten katılmış olabilirsiniz.';
+              break;
+            default:
+              errorMessage = `Bir hata oluştu (${error.response.status}). Lütfen tekrar deneyin.`;
+          }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       set({ 
-        error: error instanceof Error ? error.message : 'Etkinliğe katılırken bir hata oluştu.', 
+        error: errorMessage,
         isLoading: false 
       });
       
       // API Store'da global hata mesajını güncelle
-      useApiStore.getState().setGlobalError('Etkinliğe katılırken bir hata oluştu.');
+      useApiStore.getState().setGlobalError(errorMessage);
       return false;
     }
   },

@@ -85,6 +85,29 @@ const eventService = {
     }
   },
 
+  // Özel etkinliğe davet kodu ile katıl
+  joinPrivateEvent: async (eventId: string, invitationCode: string): Promise<ApiResponse<{message: string}>> => {
+    try {
+      const response = await apiClient.post(`/events/${eventId}/join`, { invitation_code: invitationCode });
+      return response.data;
+    } catch (error: any) {
+      console.error('Özel etkinliğe katılırken hata:', error);
+      
+      // API'den gelen hata mesajını kontrol et
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        // API'den gelen mesajı döndür
+        return {
+          success: false,
+          message: errorData.message || 'Özel etkinliğe katılırken bir hata oluştu',
+          data: null
+        };
+      }
+      
+      throw error;
+    }
+  },
+
   // Etkinlikten ayrıl
   leaveEvent: async (eventId: string): Promise<ApiResponse<{message: string}>> => {
     try {
