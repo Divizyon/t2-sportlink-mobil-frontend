@@ -7,6 +7,7 @@ export const colors = {
   silver: '#F5F7FA',    // Silver (gümüş)
   white: '#FFFFFF',     // White
   background: '#FFFFFF',
+  cardBackground: '#FFFFFF', // Kart arkaplanı
   text: '#333333',
   textSecondary: '#7f8c8d',
   error: '#e74c3c',
@@ -15,4 +16,5 @@ export const colors = {
   info: '#3498db',
   border: '#e0e0e0',
   shadow: 'rgba(0, 0, 0, 0.1)',
-}; 
+  notification: '#FF3B30', // Bildirim rengi
+};

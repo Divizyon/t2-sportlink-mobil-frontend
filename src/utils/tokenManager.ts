@@ -50,6 +50,8 @@ export const tokenManager = {
       
       // Yeni format yoksa, eski format kontrol edilir
       const legacyToken = await SecureStore.getItemAsync(TOKEN_KEYS.ACCESS_TOKEN);
+      console.log('Legacy token kontrol ediliyor:', legacyToken ? 'var' : 'yok');
+      
       if (legacyToken) {
         const tokenData: TokenData = {
           access_token: legacyToken
@@ -72,8 +74,54 @@ export const tokenManager = {
    */
   getToken: async (): Promise<string | null> => {
     try {
-      const tokenData = await tokenManager.getTokenData();
-      return tokenData?.access_token || null;
+      // Önce eski yöntemi deneyelim (UYUMLULUK için)
+      const legacyToken = await SecureStore.getItemAsync(TOKEN_KEYS.ACCESS_TOKEN);
+      
+      // Yeni formatta token verisi almayı deneyelim
+      const tokenDataStr = await SecureStore.getItemAsync(TOKEN_KEYS.TOKEN_DATA);
+      
+      if (tokenDataStr) {
+        try {
+          const tokenData = JSON.parse(tokenDataStr);
+          console.log('TokenData bulundu:', tokenData ? 'token veri mevcut' : 'token veri yok');
+          
+          if (tokenData && tokenData.access_token) {
+            // Süre kontrolü yapalım, eğer token süresi yakında dolacaksa yenilemeyi deneyelim
+            if (tokenData.expires_at) {
+              const currentTime = Math.floor(Date.now() / 1000);
+              
+              // Son 5 dakika içerisinde süresi dolacaksa yenilemeyi deneyelim
+              if (tokenData.expires_at - currentTime < 300 && tokenData.refresh_token) {
+                console.log('Token süresi dolmak üzere, yenilemeyi deniyorum...');
+                await tokenManager.refreshToken();
+                
+                // Yenileme sonrası güncel token'ı alalım
+                const refreshedTokenData = await tokenManager.getTokenData();
+                return refreshedTokenData?.access_token || null;
+              }
+
+              // Eğer token süresi zaten dolmuşsa
+              if (currentTime >= tokenData.expires_at) {
+                console.log('Token süresi dolmuş!');
+                return null;
+              }
+            }
+            
+            return tokenData.access_token;
+          }
+        } catch (parseError) {
+          console.error('Token verisi JSON parse hatası:', parseError);
+        }
+      }
+      
+      // Yeni format yoksa eski formata bakalım
+      if (legacyToken) {
+        console.log('Legacy token bulundu');
+        return legacyToken;
+      }
+      
+      console.log('Token bulunamadı');
+      return null;
     } catch (error) {
       console.error('Token alınırken hata oluştu:', error);
       return null;
@@ -171,4 +219,4 @@ export const tokenManager = {
   },
 };
 
-export default tokenManager; 
+export default tokenManager;

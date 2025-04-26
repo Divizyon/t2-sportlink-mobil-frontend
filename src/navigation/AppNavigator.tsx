@@ -18,6 +18,10 @@ import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
+// Screens - Events
+import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDetailScreen';
+import { CreateEventScreen } from '../screens/events/CreateEventScreen';
+
 // Store
 import { useThemeStore } from '../store/appStore/themeStore';
 
@@ -30,12 +34,47 @@ type AuthStackParamList = {
 
 type AppStackParamList = {
   MainTabs: undefined;
+  EventDetail: { eventId: string };
+  CreateEvent: undefined;
+  EditEvent: { eventId: string };
+};
+
+type EventsStackParamList = {
+  EventsList: undefined;
+  EventDetail: { eventId: string };
+  CreateEvent: undefined;
+  EditEvent: { eventId: string };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
+const EventsStack = createNativeStackNavigator<EventsStackParamList>();
 const Tab = createBottomTabNavigator();
 
+// Etkinlikler Stack Navigator
+const EventsStackNavigator = () => {
+  return (
+    <EventsStack.Navigator screenOptions={{ headerShown: false }}>
+      <EventsStack.Screen name="EventsList" component={EventsScreen} />
+      <EventsStack.Screen name="EventDetail" component={EventDetailScreen} />
+      <EventsStack.Screen 
+        name="CreateEvent" 
+        component={CreateEventScreen}
+        options={{ 
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          contentStyle: { backgroundColor: 'transparent' }
+        }}
+      />
+      <EventsStack.Screen 
+        name="EditEvent" 
+        component={EventsScreen} // Henüz implement edilmedi
+      />
+    </EventsStack.Navigator>
+  );
+};
+
+// Tab Navigator
 const TabNavigator = () => {
   const { theme } = useThemeStore();
   
@@ -63,7 +102,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen 
         name="Events" 
-        component={EventsScreen} 
+        component={EventsStackNavigator} 
         options={{
           tabBarLabel: 'Etkinlikler',
           tabBarIcon: ({ color, size }) => (
@@ -147,6 +186,24 @@ export const AppNavigator = () => {
       {isAuthenticated ? (
         <AppStack.Navigator screenOptions={{ headerShown: false }}>
           <AppStack.Screen name="MainTabs" component={TabNavigator} />
+          <AppStack.Screen 
+            name="EventDetail" 
+            component={EventDetailScreen} 
+            options={{ presentation: 'card' }}
+          />
+          <AppStack.Screen 
+            name="CreateEvent" 
+            component={CreateEventScreen}
+            options={{ 
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' }
+            }}
+          />
+          <AppStack.Screen 
+            name="EditEvent" 
+            component={EventsScreen} // Henüz implement edilmedi
+          />
         </AppStack.Navigator>
       ) : (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -157,4 +214,4 @@ export const AppNavigator = () => {
       )}
     </NavigationContainer>
   );
-}; 
+};

@@ -1,0 +1,5 @@
+Konya’da spor yapmayı seven bireylerin, takım arkadaşları veya antrenman partnerleri bulması genellikle zor ve zaman alıcı bir süreçtir. Mevcut spor toplulukları genellikle kapalı gruplardan oluşmakta ve yeni bireylerin bu gruplara katılması kolay olmamaktadır. Ayrıca, şehirde düzenlenen spor etkinlikleri, turnuvalar veya antrenman buluşmaları farklı platformlarda duyurulduğundan dolayı katılımcıların etkinliklerden haberdar olması zorlaşmaktadır.
+
+Bu nedenle, SportLink, Konya’daki spor severlerin belirli spor dallarında takım arkadaşı veya antrenman partneri bulmasını kolaylaştıran bir mobil platform olarak tasarlanmıştır. Kullanıcılar, basketbol, futbol, e-spor, bisiklet, masa tenisi ve tenis gibi branşlarda etkinlikler oluşturabilir, var olan etkinliklere katılabilir ve kendileriyle benzer ilgi alanlarına sahip sporcuları keşfedebilir.
+
+Ayrıca, Konya’daki spor haberleri ve etkinlik duyuruları sistemde otomatik olarak toplanarak kullanıcılara güncel bilgiler sunulacaktır. GPS ve harita entegrasyonu sayesinde kullanıcılar, kendi lokasyonlarına en uygun spor etkinliklerini hızlıca bulabileceklerdir.

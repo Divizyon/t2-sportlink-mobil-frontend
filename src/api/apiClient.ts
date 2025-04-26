@@ -68,8 +68,15 @@ apiClient.interceptors.request.use(
       }
       
       const token = await tokenManager.getToken();
+      console.log('Token alındı:', token ? 'Token mevcut' : 'Token yok', 
+                  token ? `Token uzunluğu: ${token.length}` : '');
+      
       if (token) {
+        // Token formatını kontrol et (bazı API'ler "Bearer " öneki olmadan token bekleyebilir)
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Authorization header eklendi:', config.headers.Authorization);
+      } else {
+        console.log('Token bulunamadı, Authorization header eklenemedi');
       }
       return config;
     } catch (error) {
@@ -78,6 +85,7 @@ apiClient.interceptors.request.use(
         const requestId = config.headers['X-Request-ID'] as string;
         useApiStore.getState().failRequest(requestId, error instanceof Error ? error.message : 'İstek hatası');
       }
+      console.error('Token eklenirken hata:', error);
       return Promise.reject(error);
     }
   },
@@ -182,4 +190,4 @@ function maskSensitiveData(data: any): any {
   return maskedData;
 }
 
-export { apiClient }; 
+export { apiClient };
