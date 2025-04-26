@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "deepsight-app",
+    "slug": "deepsight-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "sdkVersion": "52.0.0",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "API_URL": "http://localhost:3000/api",
+      "API_TIMEOUT": 10000,
+      "ENVIRONMENT": "development",
+      "SECURE_STORAGE_KEY": "deepvision_secure_storage",
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
