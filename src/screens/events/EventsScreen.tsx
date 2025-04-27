@@ -10,7 +10,8 @@ import {
   Animated,
   Dimensions,
   RefreshControl,
-  ScrollView
+  ScrollView,
+  TextInput
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
@@ -37,11 +38,18 @@ export const EventsScreen: React.FC = () => {
     clearError,
     clearMessage,
     sports,
-    fetchSports
+    fetchSports,
+    searchEvents,
+    searchResults
   } = useEventStore();
   
   // Filtre durumu
   const [activeSportId, setActiveSportId] = useState<string | null>(null);
+  
+  // Arama durumu
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   
   // Animasyon değerleri
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -50,6 +58,15 @@ export const EventsScreen: React.FC = () => {
   
   // Sıralanmış etkinlikler - En yeni oluşturulanlar önce gösterilir
   const sortedEvents = useMemo(() => {
+    // Arama aktifse arama sonuçlarını göster
+    if (isSearchActive && searchResults.length > 0) {
+      return [...searchResults].sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB.getTime() - dateA.getTime();
+      });
+    }
+    
     if (!events || events.length === 0) return [];
     
     // Tarihe göre sırala (en yeni oluşturulanlar önce)
@@ -58,7 +75,7 @@ export const EventsScreen: React.FC = () => {
       const dateB = new Date(b.created_at);
       return dateB.getTime() - dateA.getTime();
     });
-  }, [events]);
+  }, [events, searchResults, isSearchActive]);
   
   // Component mount edildiğinde etkinlikleri ve spor kategorilerini getir
   useEffect(() => {
@@ -90,8 +107,34 @@ export const EventsScreen: React.FC = () => {
   
   // Filtre değiştiğinde etkinlikleri yeniden getir
   useEffect(() => {
+    // Arama aktifse ve filtre değişirse, aramayı temizle
+    if (isSearchActive) {
+      setIsSearchActive(false);
+      setSearchQuery('');
+    }
     loadEvents();
   }, [activeSportId]);
+  
+  // Arama sorgusunun değişimine bağlı olarak arama yap
+  useEffect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    if (searchQuery.trim().length > 0) {
+      const timeout = setTimeout(() => {
+        handleSearch();
+      }, 500); // Kullanıcı yazmayı bitirdikten 500ms sonra arama yap (debounce)
+      setSearchTimeout(timeout);
+    } else if (searchQuery === '' && isSearchActive) {
+      setIsSearchActive(false);
+      loadEvents(); // Arama temizlendiğinde normal etkinlikleri göster
+    }
+    
+    return () => {
+      if (searchTimeout) clearTimeout(searchTimeout);
+    };
+  }, [searchQuery]);
   
   // Hata veya mesaj durumunda uyarı göster
   useEffect(() => {
@@ -142,13 +185,61 @@ export const EventsScreen: React.FC = () => {
     }
   };
   
+  // Arama işlevi
+  const handleSearch = async () => {
+    if (searchQuery.trim().length === 0) {
+      setIsSearchActive(false);
+      return;
+    }
+    
+    setIsSearchActive(true);
+    
+    // API isteği atmak yerine mevcut events üzerinde yerel arama yap
+    const allEvents = useEventStore.getState().events;
+    const query = searchQuery.toLowerCase().trim();
+    
+    // Etkinlik içinde arama yap (başlık, açıklama, lokasyon vb.)
+    const filteredEvents = allEvents.filter(event => {
+      return (
+        (event.title && event.title.toLowerCase().includes(query)) ||
+        (event.description && event.description.toLowerCase().includes(query)) ||
+        (event.location && event.location.toLowerCase().includes(query)) ||
+        (event.address && event.address.toLowerCase().includes(query)) ||
+        (event.city && event.city.toLowerCase().includes(query))
+      );
+    });
+    
+    // Spor kategorisi filtrelemesi varsa uygula
+    const results = activeSportId 
+      ? filteredEvents.filter(event => event.sport_id === activeSportId)
+      : filteredEvents;
+    
+    // Sonuçları store'a kaydet (API çağrısı yapmadan)
+    useEventStore.setState({
+      searchResults: results,
+      isLoading: false
+    });
+  };
+  
+  // Arama çubuğunu temizle
+  const clearSearch = () => {
+    setSearchQuery('');
+    setIsSearchActive(false);
+    loadEvents(); // Normal etkinlikleri yükle
+  };
+  
   // Yeniden yükleme durumu
   const [refreshing, setRefreshing] = useState(false);
   
   // Yeniden yükleme
   const handleRefresh = () => {
     setRefreshing(true);
-    loadEvents().then(() => setRefreshing(false));
+    // Arama aktifse arama sorgusunu tekrar çalıştır
+    if (isSearchActive && searchQuery.trim().length > 0) {
+      handleSearch().then(() => setRefreshing(false));
+    } else {
+      loadEvents().then(() => setRefreshing(false));
+    }
   };
   
   // Etkinliğe tıklama - detay sayfasına git
@@ -176,6 +267,29 @@ export const EventsScreen: React.FC = () => {
     if (lowerName.includes('e-spor') || lowerName.includes('espor')) return 'game-controller-outline';
     if (lowerName.includes('masa tenisi')) return 'tennisball-outline';
     return 'fitness-outline'; // Varsayılan
+  };
+  
+  // Arama çubuğunu render et
+  const renderSearchBar = () => {
+    return (
+      <View style={[styles.searchContainer, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }]}>
+        <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.colors.text }]}
+          placeholder="Etkinlik ara..."
+          placeholderTextColor={theme.colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          onSubmitEditing={handleSearch}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   };
   
   // Spor kategorilerini render et
@@ -274,12 +388,26 @@ export const EventsScreen: React.FC = () => {
             Etkinlikler
           </Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            {totalEvents > 0 
-              ? `${totalEvents} etkinlik arasından keşfet`
-              : ''
+            {isSearchActive 
+              ? `${searchResults.length} sonuç bulundu`
+              : totalEvents > 0 
+                ? `${totalEvents} etkinlik arasından keşfet`
+                : ''
             }
           </Text>
         </View>
+      </Animated.View>
+      
+      {/* Search Bar */}
+      <Animated.View 
+        style={{ 
+          opacity: fadeAnim, 
+          transform: [{ translateY: slideAnim }],
+          marginBottom: 8,
+          paddingHorizontal: 16
+        }}
+      >
+        {renderSearchBar()}
       </Animated.View>
       
       {/* Sport filters */}
@@ -299,7 +427,10 @@ export const EventsScreen: React.FC = () => {
         isLoading={isLoading}
         onRefresh={handleRefresh}
         onEventPress={handleEventPress}
-        emptyText={`Burada gösterilecek etkinlik bulunamadı.\nYeni bir etkinlik oluşturmak için butona dokunun.`}
+        emptyText={isSearchActive 
+          ? `"${searchQuery}" için sonuç bulunamadı.`
+          : `Burada gösterilecek etkinlik bulunamadı.\nYeni bir etkinlik oluşturmak için butona dokunun.`
+        }
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -366,6 +497,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 4,
     opacity: 0.7,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 46,
+    marginBottom: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 16,
+  },
+  clearButton: {
+    padding: 4,
   },
   sportFiltersContainer: {
     paddingHorizontal: 16,

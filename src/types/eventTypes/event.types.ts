@@ -41,6 +41,7 @@ export interface Event {
   is_creator?: boolean;
   is_private?: boolean; // Özel etkinlik mi?
   invitation_code?: string; // Davet kodu (özel etkinlikler için)
+  
 }
 
 /**

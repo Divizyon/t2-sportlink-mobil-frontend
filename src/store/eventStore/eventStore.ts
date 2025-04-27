@@ -56,7 +56,7 @@ interface EventState {
   clearLoading: () => void; // Yeni eklenen fonksiyon
 }
 
-export const useEventStore = create<EventState>((set, get) => ({
+export const useEventStore = create<EventState >((set, get) => ({
   // Başlangıç durumu
   events: [],
   totalEvents: 0,
