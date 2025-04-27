@@ -100,7 +100,7 @@ const eventService = {
         return {
           success: false,
           message: errorData.message || 'Özel etkinliğe katılırken bir hata oluştu',
-          data: null
+          data: null as any
         };
       }
       

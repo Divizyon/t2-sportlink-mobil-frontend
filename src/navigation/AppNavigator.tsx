@@ -21,6 +21,7 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 // Screens - Events
 import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDetailScreen';
 import { CreateEventScreen } from '../screens/events/CreateEventScreen';
+import { EditEventScreen } from '../screens/events/EditEventScreen';
 
 // Store
 import { useThemeStore } from '../store/appStore/themeStore';
@@ -68,7 +69,12 @@ const EventsStackNavigator = () => {
       />
       <EventsStack.Screen 
         name="EditEvent" 
-        component={EventsScreen} // Henüz implement edilmedi
+        component={EditEventScreen} 
+        options={{ 
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          contentStyle: { backgroundColor: 'transparent' }
+        }}
       />
     </EventsStack.Navigator>
   );
@@ -202,7 +208,12 @@ export const AppNavigator = () => {
           />
           <AppStack.Screen 
             name="EditEvent" 
-            component={EventsScreen} // Henüz implement edilmedi
+            component={EditEventScreen} 
+            options={{ 
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' }
+            }}
           />
         </AppStack.Navigator>
       ) : (

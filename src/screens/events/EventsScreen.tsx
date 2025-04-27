@@ -9,7 +9,8 @@ import {
   StatusBar,
   Animated,
   Dimensions,
-  RefreshControl
+  RefreshControl,
+  ScrollView
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
@@ -34,11 +35,13 @@ export const EventsScreen: React.FC = () => {
     message,
     fetchEvents,
     clearError,
-    clearMessage
+    clearMessage,
+    sports,
+    fetchSports
   } = useEventStore();
   
   // Filtre durumu
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed' | 'upcoming'>('all');
+  const [activeSportId, setActiveSportId] = useState<string | null>(null);
   
   // Animasyon değerleri
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -57,9 +60,12 @@ export const EventsScreen: React.FC = () => {
     });
   }, [events]);
   
-  // Component mount edildiğinde etkinlikleri getir
+  // Component mount edildiğinde etkinlikleri ve spor kategorilerini getir
   useEffect(() => {
     loadEvents();
+    if (!sports || sports.length === 0) {
+      fetchSports();
+    }
     
     // Giriş animasyonları
     Animated.parallel([
@@ -85,7 +91,7 @@ export const EventsScreen: React.FC = () => {
   // Filtre değiştiğinde etkinlikleri yeniden getir
   useEffect(() => {
     loadEvents();
-  }, [activeFilter]);
+  }, [activeSportId]);
   
   // Hata veya mesaj durumunda uyarı göster
   useEffect(() => {
@@ -104,23 +110,45 @@ export const EventsScreen: React.FC = () => {
   const loadEvents = async () => {
     let params: any = { page: 1, limit: 20 };
     
-    // Filtreye göre parametreleri ayarla
-    if (activeFilter === 'active') {
-      params.status = 'active';
-    } else if (activeFilter === 'completed') {
-      params.status = 'completed';
-    } else if (activeFilter === 'upcoming') {
-      // Yaklaşan etkinlikler için bugünden sonraki tarihi filtrele
-      const today = new Date();
-      params.startDate = today.toISOString().split('T')[0];
+    // Spor ID'ye göre filtreleme
+    if (activeSportId) {
+      params.sportId = activeSportId;
     }
     
-    await fetchEvents(params);
+    // Eğer events dizisi boşsa veya refresh yapılıyorsa API'den getir
+    // Aksi takdirde mevcut state'i filtrele
+    if (events.length === 0 || refreshing) {
+      await fetchEvents(params);
+    } else if (activeSportId) {
+      // Mevcut events içinden aktiveSportId'ye göre filtrele
+      const allEvents = useEventStore.getState().events;
+      const filteredEvents = allEvents.filter(event => 
+        event.sport_id === activeSportId
+      );
+      
+      // Zustand store'u güncelle (lokal filtreleme)
+      useEventStore.setState({
+        events: filteredEvents,
+        isLoading: false
+      });
+    } else {
+      // Tüm etkinlikleri getir (API'ye istek atmadan, store'dan)
+      // Bu durumda yalnızca ilk yüklemede API'ye istek atılacak
+      const originalEvents = useEventStore.getState().events;
+      useEventStore.setState({
+        events: originalEvents,
+        isLoading: false
+      });
+    }
   };
+  
+  // Yeniden yükleme durumu
+  const [refreshing, setRefreshing] = useState(false);
   
   // Yeniden yükleme
   const handleRefresh = () => {
-    loadEvents();
+    setRefreshing(true);
+    loadEvents().then(() => setRefreshing(false));
   };
   
   // Etkinliğe tıklama - detay sayfasına git
@@ -134,87 +162,98 @@ export const EventsScreen: React.FC = () => {
     clearError();
     navigation.navigate('CreateEvent');
   };
-  
-  // Filtreleri render et
-  const renderFilters = () => {
-    const filters = [
-      { key: 'all', label: 'Tümü', icon: 'grid-outline' },
-      { key: 'active', label: 'Aktif', icon: 'flame-outline' },
-      { key: 'upcoming', label: 'Yaklaşan', icon: 'calendar-outline' },
-    ];
-    
-    return (
-      <View style={styles.filterScrollContainer}>
-        <View style={styles.filterWrapper}>
-          {filters.map((filter) => (
-            <TouchableOpacity
-              key={filter.key}
-              style={[
-                styles.filterButton,
-                { 
-                  backgroundColor: activeFilter === filter.key 
-                    ? theme.colors.accent 
-                    : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
-                },
-                activeFilter === filter.key && styles.activeFilterButton
-              ]}
-              onPress={() => setActiveFilter(filter.key as any)}
-            >
-              <Ionicons 
-                name={filter.icon as any}
-                size={18}
-                color={activeFilter === filter.key ? 'white' : theme.colors.text}
-                style={styles.filterIcon}
-              />
-              <Text
-                style={[
-                  styles.filterText,
-                  { color: activeFilter === filter.key ? 'white' : theme.colors.text }
-                ]}
-              >
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    );
+
+  // Spor ikonunu belirle
+  const getSportIcon = (sportName: string = '') => {
+    const lowerName = sportName.toLowerCase();
+    if (lowerName.includes('futbol')) return 'football-outline';
+    if (lowerName.includes('basketbol')) return 'basketball-outline';
+    if (lowerName.includes('voleybol')) return 'baseball-outline';
+    if (lowerName.includes('tenis')) return 'tennisball-outline';
+    if (lowerName.includes('yüzme')) return 'water-outline';
+    if (lowerName.includes('koşu') || lowerName.includes('kosu')) return 'walk-outline';
+    if (lowerName.includes('bisiklet')) return 'bicycle-outline';
+    if (lowerName.includes('e-spor') || lowerName.includes('espor')) return 'game-controller-outline';
+    if (lowerName.includes('masa tenisi')) return 'tennisball-outline';
+    return 'fitness-outline'; // Varsayılan
   };
   
-  // Etkinlik istatistiklerini render et
-  const renderEventStats = () => {
+  // Spor kategorilerini render et
+  const renderSportFilters = () => {
+    // API'den gelen spor kategorileri veya varsayılan kategorileri kullan
+    const defaultSports = [
+      { id: 'all', name: 'Tümü', icon: 'grid-outline' },
+      { id: 'football', name: 'Futbol', icon: 'football-outline' },
+      { id: 'basketball', name: 'Basketbol', icon: 'basketball-outline' },
+      { id: 'volleyball', name: 'Voleybol', icon: 'baseball-outline' },
+      { id: 'tennis', name: 'Tenis', icon: 'tennisball-outline' },
+      { id: 'running', name: 'Koşu', icon: 'walk-outline' },
+      { id: 'cycling', name: 'Bisiklet', icon: 'bicycle-outline' },
+      { id: 'swimming', name: 'Yüzme', icon: 'water-outline' },
+      { id: 'tabletennis', name: 'Masa Tenisi', icon: 'tennisball-outline' },
+      { id: 'esports', name: 'E-Spor', icon: 'game-controller-outline' },
+    ];
+    
+    // API'den gelen sporları doğru ikonlarla birlikte kullan
+    let displaySports = [];
+    
+    if (sports && sports.length > 0) {
+      // API'den gelen sporları doğru ikonlarla eşleştir
+      displaySports = sports.map(sport => {
+        // API'den gelen sport nesnesine Ionicons formatında icon ekle
+        return {
+          ...sport,
+          icon: getSportIcon(sport.name)
+        };
+      });
+      
+      // Tümü filtresini başa ekle
+      displaySports = [{ id: 'all', name: 'Tümü', icon: 'grid-outline' }, ...displaySports];
+    } else {
+      displaySports = defaultSports;
+    }
+    
     return (
-      <View style={styles.statsContainer}>
-        <View style={[styles.statItem, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
-          <Text style={[styles.statCount, { color: theme.colors.accent }]}>
-            {totalEvents || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-            Toplam Etkinlik
-          </Text>
-        </View>
-        
-        <View style={[styles.statItem, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
-          <Text style={[styles.statCount, { color: theme.colors.accent }]}>
-            {sortedEvents.filter(e => e.status === 'active').length}
-          </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-            Aktif
-          </Text>
-        </View>
-        
-        <View style={[styles.statItem, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
-          <Text style={[styles.statCount, { color: theme.colors.accent }]}>
-            {sortedEvents.filter(e => {
-              const eventDate = new Date(e.event_date);
-              const today = new Date();
-              return eventDate > today;
-            }).length}
-          </Text>
-          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-            Yaklaşan
-          </Text>
-        </View>
+      <View style={styles.sportFiltersContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sportFiltersScroll}
+        >
+          {displaySports.map((sport) => {
+            const isActive = sport.id === activeSportId || (sport.id === 'all' && activeSportId === null);
+            const iconName = sport.icon || 'fitness-outline'; // Varsayılan ikon
+            
+            return (
+              <TouchableOpacity
+                key={sport.id}
+                style={[
+                  styles.sportFilterButton,
+                  { 
+                    backgroundColor: isActive 
+                      ? theme.colors.accent 
+                      : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
+                  }
+                ]}
+                onPress={() => setActiveSportId(sport.id === 'all' ? null : sport.id)}
+              >
+                <Ionicons 
+                  name={iconName as any}
+                  size={22}
+                  color={isActive ? 'white' : theme.colors.text}
+                />
+                <Text
+                  style={[
+                    styles.sportFilterText,
+                    { color: isActive ? 'white' : theme.colors.text }
+                  ]}
+                >
+                  {sport.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
     );
   };
@@ -237,31 +276,21 @@ export const EventsScreen: React.FC = () => {
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             {totalEvents > 0 
               ? `${totalEvents} etkinlik arasından keşfet`
-              : 'Etkinlik bulunamadı'
+              : ''
             }
           </Text>
         </View>
       </Animated.View>
       
-      {/* Stats Summary */}
+      {/* Sport filters */}
       <Animated.View 
         style={{ 
           opacity: fadeAnim, 
           transform: [{ translateY: slideAnim }],
-          marginBottom: 12
+          marginBottom: 8
         }}
       >
-        {renderEventStats()}
-      </Animated.View>
-      
-      {/* Filter tabs */}
-      <Animated.View 
-        style={{ 
-          opacity: fadeAnim, 
-          transform: [{ translateY: slideAnim }] 
-        }}
-      >
-        {renderFilters()}
+        {renderSportFilters()}
       </Animated.View>
       
       {/* Event List */}
@@ -338,58 +367,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     opacity: 0.7,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  sportFiltersContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
-  statItem: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 4,
-    alignItems: 'center',
+  sportFiltersScroll: {
+    paddingVertical: 8,
+    paddingRight: 24,
   },
-  statCount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  filterScrollContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 16,
-  },
-  filterWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  filterButton: {
+  sportFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 50,
     marginRight: 12,
-    marginBottom: 8,
   },
-  activeFilterButton: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  filterIcon: {
-    marginRight: 6,
-  },
-  filterText: {
+  sportFilterText: {
     fontWeight: '600',
     fontSize: 14,
+    marginLeft: 8,
   },
   fabContainer: {
     position: 'absolute',
