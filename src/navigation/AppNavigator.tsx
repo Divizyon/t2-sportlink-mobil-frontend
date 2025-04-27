@@ -5,11 +5,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/userStore/authStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Screens - Auth
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
+
+// Screens - Onboarding
+import WelcomeScreen from '../screens/welcome/WelcomeScreen';
 
 // Screens - Main
 import { HomeScreen } from '../screens/home/HomeScreen';
@@ -32,6 +36,7 @@ import { useThemeStore } from '../store/appStore/themeStore';
 
 // Types
 type AuthStackParamList = {
+  Welcome: undefined;
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
@@ -230,6 +235,7 @@ export const AppNavigator = () => {
         </AppStack.Navigator>
       ) : (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+          <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
           <AuthStack.Screen name="Login" component={LoginScreen} />
           <AuthStack.Screen name="Register" component={RegisterScreen} />
           <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
