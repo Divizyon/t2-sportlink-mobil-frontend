@@ -45,6 +45,33 @@ export interface Event {
 }
 
 /**
+ * Etkinlik yanıtı - Tek bir etkinlik için API yanıtı
+ */
+export interface EventResponse {
+  success: boolean;
+  data: Event;
+  message?: string;
+}
+
+/**
+ * Etkinlik listesi yanıtı - Birden fazla etkinlik için API yanıtı
+ */
+export interface EventsListResponse {
+  success: boolean;
+  data: {
+    events: Event[];
+    pagination?: {
+      totalCount: number;
+      totalPages: number;
+      currentPage: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
+    };
+  };
+  message?: string;
+}
+
+/**
  * Etkinlik oluşturma isteği
  */
 export interface EventCreateRequest {

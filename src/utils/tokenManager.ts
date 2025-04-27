@@ -85,30 +85,7 @@ export const tokenManager = {
           const tokenData = JSON.parse(tokenDataStr);
           console.log('TokenData bulundu:', tokenData ? 'token veri mevcut' : 'token veri yok');
           
-          if (tokenData && tokenData.access_token) {
-            // Süre kontrolü yapalım, eğer token süresi yakında dolacaksa yenilemeyi deneyelim
-            if (tokenData.expires_at) {
-              const currentTime = Math.floor(Date.now() / 1000);
-              
-              // Son 5 dakika içerisinde süresi dolacaksa yenilemeyi deneyelim
-              if (tokenData.expires_at - currentTime < 300 && tokenData.refresh_token) {
-                console.log('Token süresi dolmak üzere, yenilemeyi deniyorum...');
-                await tokenManager.refreshToken();
-                
-                // Yenileme sonrası güncel token'ı alalım
-                const refreshedTokenData = await tokenManager.getTokenData();
-                return refreshedTokenData?.access_token || null;
-              }
-
-              // Eğer token süresi zaten dolmuşsa
-              if (currentTime >= tokenData.expires_at) {
-                console.log('Token süresi dolmuş!');
-                return null;
-              }
-            }
-            
-            return tokenData.access_token;
-          }
+     
         } catch (parseError) {
           console.error('Token verisi JSON parse hatası:', parseError);
         }

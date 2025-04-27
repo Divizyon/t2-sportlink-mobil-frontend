@@ -14,14 +14,36 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.deepvision.sportlink",
+      "config": {
+        "googleMapsApiKey": "YOUR_IOS_API_KEY"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.deepvision.sportlink",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_ANDROID_API_KEY"
+        }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow the app to use your location."
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },

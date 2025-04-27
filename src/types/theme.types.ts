@@ -19,6 +19,8 @@ export interface ThemeColors {
   info: string;
   border: string;
   shadow: string;
+  card: string;
+  surface: string;
   notification: string;
 }
 

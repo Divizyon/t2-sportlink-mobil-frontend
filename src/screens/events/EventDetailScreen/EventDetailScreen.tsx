@@ -232,9 +232,40 @@ export const EventDetailScreen: React.FC = () => {
   const handleOpenMap = () => {
     if (!currentEvent) return;
     
+    // Konum bilgisini doğrula
+    if (!currentEvent.location_latitude || !currentEvent.location_longitude) {
+      Alert.alert('Hata', 'Bu etkinlik için konum bilgisi bulunamadı.');
+      return;
+    }
+    
     const { location_latitude, location_longitude, location_name } = currentEvent;
-    const url = `https://maps.google.com/maps?q=${location_latitude},${location_longitude}`;
-    Linking.openURL(url);
+    
+    // Konum adı ile veya koordinatlarla bir URL oluştur
+    let url = '';
+    
+    if (Platform.OS === 'ios') {
+      // iOS için Apple Maps'te aç (eğer kullanıcı tercih ediyorsa Google Maps de olabilir)
+      url = `maps:?q=${encodeURIComponent(location_name || 'Etkinlik Konumu')}&ll=${location_latitude},${location_longitude}`;
+    } else {
+      // Android için Google Maps'te aç
+      url = `geo:${location_latitude},${location_longitude}?q=${location_latitude},${location_longitude}&z=16`;
+    }
+    
+    // URL'i açabilir miyiz diye kontrol et
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        // Eğer yerleşik harita uygulaması açılamazsa Google Maps web URL'i dene
+        const webUrl = `https://maps.google.com/maps?q=${location_latitude},${location_longitude}`;
+        Linking.openURL(webUrl);
+      }
+    }).catch(err => {
+      console.error('Harita açılırken hata oluştu:', err);
+      // Her durumda çalışacak yedek çözüm
+      const webUrl = `https://maps.google.com/maps?q=${location_latitude},${location_longitude}`;
+      Linking.openURL(webUrl);
+    });
   };
 
   // Harita ekranına git
@@ -410,7 +441,7 @@ export const EventDetailScreen: React.FC = () => {
             
             <View style={[styles.sportBadge, { backgroundColor: theme.colors.accent + '20' }]}>
               <Text style={[styles.sportText, { color: theme.colors.accent }]}>
-                {currentEvent.sport_name || 'Spor'}
+                {currentEvent.sport_id || 'Spor'}
               </Text>
             </View>
             
@@ -752,7 +783,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 8 : StatusBar.currentHeight + 8,
     paddingBottom: 8,
     zIndex: 10,
   },

@@ -23,6 +23,7 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 
 // Screens - Events
 import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDetailScreen';
+import { EventMapScreen } from '../screens/events/EventMapScreen/EventMapScreen';
 import { CreateEventScreen } from '../screens/events/CreateEventScreen';
 import { EditEventScreen } from '../screens/events/EditEventScreen';
 
@@ -39,6 +40,7 @@ type AuthStackParamList = {
 type AppStackParamList = {
   MainTabs: undefined;
   EventDetail: { eventId: string };
+  EventMapScreen: { eventId: string };
   CreateEvent: undefined;
   EditEvent: { eventId: string };
 };
@@ -46,6 +48,7 @@ type AppStackParamList = {
 type EventsStackParamList = {
   EventsList: undefined;
   EventDetail: { eventId: string };
+  EventMapScreen: { eventId: string };
   CreateEvent: undefined;
   EditEvent: { eventId: string };
 };
@@ -61,6 +64,7 @@ const EventsStackNavigator = () => {
     <EventsStack.Navigator screenOptions={{ headerShown: false }}>
       <EventsStack.Screen name="EventsList" component={EventsScreen} />
       <EventsStack.Screen name="EventDetail" component={EventDetailScreen} />
+      <EventsStack.Screen name="EventMapScreen" component={EventMapScreen} />
       <EventsStack.Screen 
         name="CreateEvent" 
         component={CreateEventScreen}
@@ -198,6 +202,11 @@ export const AppNavigator = () => {
           <AppStack.Screen 
             name="EventDetail" 
             component={EventDetailScreen} 
+            options={{ presentation: 'card' }}
+          />
+          <AppStack.Screen 
+            name="EventMapScreen" 
+            component={EventMapScreen} 
             options={{ presentation: 'card' }}
           />
           <AppStack.Screen 

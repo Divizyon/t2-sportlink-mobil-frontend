@@ -15,6 +15,8 @@ export const colors = {
   warning: '#f39c12',
   info: '#3498db',
   border: '#e0e0e0',
+  surface: '#FFFFFF', // Yüzey rengi
   shadow: 'rgba(0, 0, 0, 0.1)',
+  card : '#FFFFFF', // Kart rengi
   notification: '#FF3B30', // Bildirim rengi
 };

@@ -97,7 +97,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Etkinlikler alınamadı.', 
+          error: response.message || 'Etkinlikler alınamadı.', 
           isLoading: false 
         });
       }
@@ -126,7 +126,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Etkinlik detayı alınamadı.', 
+          error: response.message || 'Etkinlik detayı alınamadı.', 
           isLoading: false 
         });
       }
@@ -162,7 +162,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         return true;
       } else {
         set({ 
-          error: response.error || 'Etkinlik oluşturulamadı.', 
+          error: response.message || 'Etkinlik oluşturulamadı.', 
           isLoading: false 
         });
         return false;
@@ -214,7 +214,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         return true;
       } else {
         set({ 
-          error: response.error || 'Etkinlik güncellenemedi.', 
+          error: response.message || 'Etkinlik güncellenemedi.', 
           isLoading: false 
         });
         return false;
@@ -260,7 +260,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         return true;
       } else {
         set({ 
-          error: response.error || 'Etkinlik silinemedi.', 
+          error: response.message || 'Etkinlik silinemedi.', 
           isLoading: false 
         });
         return false;
@@ -400,7 +400,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         return true;
       } else {
         set({ 
-          error: response.error || 'Etkinlikten ayrılma işlemi başarısız oldu.', 
+          error: response.message || 'Etkinlikten ayrılma işlemi başarısız oldu.', 
           isLoading: false 
         });
         return false;
@@ -437,7 +437,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         return true;
       } else {
         set({ 
-          error: response.error || 'Değerlendirme kaydedilemedi.', 
+          error: response.message || 'Değerlendirme kaydedilemedi.', 
           isLoading: false 
         });
         return false;
@@ -474,7 +474,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Katıldığım etkinlikler alınamadı.', 
+          error: response.message || 'Katıldığım etkinlikler alınamadı.', 
           isLoading: false 
         });
       }
@@ -510,7 +510,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Oluşturduğum etkinlikler alınamadı.', 
+          error: response.message || 'Oluşturduğum etkinlikler alınamadı.', 
           isLoading: false 
         });
       }
@@ -539,7 +539,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Yakındaki etkinlikler alınamadı.', 
+          error: response.message || 'Yakındaki etkinlikler alınamadı.', 
           isLoading: false 
         });
       }
@@ -568,7 +568,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Arama sonuçları alınamadı.', 
+          error: response.message || 'Arama sonuçları alınamadı.', 
           isLoading: false 
         });
       }
@@ -597,7 +597,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Önerilen etkinlikler alınamadı.', 
+          error: response.message || 'Önerilen etkinlikler alınamadı.', 
           isLoading: false 
         });
       }
@@ -626,7 +626,7 @@ export const useEventStore = create<EventState >((set, get) => ({
         });
       } else {
         set({ 
-          error: response.error || 'Spor dalları alınamadı.', 
+          error: response.message || 'Spor dalları alınamadı.', 
           isLoading: false 
         });
       }
