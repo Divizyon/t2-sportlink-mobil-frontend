@@ -14,7 +14,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DatePicker from 'react-native-date-picker';
 import { useNavigation } from '@react-navigation/native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
@@ -194,12 +194,13 @@ export const CreateEventScreen: React.FC = () => {
   const handlePrivateToggle = () => {
     const newIsPrivate = !isPrivate;
     setIsPrivate(newIsPrivate);
-    setFormData({ ...formData, is_private: newIsPrivate });
     
     // Eğer özel etkinlik kapatılırsa invitation_code'u temizle
     if (!newIsPrivate) {
       setInvitationCode('');
-      setFormData(prev => ({ ...prev, invitation_code: '' }));
+      setFormData(prev => ({ ...prev, is_private: false, invitation_code: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, is_private: true }));
     }
   };
 
@@ -305,13 +306,16 @@ export const CreateEventScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             
-            <DateTimePicker
-              value={selectedDate}
+            <DatePicker
+              date={selectedDate}
+              onDateChange={(date) => {
+                setSelectedDate(date);
+                onDateChange(null, date);
+              }}
               mode="date"
-              display="spinner"
-              onChange={onDateChange}
               minimumDate={new Date()}
-              style={{ width: '100%' }}
+              locale="tr"
+              style={{ backgroundColor: theme.colors.background }}
             />
             
             <TouchableOpacity
@@ -351,12 +355,15 @@ export const CreateEventScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             
-            <DateTimePicker
-              value={selectedStartTime}
+            <DatePicker
+              date={selectedStartTime}
+              onDateChange={(date) => {
+                setSelectedStartTime(date);
+                onStartTimeChange(null, date);
+              }}
               mode="time"
-              display="spinner"
-              onChange={onStartTimeChange}
-              style={{ width: '100%' }}
+              locale="tr"
+              style={{ backgroundColor: theme.colors.background }}
             />
             
             <TouchableOpacity
@@ -396,12 +403,15 @@ export const CreateEventScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             
-            <DateTimePicker
-              value={selectedEndTime}
+            <DatePicker
+              date={selectedEndTime}
+              onDateChange={(date) => {
+                setSelectedEndTime(date);
+                onEndTimeChange(null, date);
+              }}
               mode="time"
-              display="spinner"
-              onChange={onEndTimeChange}
-              style={{ width: '100%' }}
+              locale="tr"
+              style={{ backgroundColor: theme.colors.background }}
             />
             
             <TouchableOpacity

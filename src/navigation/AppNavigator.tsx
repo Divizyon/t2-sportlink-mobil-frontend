@@ -18,6 +18,9 @@ import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
+// App Screens
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+
 // Screens - Events
 import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDetailScreen';
 import { CreateEventScreen } from '../screens/events/CreateEventScreen';

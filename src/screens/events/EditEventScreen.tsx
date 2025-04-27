@@ -14,7 +14,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DatePicker from 'react-native-date-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
@@ -192,7 +192,7 @@ export const EditEventScreen: React.FC = () => {
       setSelectedStartTime(selectedTime);
       
       // Combine the selected date with the selected time
-      const combinedDateTime = new Date(formData.event_date);
+      const combinedDateTime = new Date(formData.event_date || new Date());
       combinedDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0);
       
       // Format the start time as ISO string
@@ -215,7 +215,7 @@ export const EditEventScreen: React.FC = () => {
       setSelectedEndTime(selectedTime);
       
       // Combine the selected date with the selected time
-      const combinedDateTime = new Date(formData.event_date);
+      const combinedDateTime = new Date(formData.event_date || new Date());
       combinedDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0);
       
       // Format the end time as ISO string
@@ -257,8 +257,8 @@ export const EditEventScreen: React.FC = () => {
     }
 
     // Parse time from ISO format for comparison
-    const startTime = new Date(formData.start_time);
-    const endTime = new Date(formData.end_time);
+    const startTime = new Date(formData.start_time || new Date());
+    const endTime = new Date(formData.end_time || new Date()  );
 
     if (startTime >= endTime) {
       errors.end_time = 'Bitiş saati başlangıç saatinden sonra olmalıdır';
@@ -328,11 +328,9 @@ export const EditEventScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="spinner"
-              onChange={onDateChange}
+            <DatePicker
+              date={selectedDate}
+              onDateChange={onDateChange}
               minimumDate={new Date()}
               style={{ width: '100%' }}
             />
@@ -374,11 +372,9 @@ export const EditEventScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             
-            <DateTimePicker
-              value={selectedStartTime}
-              mode="time"
-              display="spinner"
-              onChange={onStartTimeChange}
+            <DatePicker
+              date={selectedStartTime}
+              onDateChange={onStartTimeChange}
               style={{ width: '100%' }}
             />
             
@@ -419,11 +415,9 @@ export const EditEventScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             
-            <DateTimePicker
-              value={selectedEndTime}
-              mode="time"
-              display="spinner"
-              onChange={onEndTimeChange}
+            <DatePicker
+              date={selectedEndTime}
+              onDateChange={onEndTimeChange}
               style={{ width: '100%' }}
             />
             
@@ -610,7 +604,7 @@ export const EditEventScreen: React.FC = () => {
           >
             <Ionicons name="calendar-outline" size={20} color={theme.colors.textSecondary} />
             <Text style={[styles.datePickerText, { color: theme.colors.text }]}>
-              {formatDate(formData.event_date)}
+              {formatDate(formData.event_date || new Date())}
             </Text>
           </TouchableOpacity>
           {formErrors.event_date && (

@@ -8,6 +8,7 @@
 - [x] Temel dosyaların oluşturulması
 - [x] Kod dublikliklerin temizlenmesi
 - [x] Token yönetim sistemi iyileştirmesi
+- [x] DateTimePicker paketi react-native-date-picker ile değiştirildi
 
 ### Tema & Stil
 - [x] Renk paleti
@@ -23,6 +24,7 @@
 - [x] Loading
 - [x] Avatar
 - [x] Modal
+- [x] DatePicker (react-native-date-picker entegrasyonu)
 
 ### State Yönetimi
 - [x] Store yapısı
@@ -54,6 +56,7 @@
 - [x] Standart API yanıt formatı
 - [x] API istek güvenlik kontrolleri
 - [x] Hassas veri maskeleme
+- [x] API endpoint'leri '/api/users/profile' formundan '/users/profile' formuna güncellendi
 
 ### Güvenlik İyileştirmeleri
 - [x] Token güvenli depolama (SecureStore)
@@ -99,5 +102,6 @@
 - [x] Duplike dosyalar kaldırıldı
 - [x] API istek izleme ve takip sistemi eklendi
 - [x] Çevrimdışı mod desteği eklendi
+- [x] DateTimePicker paketi daha modern ve stabil bir alternatifle değiştirildi
 - [ ] Tutarlı tip kontrolü
 - [ ] Asenkron işlemlerde performans optimizasyonu 
