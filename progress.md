@@ -103,5 +103,5 @@
 - [x] API istek izleme ve takip sistemi eklendi
 - [x] Çevrimdışı mod desteği eklendi
 - [x] DateTimePicker paketi daha modern ve stabil bir alternatifle değiştirildi
-- [ ] Tutarlı tip kontrolü
-- [ ] Asenkron işlemlerde performans optimizasyonu 
+- [x] Tutarlı tip kontrolü
+- [x] Asenkron işlemlerde performans optimizasyonu 
