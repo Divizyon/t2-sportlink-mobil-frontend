@@ -31,6 +31,9 @@ import { EventMapScreen } from '../screens/events/EventMapScreen/EventMapScreen'
 import { CreateEventScreen } from '../screens/events/CreateEventScreen';
 import { EditEventScreen } from '../screens/events/EditEventScreen';
 
+// Navigation
+import { ProfileStack } from './ProfileStack';
+
 // Store
 import { useThemeStore } from '../store/appStore/themeStore';
 
@@ -166,7 +169,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen 
         name="Profile" 
-        component={ProfileScreen} 
+        component={ProfileStack} 
         options={{
           tabBarLabel: 'Profilim',
           tabBarIcon: ({ color, size }) => (

@@ -11,7 +11,7 @@ type EditProfileScreenProps = {
 
 const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route }) => {
   const { theme } = useThemeStore();
-  const { userInfo, updateUserInfo, isUpdating, error, successMessage, clearErrors, clearMessages } = useProfileStore();
+  const { userInfo, updateUserInfo, isUpdating, error, successMessage, clearErrors, clearMessages, fetchUserProfile } = useProfileStore();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -119,25 +119,29 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
     if (userInfo?.phone !== formData.phone) changedData.phone = formData.phone;
     
     // Profili güncelle
-    await updateUserInfo(changedData);
+    const success = await updateUserInfo(changedData);
+    
+    if (success) {
+      // Profil verilerini yeniden getir
+      await fetchUserProfile();
+      
+      // Başarı mesajını göster ve önceki sayfaya dön
+      Alert.alert(
+        'Başarılı',
+        'Profil bilgileriniz başarıyla güncellendi.',
+        [
+          {
+            text: 'Tamam',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          Profili Düzenle
-        </Text>
-        <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
-          <Text style={[styles.resetButtonText, { color: theme.colors.accent }]}>
-            Sıfırla
-          </Text>
-        </TouchableOpacity>
-      </View>
+     
       
       <ScrollView style={styles.scrollView}>
         <View style={styles.formContainer}>

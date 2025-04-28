@@ -5,22 +5,17 @@ import {
   UserSportPreference,
   UserLocation,
   FriendSummary,
-  ProfileSettings
+  ProfileSettings,
+  UserInfo
 } from '../../store/userStore/profileStore';
 
 interface ProfileResponse {
-  userInfo: {
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-    phone?: string;
-    profilePicture?: string;
-  };
+  userInfo: UserInfo;
   stats: UserStats;
   sportPreferences: UserSportPreference[];
-  defaultLocation: UserLocation;
-  friendsSummary: FriendSummary;
+  defaultLocation?: UserLocation;
+  friendsSummary?: FriendSummary;
+  settings?: ProfileSettings;
 }
 
 interface UpdateProfileInfoRequest {
@@ -45,19 +40,21 @@ export const userProfileService = {
         // Dönüştürülmüş veri yapısı oluştur
         const transformedData: ProfileResponse = {
           userInfo: {
-            firstName: userData.first_name || '',
-            lastName: userData.last_name || '',
-            username: userData.username || '',
-            email: userData.email || '',
-            phone: userData.phone || undefined,
-            profilePicture: userData.profile_picture || undefined,
+            id: userData.id,
+            firstName: userData.first_name,
+            lastName: userData.last_name,
+            username: userData.username,
+            email: userData.email,
+            phone: userData.phone,
+            profilePicture: userData.profile_picture,
+            role: userData.role,
+            createdAt: userData.created_at
           },
           stats: {
-            joinedEventsCount: userData.joined_events_count || 0,
-            createdEventsCount: userData.created_events_count || 0,
-            rating: userData.rating || 0,
-            reviewCount: userData.review_count || 0,
-            favoriteEventType: userData.favorite_event_type || undefined,
+            createdEventsCount: userData.stats.createdEventsCount,
+            participatedEventsCount: userData.stats.participatedEventsCount,
+            averageRating: userData.stats.averageRating,
+            friendsCount: userData.stats.friendsCount
           },
           sportPreferences: Array.isArray(userData.user_sports) 
             ? userData.user_sports.map((sport: any) => ({
@@ -67,16 +64,11 @@ export const userProfileService = {
                 icon: sport.icon || undefined,
               }))
             : [],
-          defaultLocation: {
-            latitude: userData.default_location_latitude || 0,
-            longitude: userData.default_location_longitude || 0,
-            locationName: userData.default_location_name || 'Belirtilmemiş',
-          },
-          friendsSummary: {
-            totalFriends: userData.total_friends || 0,
-            pendingRequests: userData.pending_requests || 0,
-            mostActiveWith: userData.most_active_with || undefined,
-          }
+          defaultLocation: userData.default_location_latitude && userData.default_location_longitude ? {
+            latitude: userData.default_location_latitude,
+            longitude: userData.default_location_longitude,
+            locationName: 'Belirtilmemiş'
+          } : undefined
         };
         
         return {
@@ -86,7 +78,6 @@ export const userProfileService = {
         };
       }
       
-      // Başarısız yanıt durumunda orijinal yanıtı döndür
       return apiData;
     } catch (error) {
       console.error('Profil bilgisi getirme hatası:', error);
@@ -102,8 +93,39 @@ export const userProfileService = {
    */
   updateProfile: async (data: UpdateProfileInfoRequest): Promise<ApiResponse<{ userInfo: ProfileResponse['userInfo'] }>> => {
     try {
-      const response = await apiClient.put('/users/profile', data);
-      return response.data;
+      // Frontend'den gelen camelCase verileri snake_case'e dönüştür
+      const snakeCaseData = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone
+      };
+
+      const response = await apiClient.put('/users/profile', snakeCaseData);
+      const apiData = response.data;
+
+      // Backend yanıtını frontend formatına dönüştür
+      if (apiData.success && apiData.data) {
+        const userData = apiData.data;
+        return {
+          success: true,
+          data: {
+            userInfo: {
+              id: userData.id,
+              firstName: userData.first_name || '',
+              lastName: userData.last_name || '',
+              username: userData.username || '',
+              email: userData.email || '',
+              phone: userData.phone || undefined,
+              profilePicture: userData.profile_picture || undefined,
+              role: userData.role,
+              createdAt: userData.created_at
+            }
+          },
+          message: apiData.message || 'Profil bilgileri başarıyla güncellendi.'
+        };
+      }
+
+      return apiData;
     } catch (error) {
       console.error('Profil güncelleme hatası:', error);
       return {
@@ -118,7 +140,7 @@ export const userProfileService = {
    */
   updateProfilePicture: async (imageData: FormData): Promise<ApiResponse<{ profilePicture: string }>> => {
     try {
-      const response = await apiClient.put('/users/profile/avatar', imageData, {
+      const response = await apiClient.put('/users/profile', imageData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
