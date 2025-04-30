@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, View, ViewStyle, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/userStore/authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,6 +21,9 @@ import { EventsScreen } from '../screens/events/EventsScreen';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+
+
+
 
 // App Screens
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
@@ -134,28 +137,41 @@ const TabNavigator = () => {
       <Tab.Screen 
         name="Discover" 
         component={DiscoverScreen} 
-        options={{
+        options={({ navigation }) => ({
           tabBarLabel: 'Keşfet',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
-          tabBarButton: (props) => (
-            <View 
-              style={{
-                ...(props.style as ViewStyle),
-                backgroundColor: theme.colors.accent,
-                borderRadius: 30,
-                marginTop: -10,
-                height: 60,
-                width: 60,
+          tabBarButton: (props) => {
+            return (
+              <View style={{
+                flex: 1,
                 alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name="search" size={30} color="white" />
-            </View>
-          ),
-        }}
+              }}>
+                <TouchableOpacity
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    backgroundColor: theme.colors.accent,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginTop: -10,
+                    position: 'absolute',
+                    bottom: 5,
+                  }}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    navigation.navigate('Discover');
+                    console.log("Keşfet butonuna tıklandı");
+                  }}
+                >
+                  <Ionicons name="search" size={30} color="white" />
+                </TouchableOpacity>
+              </View>
+            );
+          },
+        })}
       />
       <Tab.Screen 
         name="Notifications" 
