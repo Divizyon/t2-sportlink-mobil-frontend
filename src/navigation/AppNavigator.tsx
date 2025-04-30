@@ -5,11 +5,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, ViewStyle, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/userStore/authStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Screens - Auth
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
+
+// Screens - Onboarding
+import WelcomeScreen from '../screens/welcome/WelcomeScreen';
 
 // Screens - Main
 import { HomeScreen } from '../screens/home/HomeScreen';
@@ -30,11 +34,15 @@ import { EventMapScreen } from '../screens/events/EventMapScreen/EventMapScreen'
 import { CreateEventScreen } from '../screens/events/CreateEventScreen';
 import { EditEventScreen } from '../screens/events/EditEventScreen';
 
+// Navigation
+import { ProfileStack } from './ProfileStack';
+
 // Store
 import { useThemeStore } from '../store/appStore/themeStore';
 
 // Types
 type AuthStackParamList = {
+  Welcome: undefined;
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
@@ -177,7 +185,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen 
         name="Profile" 
-        component={ProfileScreen} 
+        component={ProfileStack} 
         options={{
           tabBarLabel: 'Profilim',
           tabBarIcon: ({ color, size }) => (
@@ -246,6 +254,7 @@ export const AppNavigator = () => {
         </AppStack.Navigator>
       ) : (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+          <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
           <AuthStack.Screen name="Login" component={LoginScreen} />
           <AuthStack.Screen name="Register" component={RegisterScreen} />
           <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

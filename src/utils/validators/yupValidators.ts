@@ -39,9 +39,8 @@ export const registerSchema = yup.object().shape({
       'Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir'
     ),
   confirmPassword: yup
-    .string()
-    .required('Şifre tekrarı gerekli')
-    .oneOf([yup.ref('password')], 'Şifreler eşleşmiyor'),
+    .string(),
+   
   firstName: yup
     .string()
     .required('Ad gerekli'),

@@ -5,22 +5,17 @@ import {
   SafeAreaView, 
   ScrollView, 
   ActivityIndicator, 
-  RefreshControl,
-  Alert
+  RefreshControl
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
-import { useAuthStore } from '../../store/userStore/authStore';
 import { useProfileStore } from '../../store/userStore/profileStore';
 import { ProfileHeader } from '../../components/Profile/ProfileHeader';
-import { StatsCard } from '../../components/Profile/StatsCard';
 import { SportPreferencesCard } from '../../components/Profile/SportPreferencesCard';
 import { FriendsCard } from '../../components/Profile/FriendsCard';
 import { LocationCard } from '../../components/Profile/LocationCard';
-import { ProfileActions } from '../../components/Profile/ProfileActions';
 
 export const ProfileScreen: React.FC = ({ navigation }: any) => {
-  const { theme, isDarkMode, toggleTheme } = useThemeStore();
-  const { logout } = useAuthStore();
+  const { theme } = useThemeStore();
   const { 
     userInfo, 
     stats, 
@@ -28,20 +23,17 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     defaultLocation, 
     friendsSummary,
     isLoading,
-    error,
     fetchUserProfile
   } = useProfileStore();
   
   const [refreshing, setRefreshing] = useState(false);
 
-  // İlk yüklemede profil verilerini getir
   useEffect(() => {
     fetchUserProfile().catch(err => {
       console.error('Profil verileri getirilirken hata:', err);
     });
   }, []);
 
-  // Yenileme işlemi
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -53,31 +45,8 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     }
   };
 
-  // Çıkış işlemi
-  const handleLogout = async () => {
-    try {
-      Alert.alert(
-        'Çıkış',
-        'Uygulamadan çıkış yapmak istediğinize emin misiniz?',
-        [
-          { text: 'İptal', style: 'cancel' },
-          { 
-            text: 'Çıkış Yap', 
-            style: 'destructive', 
-            onPress: async () => {
-              await logout();
-            }
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Çıkış yapılırken hata oluştu:', error);
-    }
-  };
-
   // Profil düzenleme işlemi
   const handleEditProfile = () => {
-    // EditProfile sayfasına yönlendir
     navigation.navigate('EditProfile');
   };
 
@@ -105,25 +74,6 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     console.log('Arkadaşlık istekleri sayfasına yönlendirme');
   };
 
-  // Bildirim yönetimi
-  const handleManageNotifications = () => {
-    // TODO: Bildirim ayarları sayfasına yönlendir
-    console.log('Bildirim ayarları sayfasına yönlendirme');
-  };
-
-  // Gizlilik ayarları
-  const handlePrivacySettings = () => {
-    // TODO: Gizlilik ayarları sayfasına yönlendir
-    console.log('Gizlilik ayarları sayfasına yönlendirme');
-  };
-
-  // Yardım/Destek
-  const handleHelp = () => {
-    // TODO: Yardım sayfasına yönlendir
-    console.log('Yardım sayfasına yönlendirme');
-  };
-
-  // Yükleme durumunda
   if (isLoading && !refreshing && !userInfo) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -155,22 +105,15 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
             lastName={userInfo.lastName}
             username={userInfo.username}
             profilePicture={userInfo.profilePicture}
-            onEditProfile={handleEditProfile}
-          />
-        )}
-        
-        {/* İstatistikler */}
-        {stats && (
-          <StatsCard 
-            stats={stats}
-            themeColors={{
-              cardBackground: theme.colors.cardBackground,
-              text: theme.colors.text,
-              textSecondary: theme.colors.textSecondary,
-              accent: theme.colors.accent
+            stats={{
+              createdEvents: stats?.createdEventsCount || 0,
+              joinedEvents: stats?.participatedEventsCount || 0,
+              rating: stats?.averageRating || 0,
+              friends: stats?.friendsCount || 0
             }}
           />
         )}
+       
         
         {/* Spor Tercihleri */}
         <SportPreferencesCard 
@@ -185,16 +128,18 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
         />
         
         {/* Konum Bilgisi */}
-        <LocationCard 
-          location={defaultLocation}
-          themeColors={{
-            cardBackground: theme.colors.cardBackground,
-            text: theme.colors.text,
-            textSecondary: theme.colors.textSecondary,
-            accent: theme.colors.accent
-          }}
-          onEditLocation={handleEditLocation}
-        />
+        {defaultLocation && (
+          <LocationCard 
+            location={defaultLocation}
+            themeColors={{
+              cardBackground: theme.colors.cardBackground,
+              text: theme.colors.text,
+              textSecondary: theme.colors.textSecondary,
+              accent: theme.colors.accent
+            }}
+            onEditLocation={handleEditLocation}
+          />
+        )}
         
         {/* Arkadaşlık Durumu */}
         {friendsSummary && (
@@ -211,24 +156,6 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
             onViewRequests={handleViewRequests}
           />
         )}
-        
-        {/* Profil Aksiyonları */}
-        <ProfileActions 
-          themeColors={{
-            cardBackground: theme.colors.cardBackground,
-            text: theme.colors.text,
-            textSecondary: theme.colors.textSecondary,
-            accent: theme.colors.accent,
-            error: theme.colors.error || '#FF3B30'
-          }}
-          isDarkMode={isDarkMode}
-          onToggleTheme={toggleTheme}
-          onEditProfile={handleEditProfile}
-          onManageNotifications={handleManageNotifications}
-          onPrivacySettings={handlePrivacySettings}
-          onHelp={handleHelp}
-          onLogout={handleLogout}
-        />
       </ScrollView>
     </SafeAreaView>
   );

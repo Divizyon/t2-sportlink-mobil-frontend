@@ -6,11 +6,10 @@ import { userProfileService } from '../../api/user/userProfileService';
 
 // Profil için tip tanımları
 export interface UserStats {
-  joinedEventsCount: number;
   createdEventsCount: number;
-  rating: number;
-  reviewCount: number;
-  favoriteEventType?: string;
+  participatedEventsCount: number;
+  averageRating: number;
+  friendsCount: number;
 }
 
 export interface UserSportPreference {
@@ -46,16 +45,21 @@ export interface ProfileSettings {
   };
 }
 
+export interface UserInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phone?: string;
+  profilePicture?: string | null;
+  role: string;
+  createdAt: string;
+}
+
 interface ProfileState {
   // Ana veriler
-  userInfo: {
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-    phone?: string;
-    profilePicture?: string;
-  } | null;
+  userInfo: UserInfo | null;
   stats: UserStats | null;
   sportPreferences: UserSportPreference[];
   defaultLocation: UserLocation | null;
