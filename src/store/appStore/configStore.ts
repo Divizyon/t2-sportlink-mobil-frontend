@@ -23,6 +23,7 @@ const developmentConfig: ConfigValues = {
 
 const productionConfig: ConfigValues = {
   apiBaseUrl: 'https://api.sportvision.com/api',
+  
   apiTimeout: 30000,
   appName: 'SportVision',
   appVersion: '1.0.0',
