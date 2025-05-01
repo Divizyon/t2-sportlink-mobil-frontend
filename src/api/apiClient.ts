@@ -132,31 +132,7 @@ apiClient.interceptors.response.use(
       });
     }
     
-    // 401 hatası ve token refresh gerekiyorsa
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Token yenileme işlemini tokenManager üzerinden yap
-        const refreshed = await tokenManager.refreshToken();
-        
-        if (refreshed) {
-          // Token yenileme başarılı ise, isteği tekrar gönder
-          const token = await tokenManager.getToken();
-          if (token && originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-          }
-          return axios(originalRequest);
-        }
-        
-        // Token yenileme başarısız ise, hatayı döndür
-        return Promise.reject(error);
-      } catch (refreshError) {
-        // Token yenileme başarısız olursa, token'ı temizle
-        await tokenManager.removeToken();
-        return Promise.reject(refreshError);
-      }
-    }
+ 
     
     // 5xx sunucu hataları için genel hata bildirimlerini ayarla
     if (error.response?.status && error.response.status >= 500) {

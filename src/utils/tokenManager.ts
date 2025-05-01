@@ -130,21 +130,7 @@ export const tokenManager = {
         return false;
       }
       
-      // Expiration süresi belirtilmişse kontrol et
-      if (tokenData.expires_at) {
-        const currentTime = Math.floor(Date.now() / 1000);
-        
-        // Eğer token son 5 dakika içinde sona erecekse yenilemeyi dene
-        if (tokenData.expires_at - currentTime < 300 && tokenData.refresh_token) {
-          const refreshed = await tokenManager.refreshToken();
-          if (!refreshed) {
-            return false;
-          }
-          return true;
-        }
-        
-        return currentTime < tokenData.expires_at;
-      }
+  
       
       // expires_at bilgisi yoksa sadece token varlığını kontrol et
       return true;
@@ -154,46 +140,7 @@ export const tokenManager = {
     }
   },
   
-  /**
-   * Token yenilemesi için yardımcı fonksiyon
-   */
-  refreshToken: async (): Promise<boolean> => {
-    try {
-      const tokenData = await tokenManager.getTokenData();
-      if (!tokenData || !tokenData.refresh_token) {
-        return false;
-      }
-      
-      // Refresh token kullanarak yeni token alma
-      const response = await authService.refreshToken(tokenData.refresh_token);
-      
-      if (response.success && response.data) {
-        // Token değerlerini kontrol et ve varsayılan değerler ata
-        const accessToken = response.data.token || response.data.access_token;
-        
-        // Erişim token'ı yoksa başarısız kabul et
-        if (!accessToken) {
-          return false;
-        }
-        
-        // Yeni token bilgilerini kaydet
-        const newTokenData: TokenData = {
-          access_token: accessToken,
-          refresh_token: response.data.refresh_token || tokenData.refresh_token,
-          expires_at: response.data.expires_at,
-          token_type: response.data.token_type || 'Bearer'
-        };
-        
-        await tokenManager.setTokenData(newTokenData);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Token yenilenirken hata oluştu:', error);
-      return false;
-    }
-  },
+
 };
 
 export default tokenManager;
