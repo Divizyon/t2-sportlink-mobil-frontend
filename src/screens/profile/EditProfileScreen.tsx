@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Activi
 import { Ionicons } from '@expo/vector-icons';
 import { useProfileStore } from '../../store/userStore/profileStore';
 import { useThemeStore } from '../../store/appStore/themeStore';
+import * as Location from 'expo-location';
 
 type EditProfileScreenProps = {
   navigation: any;
@@ -11,7 +12,7 @@ type EditProfileScreenProps = {
 
 const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route }) => {
   const { theme } = useThemeStore();
-  const { userInfo, updateUserInfo, isUpdating, error, successMessage, clearErrors, clearMessages, fetchUserProfile } = useProfileStore();
+  const { userInfo, defaultLocation, updateUserInfo, updateUserLocation, isUpdating, error, successMessage, clearErrors, clearMessages, fetchUserProfile } = useProfileStore();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -21,6 +22,15 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
     email: '',
     phone: '',
   });
+
+  // Konum bilgileri
+  const [locationData, setLocationData] = useState({
+    latitude: '',
+    longitude: '',
+  });
+  
+  // Konum alma işlemi durumu
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   
   // Validation errors
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -36,7 +46,15 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
         phone: userInfo.phone || '',
       });
     }
-  }, [userInfo]);
+    
+    // Konum bilgilerini doldur
+    if (defaultLocation) {
+      setLocationData({
+        latitude: String(defaultLocation.latitude),
+        longitude: String(defaultLocation.longitude),
+      });
+    }
+  }, [userInfo, defaultLocation]);
 
   // Başarı durumunda
   useEffect(() => {
@@ -75,6 +93,22 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
     }
   };
 
+  // Konum değerlerini güncelle
+  const handleLocationChange = (field: string, value: string) => {
+    setLocationData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // İlgili hatayı temizle
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
   // Formu sıfırla
   const handleReset = () => {
     if (userInfo) {
@@ -86,7 +120,64 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
         phone: userInfo.phone || '',
       });
     }
+    
+    if (defaultLocation) {
+      setLocationData({
+        latitude: String(defaultLocation.latitude),
+        longitude: String(defaultLocation.longitude),
+      });
+    } else {
+      setLocationData({
+        latitude: '',
+        longitude: '',
+      });
+    }
+    
     setValidationErrors({});
+  };
+
+  // Mevcut konumu al
+  const getCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      // Konum izni iste
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'İzin Gerekli', 
+          'Konumunuzu almak için izin vermeniz gerekiyor.',
+          [{ text: 'Tamam' }]
+        );
+        setIsLoadingLocation(false);
+        return;
+      }
+      
+      // Mevcut konum bilgisini al
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High
+      });
+      
+      // Konum bilgilerini güncelle
+      setLocationData({
+        latitude: String(location.coords.latitude),
+        longitude: String(location.coords.longitude),
+      });
+      
+      Alert.alert(
+        'Konum Alındı', 
+        'Mevcut konumunuz başarıyla alındı.',
+        [{ text: 'Tamam' }]
+      );
+    } catch (error) {
+      Alert.alert(
+        'Hata', 
+        'Konum alınırken bir hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'),
+        [{ text: 'Tamam' }]
+      );
+    } finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   // Form doğrulama
@@ -100,9 +191,26 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
     if (!formData.lastName.trim()) {
       errors.lastName = 'Soyisim alanı zorunludur';
     }
+    
+    // Konum doğrulama
+    if (locationData.latitude && !isValidCoordinate(parseFloat(locationData.latitude), true)) {
+      errors.latitude = 'Geçerli bir enlem değeri giriniz (-90 ile 90 arası)';
+    }
+    
+    if (locationData.longitude && !isValidCoordinate(parseFloat(locationData.longitude), false)) {
+      errors.longitude = 'Geçerli bir boylam değeri giriniz (-180 ile 180 arası)';
+    }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+  
+  // Koordinat doğrulama yardımcı fonksiyonu
+  const isValidCoordinate = (value: number, isLatitude: boolean): boolean => {
+    if (isNaN(value)) return false;
+    return isLatitude 
+      ? value >= -90 && value <= 90 
+      : value >= -180 && value <= 180;
   };
 
   // Değişiklikleri kaydet
@@ -111,15 +219,46 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
       return;
     }
 
-    // Sadece değişen alanları gönder
+    // Sadece değişen profil verilerini gönder
     const changedData: Partial<typeof formData> = {};
     
     if (userInfo?.firstName !== formData.firstName) changedData.firstName = formData.firstName;
     if (userInfo?.lastName !== formData.lastName) changedData.lastName = formData.lastName;
     if (userInfo?.phone !== formData.phone) changedData.phone = formData.phone;
     
-    // Profili güncelle
+    // Profil bilgilerini güncelle
     const success = await updateUserInfo(changedData);
+    
+    // Konum bilgilerini kontrol et ve güncelle
+    const hasLatitude = locationData.latitude.trim() !== '';
+    const hasLongitude = locationData.longitude.trim() !== '';
+    
+    if (hasLatitude && hasLongitude) {
+      const lat = parseFloat(locationData.latitude);
+      const lng = parseFloat(locationData.longitude);
+      
+      // Eğer konum bilgileri değiştiyse veya ilk kez ekleniyorsa güncelle
+      const locationChanged = 
+        !defaultLocation || 
+        defaultLocation.latitude !== lat || 
+        defaultLocation.longitude !== lng;
+      
+      if (locationChanged) {
+        const locationSuccess = await updateUserLocation({
+          latitude: lat,
+          longitude: lng,
+          locationName: "Kullanıcı Konumu"
+        });
+        
+        if (!locationSuccess && success) {
+          Alert.alert(
+            'Kısmi Başarı',
+            'Profil bilgileriniz güncellendi fakat konum bilgisi güncellenemedi.'
+          );
+          return;
+        }
+      }
+    }
     
     if (success) {
       // Profil verilerini yeniden getir
@@ -254,6 +393,72 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
             />
           </View>
           
+          {/* Konum Bilgileri */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Konum Bilgileri</Text>
+            <TouchableOpacity 
+              style={[styles.locationButton, { backgroundColor: theme.colors.accent }]}
+              onPress={getCurrentLocation}
+              disabled={isLoadingLocation}
+            >
+              {isLoadingLocation ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.locationButtonText}>Mevcut Konumu Al</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          {/* Enlem */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Enlem (Latitude)</Text>
+            <TextInput
+              style={[
+                styles.input, 
+                { 
+                  backgroundColor: theme.colors.cardBackground,
+                  color: theme.colors.text,
+                  borderColor: validationErrors.latitude ? theme.colors.error : theme.colors.border 
+                }
+              ]}
+              placeholder="Örn: 41.0082"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={locationData.latitude}
+              onChangeText={(text) => handleLocationChange('latitude', text)}
+              keyboardType="numeric"
+            />
+            {validationErrors.latitude ? (
+              <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                {validationErrors.latitude}
+              </Text>
+            ) : null}
+          </View>
+          
+          {/* Boylam */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Boylam (Longitude)</Text>
+            <TextInput
+              style={[
+                styles.input, 
+                { 
+                  backgroundColor: theme.colors.cardBackground,
+                  color: theme.colors.text,
+                  borderColor: validationErrors.longitude ? theme.colors.error : theme.colors.border 
+                }
+              ]}
+              placeholder="Örn: 28.9784"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={locationData.longitude}
+              onChangeText={(text) => handleLocationChange('longitude', text)}
+              keyboardType="numeric"
+            />
+            {validationErrors.longitude ? (
+              <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                {validationErrors.longitude}
+              </Text>
+            ) : null}
+          </View>
+          
           {/* Butonlar */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
@@ -343,6 +548,27 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     marginTop: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  locationButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  locationButtonText: {
+    color: 'white',
+    fontWeight: '500',
+    fontSize: 14,
   },
   buttonContainer: {
     flexDirection: 'row',

@@ -33,7 +33,7 @@ export const ProfileStack = () => {
         options={{
           headerShown: true,
           title: 'Ayarlar',
-          headerTintColor: '#44BD32',
+          headerTintColor: '#338626',
           headerStyle: {
             backgroundColor: '#fff',
           },
@@ -47,7 +47,7 @@ export const ProfileStack = () => {
         options={{
           headerShown: true,
           title: 'Profili Düzenle',
-          headerTintColor: '#44BD32',
+          headerTintColor: '#338626',
           headerStyle: {
             backgroundColor: '#fff',
           },

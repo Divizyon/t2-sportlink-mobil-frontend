@@ -431,12 +431,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: '#44BD32',
+    color: '#338626',
     fontSize: 14,
     fontWeight: '500',
   },
   loginButton: {
-    backgroundColor: '#44BD32',
+    backgroundColor: '#338626',
     borderRadius: 8,
     height: 50,
     justifyContent: 'center',

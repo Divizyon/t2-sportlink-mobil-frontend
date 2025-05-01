@@ -79,6 +79,7 @@ interface ProfileState {
   updateSportPreferences: (preferences: UserSportPreference[]) => Promise<boolean>;
   updateDefaultLocation: (location: UserLocation) => Promise<boolean>;
   updateProfileSettings: (settings: Partial<ProfileSettings>) => Promise<boolean>;
+  updateUserLocation: (location: UserLocation) => Promise<boolean>;
   
   // Yardımcı metotlar
   clearErrors: () => void;
@@ -372,6 +373,28 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Profil ayarları güncellenemedi';
+      
+      set({
+        error: errorMessage,
+        isUpdating: false
+      });
+      
+      return false;
+    }
+  },
+
+  // Kullanıcı konumunu güncelle
+  updateUserLocation: async (location) => {
+    try {
+      set({ isUpdating: true, error: null, successMessage: null });
+      
+      // updateDefaultLocation fonksiyonunu kullan
+      return await get().updateDefaultLocation(location);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Konum bilgisi güncellenemedi';
+      
+      // API isteği başarısız
+      useApiStore.getState().setGlobalError(errorMessage);
       
       set({
         error: errorMessage,

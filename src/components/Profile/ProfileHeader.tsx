@@ -118,7 +118,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           onPress={handleSettingsPress}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="settings-outline" size={24} color="#44BD32" />
+          <Ionicons name="settings-outline" size={24} color="#338626" />
         </TouchableOpacity>
       </View>
 
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: -4,
     bottom: -4,
-    backgroundColor: '#44BD32',
+    backgroundColor: '#338626',
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -239,13 +239,13 @@ const styles = StyleSheet.create({
   editButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#44BD32',
+    borderColor: '#338626',
     borderRadius: 15,
     paddingVertical: 12,
     alignItems: 'center',
   },
   editButtonText: {
-    color: '#44BD32',
+    color: '#338626',
     fontSize: 14,
     fontWeight: '600',
   },

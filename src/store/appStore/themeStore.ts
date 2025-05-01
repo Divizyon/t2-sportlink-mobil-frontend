@@ -21,7 +21,7 @@ const darkTheme: AppTheme = {
     textSecondary: '#BBBBBB',
     primary: '#273C75',
     secondary: '#192A56',
-    accent: '#44BD32',
+    accent: '#338626',
     dark: '#333333',
     light: '#484848',
     silver: '#666666',

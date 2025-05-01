@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     width: '85%',
-    backgroundColor: '#44BD32',
+    backgroundColor: '#338626',
     borderRadius: 50,
     height: 56,
     flexDirection: 'row',

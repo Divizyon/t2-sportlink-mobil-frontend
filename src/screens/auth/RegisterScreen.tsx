@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   registerButton: {
-    backgroundColor: '#44BD32',
+    backgroundColor: '#338626',
     borderRadius: 8,
     height: 50,
     justifyContent: 'center',
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#44BD32',
+    color: '#338626',
     marginLeft: 4,
   },
   phonePrefix: {
