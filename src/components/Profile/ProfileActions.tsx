@@ -15,6 +15,7 @@ interface ProfileActionsProps {
   onEditProfile: () => void;
   onManageNotifications: () => void;
   onPrivacySettings: () => void;
+  onSessionHistory: () => void;
   onHelp: () => void;
   onLogout: () => void;
 }
@@ -26,6 +27,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   onEditProfile,
   onManageNotifications,
   onPrivacySettings,
+  onSessionHistory,
   onHelp,
   onLogout
 }) => {
@@ -62,6 +64,17 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <View style={styles.actionLeft}>
             <Ionicons name="shield-outline" size={22} color={themeColors.accent} />
             <Text style={[styles.actionText, { color: themeColors.text }]}>Gizlilik Ayarları</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.actionItem} 
+          onPress={onSessionHistory}
+        >
+          <View style={styles.actionLeft}>
+            <Ionicons name="time-outline" size={22} color={themeColors.accent} />
+            <Text style={[styles.actionText, { color: themeColors.text }]}>Giriş Yapılan Yerler</Text>
           </View>
           <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
         </TouchableOpacity>

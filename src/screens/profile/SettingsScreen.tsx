@@ -51,17 +51,19 @@ export const SettingsScreen = () => {
 
   const handleManageNotifications = () => {
     // TODO: Bildirim ayarları sayfasına yönlendir
-    console.log('Bildirim ayarları sayfasına yönlendirme');
+    navigation.navigate('NotificationSettings');
   };
 
   const handlePrivacySettings = () => {
-    // TODO: Gizlilik ayarları sayfasına yönlendir
-    console.log('Gizlilik ayarları sayfasına yönlendirme');
+    navigation.navigate('SecuritySettings');
   };
 
   const handleHelp = () => {
-    // TODO: Yardım sayfasına yönlendir
-    console.log('Yardım sayfasına yönlendirme');
+    navigation.navigate('Help');
+  };
+
+  const handleSessionHistory = () => {
+    navigation.navigate('SessionHistory');
   };
 
   return (
@@ -83,6 +85,7 @@ export const SettingsScreen = () => {
           onEditProfile={handleEditProfile}
           onManageNotifications={handleManageNotifications}
           onPrivacySettings={handlePrivacySettings}
+          onSessionHistory={handleSessionHistory}
           onHelp={handleHelp}
           onLogout={handleLogout}
         />

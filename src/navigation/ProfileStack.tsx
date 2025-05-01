@@ -3,11 +3,19 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import { HelpScreen } from '../screens/profile/settings/HelpScreen';
+import { SecuritySettingsScreen } from '../screens/profile/settings/SecuritySettingsScreen';
+import { SessionSettings } from '../screens/profile/settings/SessionSettings';
+import { NotificationSettingsScreen } from '../screens/profile/settings/NotificationSettingsScreen';
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
   Settings: undefined;
   EditProfile: undefined;
+  Help: undefined;
+  SecuritySettings: undefined;
+  SessionHistory: undefined;
+  NotificationSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -52,6 +60,38 @@ export const ProfileStack = () => {
             backgroundColor: '#fff',
           },
           headerShadowVisible: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="Help" 
+        component={HelpScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="SecuritySettings" 
+        component={SecuritySettingsScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="SessionHistory" 
+        component={SessionSettings}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="NotificationSettings" 
+        component={NotificationSettingsScreen}
+        options={{
+          headerShown: false,
           animation: 'slide_from_right'
         }}
       />
