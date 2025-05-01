@@ -215,7 +215,7 @@ export const AnnouncementDetailScreen: React.FC = () => {
             >
               {/* Duyuru Görseli */}
               <Image
-                source={{ uri: "https://img.freepik.com/free-vector/gradient-announcement-concept_23-2148829634.jpg" }}
+                source={{ uri: "https://t4.ftcdn.net/jpg/04/26/04/61/360_F_426046170_Bshw7CccMbBLIFd9PCdLdKv3XRSkgFMh.jpg" }}
                 style={styles.announcementImage}
                 resizeMode="cover"
               />

@@ -43,6 +43,40 @@ const SportCategories: React.FC<SportCategoriesProps> = ({
       contentContainerStyle={styles.contentContainer}
       style={styles.container}
     >
+      {/* Tümü seçeneği */}
+      <TouchableOpacity 
+        style={[
+          styles.categoryItem, 
+          { 
+            backgroundColor: !selectedSportId ? theme.colors.accent : theme.colors.card,
+            borderColor: !selectedSportId ? theme.colors.accent : theme.colors.border 
+          }
+        ]}
+        onPress={() => onSelectSport({ id: '', name: 'Tümü' } as Sport)}
+      >
+        <View 
+          style={[
+            styles.iconContainer, 
+            { backgroundColor: !selectedSportId ? theme.colors.white : theme.colors.accent + '20' }
+          ]}
+        >
+          <Ionicons 
+            name="apps-outline"
+            size={20} 
+            color={!selectedSportId ? theme.colors.accent : theme.colors.accent} 
+          />
+        </View>
+        <Text 
+          style={[
+            styles.categoryName,
+            { color: !selectedSportId ? theme.colors.white : theme.colors.text }
+          ]}
+          numberOfLines={1}
+        >
+          Tümü
+        </Text>
+      </TouchableOpacity>
+
       {sports.map((sport) => {
         const isSelected = selectedSportId === sport.id;
         const iconName = getSportIcon(sport.name);
@@ -66,6 +100,7 @@ const SportCategories: React.FC<SportCategoriesProps> = ({
               ]}
             >
               <Ionicons 
+                name={iconName}
                 size={16} 
                 color={isSelected ? theme.colors.accent : theme.colors.accent} 
               />
@@ -91,34 +126,33 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   contentContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingRight: 8,
   },
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    marginRight: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 2,
     elevation: 2,
   },
   iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 20,
+    height: 20,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 6,
   },
   categoryName: {
     fontWeight: '600',
-    fontSize: 14
+    fontSize: 13
   }
 });
 

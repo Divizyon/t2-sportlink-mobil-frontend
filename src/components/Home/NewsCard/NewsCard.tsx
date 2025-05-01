@@ -46,75 +46,68 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, onPress }) => {
     return 'newspaper-outline'; // default for news
   };
   
+  // Görsel var mı kontrol et
+  const hasImage = news.image_url && news.image_url.length > 0;
+  
   return (
     <TouchableOpacity 
       style={[styles.container, { backgroundColor: theme.colors.card }]}
       onPress={() => onPress(news)}
       activeOpacity={0.7}
     >
-      <View style={styles.headerRow}>
-        <View style={styles.sourceContainer}>
-          <View style={[styles.sourceIconContainer, { backgroundColor: theme.colors.accent + '20' }]}>
-            <Ionicons name={getSportIcon(news.sport.name)} size={14} color={theme.colors.accent} />
-          </View>
-          <Text style={[styles.sourceName, { color: theme.colors.text }]}>
-            {news.source}
-          </Text>
-        </View>
-        <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
-          {formatDate(news.created_at)}
-        </Text>
-      </View>
+
       
-      <View style={styles.contentContainer}>
-        <View style={styles.textContent}>
-          <Text style={[styles.sportCategory, { color: theme.colors.accent }]}>
-            {news.sport.name}
-          </Text>
-          <Text 
-            style={[styles.title, { color: theme.colors.text }]}
-            numberOfLines={2}
-          >
-            {news.title}
-          </Text>
-          {news.content && (
-            <Text 
-              style={[styles.summary, { color: theme.colors.textSecondary }]}
-              numberOfLines={2}
-            >
-              {news.content}
+      <View style={[styles.contentWrapper, { paddingTop: hasImage ? 0 : 16 }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.sourceContainer}>
+            <View style={[styles.sourceIconContainer, { backgroundColor: theme.colors.accent + '20' }]}>
+              <Ionicons name={getSportIcon(news.sport.name)} size={16} color={theme.colors.accent} />
+            </View>
+            <Text style={[styles.sourceName, { color: theme.colors.text }]}>
+              {news.source}
             </Text>
-          )}
+          </View>
+          
+          <View style={styles.dateContainer}>
+            <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} style={styles.dateIcon} />
+            <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
+              {formatDate(news.created_at)}
+            </Text>
+          </View>
         </View>
         
-        {news.image_url && (
-          <Image 
-            source={{ uri: news.image_url || 'https://via.placeholder.com/120' }} 
-            style={styles.image}
-            resizeMode="cover"
-          />
-        )}
-      </View>
-      
-      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="heart-outline" size={18} color={theme.colors.accent} />
-          <Text style={[styles.actionText, { color: theme.colors.accent }]}>
-            Beğen
+        <View style={styles.contentContainer}>
+          <View style={styles.textContent}>
+            <View style={[styles.sportCategoryBadge, { backgroundColor: theme.colors.accent + '15' }]}>
+              <Text style={[styles.sportCategory, { color: theme.colors.accent }]}>
+                {news.sport.name}
+              </Text>
+            </View>
+            
+            <Text 
+              style={[styles.title, { color: theme.colors.text }]}
+              numberOfLines={2}
+            >
+              {news.title}
+            </Text>
+            
+            {news.content && (
+              <Text 
+                style={[styles.summary, { color: theme.colors.textSecondary }]}
+                numberOfLines={3}
+              >
+                {news.content}
+              </Text>
+            )}
+          </View>
+        </View>
+        
+        <View style={styles.footer}>
+          <Text style={[styles.readMoreText, { color: theme.colors.accent }]}>
+            Devamını Oku
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="chatbubble-outline" size={18} color={theme.colors.textSecondary} />
-          <Text style={[styles.actionText, { color: theme.colors.textSecondary }]}>
-            Yorum
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="share-social-outline" size={18} color={theme.colors.textSecondary} />
-          <Text style={[styles.actionText, { color: theme.colors.textSecondary }]}>
-            Paylaş
-          </Text>
-        </TouchableOpacity>
+          <Ionicons name="chevron-forward" size={16} color={theme.colors.accent} />
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -122,15 +115,21 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 15,
+    borderRadius: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
-    marginHorizontal: 15,
+    overflow: 'hidden',
+  },
+  coverImage: {
+    width: '100%',
+    height: 180,
+  },
+  contentWrapper: {
+    padding: 16,
   },
   headerRow: {
     flexDirection: 'row',
@@ -143,9 +142,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sourceIconContainer: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -154,57 +153,54 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateIcon: {
+    marginRight: 4,
+  },
   dateText: {
     fontSize: 12,
     fontWeight: '500',
   },
   contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   textContent: {
     flex: 1,
-    marginRight: 12,
+  },
+  sportCategoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   sportCategory: {
     fontSize: 12,
     fontWeight: '600',
-    marginBottom: 6,
-    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 8,
     lineHeight: 22,
     letterSpacing: 0.2,
   },
   summary: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
+    fontSize: 14,
+    lineHeight: 20,
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-  },
-  actionButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 5,
+    justifyContent: 'flex-end',
   },
-  actionText: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 5,
+  readMoreText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginRight: 2,
   },
 });
 
