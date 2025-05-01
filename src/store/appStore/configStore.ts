@@ -14,7 +14,7 @@ export interface ConfigValues {
 
 // Ortam tabanlı yapılandırma değerleri
 const developmentConfig: ConfigValues = {
-  apiBaseUrl: 'http://192.168.131.117:3000/api',
+  apiBaseUrl: 'http://192.168.43.11:3000/api',
   apiTimeout: 10000,
   appName: 'SportVision',
   appVersion: '1.0.0',

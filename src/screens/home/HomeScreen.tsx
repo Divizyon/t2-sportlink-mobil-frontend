@@ -34,7 +34,7 @@ type RootStackParamList = {
   EventDetail: { eventId: string };
   EventsList: undefined;
   NewsDetail: { newsId: string };
-  AnnouncementDetail: { announcementId: string };
+  AnnouncementDetail: { announcementId: string; showAsModal?: boolean };
 };
 
 export const HomeScreen: React.FC = () => {
@@ -113,7 +113,10 @@ export const HomeScreen: React.FC = () => {
   
   // Duyuru detayına git
   const handleAnnouncementPress = (announcement: Announcement) => {
-    navigation.navigate('AnnouncementDetail', { announcementId: announcement.id });
+    navigation.navigate('AnnouncementDetail', { 
+      announcementId: announcement.id,
+      showAsModal: true // Modal olarak göster
+    });
   };
 
   // Profil sayfasına git

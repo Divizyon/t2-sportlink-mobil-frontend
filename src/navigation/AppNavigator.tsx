@@ -22,9 +22,6 @@ import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
-
-
-
 // App Screens
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 
@@ -33,6 +30,10 @@ import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDeta
 import { EventMapScreen } from '../screens/events/EventMapScreen/EventMapScreen';
 import { CreateEventScreen } from '../screens/events/CreateEventScreen';
 import { EditEventScreen } from '../screens/events/EditEventScreen';
+
+// Screens - News & Announcements
+import { NewsDetailScreen } from '../screens/news/NewsDetailScreen';
+import { AnnouncementDetailScreen } from '../screens/announcements/AnnouncementDetailScreen';
 
 // Navigation
 import { ProfileStack } from './ProfileStack';
@@ -54,6 +55,8 @@ type AppStackParamList = {
   EventMapScreen: { eventId: string };
   CreateEvent: undefined;
   EditEvent: { eventId: string };
+  NewsDetail: { newsId: string };
+  AnnouncementDetail: { announcementId: string };
 };
 
 type EventsStackParamList = {
@@ -248,6 +251,20 @@ export const AppNavigator = () => {
             options={{ 
               presentation: 'modal',
               animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' }
+            }}
+          />
+          <AppStack.Screen 
+            name="NewsDetail" 
+            component={NewsDetailScreen} 
+            options={{ presentation: 'card' }}
+          />
+          <AppStack.Screen 
+            name="AnnouncementDetail" 
+            component={AnnouncementDetailScreen} 
+            options={{ 
+              presentation: 'transparentModal',
+              headerShown: false,
               contentStyle: { backgroundColor: 'transparent' }
             }}
           />

@@ -263,38 +263,57 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         includeUnpublished: false
       });
       
-      console.log('Announcements API yanıtı alındı, işleniyor...');
+      console.log('Announcements API yanıtı alındı, işleniyor...', response);
       
       // API yanıt yapısını kontrol et
       if (response && response.success && response.data) {
-        // Doğru API yanıt yapısı: response.data.announcements şeklinde bir dizi
+        // İki olası yanıt yapısını kontrol et:
+        // 1. data.announcements (dizi olarak çoklu duyuru)
+        // 2. data.announcement (tekil duyuru objesi)
+        
         if (response.data.announcements && Array.isArray(response.data.announcements)) {
+          // Çoklu duyuru durumu (dizi)
           const announcements = response.data.announcements;
-          console.log('Duyurular başarıyla yüklendi:', announcements.length);
+          console.log('Duyurular dizisi başarıyla yüklendi:', announcements.length);
           
           set({ 
             announcements: announcements, 
             isLoadingAnnouncements: false 
           });
-        } else {
+        } 
+        else if (response.data.announcement) {
+          // Tek duyuru durumu (obje)
+          const announcement = response.data.announcement;
+          console.log('Tek duyuru başarıyla yüklendi:', announcement.id);
+          
+          // Tek duyuruyu dizi içine koyarak state'e aktar
+          set({ 
+            announcements: [announcement], 
+            isLoadingAnnouncements: false 
+          });
+        }
+        else {
           console.error('API yanıt yapısı beklenen formatta değil:', response);
           set({ 
             announcementsError: 'Duyuru verileri beklenmeyen formatta', 
-            isLoadingAnnouncements: false 
+            isLoadingAnnouncements: false,
+            announcements: [] // Boş dizi ile güncelle
           });
         }
       } else {
         console.error('API yanıtı başarısız veya veri içermiyor:', response);
         set({ 
-          announcementsError: response.message || 'Duyurular alınamadı', 
-          isLoadingAnnouncements: false 
+          announcementsError: response?.message || 'Duyurular alınamadı', 
+          isLoadingAnnouncements: false,
+          announcements: [] // Boş dizi ile güncelle
         });
       }
     } catch (error) {
       console.error('Duyuruları getirirken hata oluştu:', error);
       set({ 
         announcementsError: error instanceof Error ? error.message : 'Duyurular yüklenirken bir hata oluştu', 
-        isLoadingAnnouncements: false 
+        isLoadingAnnouncements: false,
+        announcements: [] // Boş dizi ile güncelle
       });
     }
   },
