@@ -76,6 +76,7 @@
 ### Profil Ekranı
 - [x] Profil görünümü
 - [x] Çıkış yapma
+- [x] Konum bilgisi ekleme/düzenleme
 
 ## Yapılacak İşler
 
@@ -104,4 +105,21 @@
 - [x] Çevrimdışı mod desteği eklendi
 - [x] DateTimePicker paketi daha modern ve stabil bir alternatifle değiştirildi
 - [x] Tutarlı tip kontrolü
-- [x] Asenkron işlemlerde performans optimizasyonu 
+- [x] Asenkron işlemlerde performans optimizasyonu
+
+## Frontend Geliştirme
+
+### Temel Özellikler
+- [x] Kullanıcı kaydı ve giriş 
+- [x] Ana sayfa akışı
+- [x] Profil sayfası
+- [x] Etkinlik oluşturma
+- [x] Etkinlik arama/filtreleme
+- [x] Google Maps entegrasyonu
+  - [x] Haritada etkinlik görüntüleme
+  - [x] Etkinliğe mesafe hesaplama
+  - [x] Yakındaki etkinlikleri gerçek mesafeye göre sıralama
+  - [x] Marker ile etkileşim ve navigasyon desteği
+  - [x] Mesafe aralığına göre filtreleme
+  - [x] Tip güvenliği ve performans optimizasyonları
+  - [x] DiscoverScreen ve NearbyEventCard'da mesafe gösterimi 

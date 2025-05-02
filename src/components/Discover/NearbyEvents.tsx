@@ -18,43 +18,28 @@ export const NearbyEvents: React.FC<NearbyEventsProps> = ({
 }) => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<any>();
-  
-  // Mock veriler (gerçek implementasyonda API'den gelecek)
-  const mockEvents = [
-    {
-      id: '1',
-      title: 'Halı Saha Maçı',
-      sport: { name: 'Futbol', icon: 'football' },
-      creator: { first_name: 'Ahmet', last_name: 'Y.' },
-      event_date: new Date(),
-      start_time: new Date(),
-      location_name: 'Beşiktaş Halı Saha',
-      location_distance: 1.5,
-      participant_count: 8,
-      max_participants: 14,
-      status: 'active'
-    },
-    {
-      id: '2',
-      title: 'Basketbol',
-      sport: { name: 'Basketbol', icon: 'basketball' },
-      creator: { first_name: 'Ayşe', last_name: 'K.' },
-      event_date: new Date(Date.now() + 86400000), // Yarın
-      start_time: new Date(),
-      location_name: 'Kadıköy Basketbol Sahası',
-      location_distance: 3.2,
-      participant_count: 6,
-      max_participants: 12,
-      status: 'active'
-    }
-  ];
-  
-  // Geçici olarak mockEvents kullan
-  const displayEvents = events.length > 0 ? events : mockEvents;
 
   const handleEventPress = (eventId: string) => {
     navigation.navigate('EventDetail', { eventId });
   };
+
+  // Veri olmaması durumu için boş durum bileşeni
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons
+        name="location-outline"
+        size={48}
+        color={theme.colors.textSecondary}
+        style={styles.emptyIcon}
+      />
+      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+        Yakınınızda etkinlik bulunamadı
+      </Text>
+      <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary, opacity: 0.7 }]}>
+        Konum izni verdiğinizden emin olun veya başka bir konumdan arayın
+      </Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -73,13 +58,13 @@ export const NearbyEvents: React.FC<NearbyEventsProps> = ({
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={theme.colors.accent} />
         </View>
-      ) : (
+      ) : events.length > 0 ? (
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollViewContent}
         >
-          {displayEvents.map((event) => (
+          {events.map((event) => (
             <NearbyEventCard 
               key={event.id} 
               event={event} 
@@ -87,6 +72,8 @@ export const NearbyEvents: React.FC<NearbyEventsProps> = ({
             />
           ))}
         </ScrollView>
+      ) : (
+        renderEmptyState()
       )}
     </View>
   );
@@ -119,5 +106,27 @@ const styles = StyleSheet.create({
     height: 160,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyContainer: {
+    height: 160,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    backgroundColor: 'rgba(0,0,0,0.02)',
+    borderRadius: 12,
+  },
+  emptyIcon: {
+    marginBottom: 8,
+    opacity: 0.6,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   }
 }); 

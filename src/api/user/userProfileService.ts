@@ -67,7 +67,7 @@ export const userProfileService = {
           defaultLocation: userData.default_location_latitude && userData.default_location_longitude ? {
             latitude: userData.default_location_latitude,
             longitude: userData.default_location_longitude,
-            locationName: 'Belirtilmemiş'
+            locationName: 'Kullanıcı Konumu'
           } : undefined
         };
         
@@ -172,12 +172,35 @@ export const userProfileService = {
   },
 
   /**
-   * Varsayılan konum bilgisini günceller
+   * Kullanıcı konum bilgisini günceller
    */
-  updateDefaultLocation: async (location: UserLocation): Promise<ApiResponse<{ defaultLocation: UserLocation }>> => {
+  updateUserLocation: async (location: UserLocation): Promise<ApiResponse<{ defaultLocation: UserLocation }>> => {
     try {
-      const response = await apiClient.put('/users/profile/location', location);
-      return response.data;
+      // Frontend'den gelen koordinat verilerini backend formatına dönüştür
+      const requestData = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        locationName: location.locationName || 'Kullanıcı Konumu'
+      };
+
+      const response = await apiClient.put('/users/profile/location', requestData);
+      const apiData = response.data;
+
+      if (apiData.success && apiData.data) {
+        return {
+          success: true,
+          data: {
+            defaultLocation: {
+              latitude: apiData.data.defaultLocation?.latitude || location.latitude,
+              longitude: apiData.data.defaultLocation?.longitude || location.longitude,
+              locationName: apiData.data.defaultLocation?.locationName || location.locationName
+            }
+          },
+          message: apiData.message || 'Konum bilgisi başarıyla güncellendi.'
+        };
+      }
+
+      return apiData;
     } catch (error) {
       console.error('Konum güncelleme hatası:', error);
       return {

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
+import { useMapsStore } from '../../store/appStore/mapsStore';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 
 interface NearbyEventCardProps {
@@ -13,6 +14,10 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const { theme } = useThemeStore();
   const [isJoined, setIsJoined] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [distance, setDistance] = useState<string | null>(null);
+  const [isLoadingDistance, setIsLoadingDistance] = useState(false);
+  
+  const { lastLocation, calculateDistance } = useMapsStore();
 
   const getSportIcon = (sportName: string) => {
     const sport = sportName.toLowerCase();
@@ -22,6 +27,34 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
     if (sport.includes('voleybol')) return 'baseball-outline';
     return 'fitness-outline';
   };
+
+  // Etkinliğin mesafesini hesapla
+  useEffect(() => {
+    const fetchDistance = async () => {
+      if (!lastLocation || !event.location_latitude || !event.location_longitude) {
+        return;
+      }
+      
+      setIsLoadingDistance(true);
+      
+      try {
+        const origin = `${lastLocation.latitude},${lastLocation.longitude}`;
+        const destination = `${event.location_latitude},${event.location_longitude}`;
+        
+        const result = await calculateDistance(origin, destination);
+        
+        if (result && result.distance) {
+          setDistance(result.distance.text);
+        }
+      } catch (error) {
+        console.error('Mesafe hesaplanırken hata:', error);
+      } finally {
+        setIsLoadingDistance(false);
+      }
+    };
+    
+    fetchDistance();
+  }, [lastLocation, event]);
 
   // Tarih ve saat formatları
   const formatEventDate = (date: Date) => {
@@ -127,6 +160,21 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
               numberOfLines={1}
             >
               {event.location_name}
+            </Text>
+          </View>
+
+          {/* Mesafe */}
+          <View style={styles.infoRow}>
+            <Ionicons name="navigate-outline" size={16} color={theme.colors.textSecondary} />
+            <Text 
+              style={[styles.infoText, { color: theme.colors.textSecondary }]}
+              numberOfLines={1}
+            >
+              {isLoadingDistance 
+                ? "Mesafe hesaplanıyor..." 
+                : distance 
+                  ? `${distance} uzaklıkta` 
+                  : "Mesafe bilgisi yok"}
             </Text>
           </View>
 

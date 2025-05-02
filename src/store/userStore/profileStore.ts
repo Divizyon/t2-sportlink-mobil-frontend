@@ -320,7 +320,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       });
       
       // API servisini çağır
-      const response = await userProfileService.updateDefaultLocation(location);
+      const response = await userProfileService.updateUserLocation(location);
       
       // API isteği tamamlandı
       useApiStore.getState().completeRequest(apiRequestId, 200);
@@ -383,13 +383,35 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  // Kullanıcı konumunu güncelle
-  updateUserLocation: async (location) => {
+  // Konum bilgisini güncelle
+  updateUserLocation: async (location: UserLocation) => {
     try {
       set({ isUpdating: true, error: null, successMessage: null });
       
-      // updateDefaultLocation fonksiyonunu kullan
-      return await get().updateDefaultLocation(location);
+      // API isteği kimliği oluştur
+      const apiRequestId = useApiStore.getState().addRequest({
+        url: '/users/profile/location',
+        method: 'PUT'
+      });
+      
+      // API servisini çağır - updateDefaultLocation yerine updateUserLocation kullan
+      const response = await userProfileService.updateUserLocation(location);
+      
+      // API isteği tamamlandı
+      useApiStore.getState().completeRequest(apiRequestId, 200);
+      
+      if (response.success && response.data) {
+        // State'i güncelle
+        set({
+          defaultLocation: response.data.defaultLocation,
+          isUpdating: false,
+          successMessage: response.message || 'Konum bilgisi başarıyla güncellendi.'
+        });
+        
+        return true;
+      } else {
+        throw new Error(response.error || 'Konum bilgisi güncellenemedi');
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Konum bilgisi güncellenemedi';
       

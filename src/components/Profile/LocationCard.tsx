@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserLocation } from '../../store/userStore/profileStore';
+import * as Location from 'expo-location';
 
 interface LocationCardProps {
   location: UserLocation | null;
@@ -19,6 +20,58 @@ export const LocationCard: React.FC<LocationCardProps> = ({
   themeColors,
   onEditLocation
 }) => {
+  const [displayAddress, setDisplayAddress] = useState<string | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+
+  // Konum verilerinden adres bilgisini çözümle
+  useEffect(() => {
+    const getAddressFromCoordinates = async () => {
+      if (!location) return;
+      
+      // Eğer anlamlı bir konum adı zaten varsa ve "Kullanıcı Konumu" değilse, onu kullan
+      if (location.locationName && location.locationName !== 'Kullanıcı Konumu' && location.locationName !== 'Belirtilmemiş') {
+        setDisplayAddress(location.locationName);
+        return;
+      }
+      
+      setIsLoadingAddress(true);
+      try {
+        const addressResponse = await Location.reverseGeocodeAsync({
+          latitude: location.latitude,
+          longitude: location.longitude
+        });
+        
+        if (addressResponse && addressResponse.length > 0) {
+          const address = addressResponse[0];
+          
+          // Anlamlı adres parçalarını birleştir
+          const addressParts = [
+            address.name,
+            address.street,
+            address.district,
+            address.city,
+            address.region
+          ].filter(Boolean);
+          
+          const formattedAddress = addressParts.length > 0 
+            ? addressParts.join(', ')
+            : 'Belirtilmemiş Konum';
+            
+          setDisplayAddress(formattedAddress);
+        } else {
+          setDisplayAddress(location.locationName || 'Belirtilmemiş Konum');
+        }
+      } catch (error) {
+        console.error('Adres çözümleme hatası:', error);
+        setDisplayAddress(location.locationName || 'Belirtilmemiş Konum');
+      } finally {
+        setIsLoadingAddress(false);
+      }
+    };
+    
+    getAddressFromCoordinates();
+  }, [location]);
+
   if (!location) {
     return (
       <View style={[styles.container, { backgroundColor: themeColors.cardBackground }]}>
@@ -49,12 +102,23 @@ export const LocationCard: React.FC<LocationCardProps> = ({
           <Ionicons name="location" size={24} color="white" />
         </View>
         <View style={styles.locationInfo}>
-          <Text style={[styles.locationName, { color: themeColors.text }]}>
-            {location.locationName}
-          </Text>
-          <Text style={[styles.coordinates, { color: themeColors.textSecondary }]}>
-            {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
-          </Text>
+          {isLoadingAddress ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={themeColors.accent} />
+              <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>
+                Adres bilgisi alınıyor...
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={[styles.locationName, { color: themeColors.text }]}>
+                {displayAddress || location.locationName || 'Belirtilmemiş Konum'}
+              </Text>
+              <Text style={[styles.coordinates, { color: themeColors.textSecondary }]}>
+                {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+              </Text>
+            </>
+          )}
         </View>
       </View>
       
@@ -64,7 +128,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
       >
         <Ionicons name="map-outline" size={16} color={themeColors.accent} />
         <Text style={[styles.mapButtonText, { color: themeColors.accent }]}>
-          Haritada Göster
+          Konumu Düzenle
         </Text>
       </TouchableOpacity>
     </View>
@@ -137,4 +201,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 6,
   },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    marginLeft: 8,
+  }
 }); 

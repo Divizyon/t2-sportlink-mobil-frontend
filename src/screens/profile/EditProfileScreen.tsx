@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Linking, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfileStore } from '../../store/userStore/profileStore';
 import { useThemeStore } from '../../store/appStore/themeStore';
+import { useMapsStore } from '../../store/appStore/mapsStore';
 import * as Location from 'expo-location';
 
 type EditProfileScreenProps = {
@@ -13,6 +14,7 @@ type EditProfileScreenProps = {
 const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route }) => {
   const { theme } = useThemeStore();
   const { userInfo, defaultLocation, updateUserInfo, updateUserLocation, isUpdating, error, successMessage, clearErrors, clearMessages, fetchUserProfile } = useProfileStore();
+  const { setLastLocation } = useMapsStore();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -24,13 +26,21 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
   });
 
   // Konum bilgileri
-  const [locationData, setLocationData] = useState({
+  const [locationData, setLocationData] = useState<{
+    latitude: string;
+    longitude: string;
+    displayAddress: string;
+  }>({
     latitude: '',
     longitude: '',
+    displayAddress: 'Konum bilgisi yok'
   });
   
   // Konum alma işlemi durumu
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  
+  // Konum izni durumu
+  const [locationPermission, setLocationPermission] = useState<string | null>(null);
   
   // Validation errors
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -49,12 +59,74 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
     
     // Konum bilgilerini doldur
     if (defaultLocation) {
+      const fetchAddressFromCoordinates = async () => {
+        try {
+          const lat = defaultLocation.latitude;
+          const lng = defaultLocation.longitude;
+          
+          let displayAddress = defaultLocation.locationName || 'Konum bilgisi';
+          
+          // Eğer locationName (adres bilgisi) yoksa veya varsayılan ise, gerçek adresi al
+          if (!defaultLocation.locationName || defaultLocation.locationName === 'Kullanıcı Konumu') {
+            try {
+              // Koordinatlardan adres bilgisini al
+              const addressResponse = await Location.reverseGeocodeAsync({
+                latitude: lat,
+                longitude: lng
+              });
+              
+              if (addressResponse && addressResponse.length > 0) {
+                const address = addressResponse[0];
+                
+                // Anlamlı adres parçalarını birleştir
+                const addressParts = [
+                  address.name,
+                  address.street,
+                  address.district,
+                  address.city,
+                  address.region
+                ].filter(Boolean);
+                
+                // Adres birleştirme
+                if (addressParts.length > 0) {
+                  displayAddress = addressParts.join(', ');
+                  
+                  // Maps store'u güncelle
+                  setLastLocation(lat, lng, displayAddress);
+                }
+              }
+            } catch (error) {
+              console.error('Adres bilgisi alınamadı:', error);
+            }
+          }
+          
+          setLocationData({
+            latitude: String(lat),
+            longitude: String(lng),
+            displayAddress
+          });
+        } catch (error) {
+          console.error('Konum verilerini işlerken hata:', error);
+          setLocationData({
+            latitude: defaultLocation.latitude ? String(defaultLocation.latitude) : '',
+            longitude: defaultLocation.longitude ? String(defaultLocation.longitude) : '',
+            displayAddress: 'Konum bilgisi'
+          });
+        }
+      };
+      
+      fetchAddressFromCoordinates();
+    } else {
       setLocationData({
-        latitude: String(defaultLocation.latitude),
-        longitude: String(defaultLocation.longitude),
+        latitude: '',
+        longitude: '',
+        displayAddress: 'Konum bilgisi yok'
       });
     }
-  }, [userInfo, defaultLocation]);
+    
+    // Konum izinlerini kontrol et
+    checkLocationPermissions();
+  }, [userInfo, defaultLocation, setLastLocation]);
 
   // Başarı durumunda
   useEffect(() => {
@@ -77,25 +149,15 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
     }
   }, [error, clearErrors]);
 
+  // Konum izinlerini kontrol et
+  const checkLocationPermissions = async () => {
+    const { status } = await Location.getForegroundPermissionsAsync();
+    setLocationPermission(status);
+  };
+
   // Form değerlerini güncelle
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // İlgili hatayı temizle
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-
-  // Konum değerlerini güncelle
-  const handleLocationChange = (field: string, value: string) => {
-    setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -125,54 +187,104 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
       setLocationData({
         latitude: String(defaultLocation.latitude),
         longitude: String(defaultLocation.longitude),
+        displayAddress: defaultLocation.locationName || 'Konum bilgisi'
       });
     } else {
       setLocationData({
         latitude: '',
         longitude: '',
+        displayAddress: 'Konum bilgisi yok'
       });
     }
     
     setValidationErrors({});
   };
 
+  // Uygulama ayarlarını aç
+  const openAppSettings = () => {
+    if (Platform.OS === 'ios') {
+      Linking.openURL('app-settings:');
+    } else {
+      Linking.openSettings();
+    }
+  };
+
   // Mevcut konumu al
   const getCurrentLocation = async () => {
     setIsLoadingLocation(true);
     try {
-      // Konum izni iste
+      // Konum izni kontrol et
       const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermission(status);
       
       if (status !== 'granted') {
         Alert.alert(
-          'İzin Gerekli', 
-          'Konumunuzu almak için izin vermeniz gerekiyor.',
-          [{ text: 'Tamam' }]
+          'Konum İzni Gerekli', 
+          'Konumunuzu almak için izin vermeniz gerekiyor. Ayarlar sayfasından konum izni verebilirsiniz.',
+          [
+            { text: 'İptal', style: 'cancel' },
+            { text: 'Ayarları Aç', onPress: openAppSettings }
+          ]
         );
         setIsLoadingLocation(false);
         return;
       }
       
-      // Mevcut konum bilgisini al
+      // Mevcut konum bilgisini al (daha yüksek doğruluk ve zaman aşımı ile)
       const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High
+        accuracy: Location.Accuracy.Highest,
+        timeInterval: 5000,
+        mayShowUserSettingsDialog: true
       });
+      
+      const lat = location.coords.latitude;
+      const lng = location.coords.longitude;
+      
+      // Adres bilgisini al
+      let displayAddress = 'Konum alındı';
+      try {
+        const addressResponse = await Location.reverseGeocodeAsync({
+          latitude: lat,
+          longitude: lng
+        });
+        
+        if (addressResponse && addressResponse.length > 0) {
+          const address = addressResponse[0];
+          const addressParts = [
+            address.name,
+            address.street,
+            address.district,
+            address.city,
+            address.region
+          ].filter(Boolean);
+          
+          displayAddress = addressParts.length > 0 
+            ? addressParts.join(', ')
+            : 'Konum alındı';
+        }
+      } catch (error) {
+        console.error('Adres alınamadı:', error);
+      }
       
       // Konum bilgilerini güncelle
       setLocationData({
-        latitude: String(location.coords.latitude),
-        longitude: String(location.coords.longitude),
+        latitude: String(lat),
+        longitude: String(lng),
+        displayAddress
       });
       
       Alert.alert(
         'Konum Alındı', 
-        'Mevcut konumunuz başarıyla alındı.',
+        `Konumunuz başarıyla alındı: ${displayAddress}`,
         [{ text: 'Tamam' }]
       );
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
+      console.error('Konum alma hatası:', errorMessage);
+      
       Alert.alert(
-        'Hata', 
-        'Konum alınırken bir hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'),
+        'Konum Alınamadı', 
+        'Konumunuz alınırken bir hata oluştu. Lütfen konum servislerinin açık olduğundan emin olun.',
         [{ text: 'Tamam' }]
       );
     } finally {
@@ -192,25 +304,10 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
       errors.lastName = 'Soyisim alanı zorunludur';
     }
     
-    // Konum doğrulama
-    if (locationData.latitude && !isValidCoordinate(parseFloat(locationData.latitude), true)) {
-      errors.latitude = 'Geçerli bir enlem değeri giriniz (-90 ile 90 arası)';
-    }
-    
-    if (locationData.longitude && !isValidCoordinate(parseFloat(locationData.longitude), false)) {
-      errors.longitude = 'Geçerli bir boylam değeri giriniz (-180 ile 180 arası)';
-    }
+    // Konum doğrulama - artık manuel giriş olmadığı için kaldırılabilir
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  };
-  
-  // Koordinat doğrulama yardımcı fonksiyonu
-  const isValidCoordinate = (value: number, isLatitude: boolean): boolean => {
-    if (isNaN(value)) return false;
-    return isLatitude 
-      ? value >= -90 && value <= 90 
-      : value >= -180 && value <= 180;
   };
 
   // Değişiklikleri kaydet
@@ -244,18 +341,33 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
         defaultLocation.longitude !== lng;
       
       if (locationChanged) {
-        const locationSuccess = await updateUserLocation({
-          latitude: lat,
-          longitude: lng,
-          locationName: "Kullanıcı Konumu"
-        });
-        
-        if (!locationSuccess && success) {
-          Alert.alert(
-            'Kısmi Başarı',
-            'Profil bilgileriniz güncellendi fakat konum bilgisi güncellenemedi.'
-          );
-          return;
+        try {
+          // Konum bilgisini güncelle
+          const locationSuccess = await updateUserLocation({
+            latitude: lat,
+            longitude: lng,
+            locationName: locationData.displayAddress
+          });
+          
+          // Maps store'daki konum bilgisini de güncelle
+          if (locationSuccess) {
+            setLastLocation(lat, lng, locationData.displayAddress);
+          } else if (success) {
+            Alert.alert(
+              'Kısmi Başarı',
+              'Profil bilgileriniz güncellendi fakat konum bilgisi güncellenemedi.'
+            );
+            return;
+          }
+        } catch (error) {
+          console.error('Konum güncelleme hatası:', error);
+          if (success) {
+            Alert.alert(
+              'Kısmi Başarı',
+              'Profil bilgileriniz güncellendi fakat konum bilgisi güncellenemedi.'
+            );
+            return;
+          }
         }
       }
     }
@@ -280,8 +392,6 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-     
-      
       <ScrollView style={styles.scrollView}>
         <View style={styles.formContainer}>
           {/* İsim */}
@@ -396,6 +506,24 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
           {/* Konum Bilgileri */}
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Konum Bilgileri</Text>
+          </View>
+          
+          {/* Konum Kartı */}
+          <View style={[styles.locationCard, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.locationInfo}>
+              <Ionicons name="location" size={24} color={theme.colors.accent} />
+              <View style={styles.locationDetails}>
+                <Text style={[styles.locationText, { color: theme.colors.text }]}>
+                  {locationData.displayAddress}
+                </Text>
+                {locationData.latitude && locationData.longitude ? (
+                  <Text style={[styles.locationCoords, { color: theme.colors.textSecondary }]}>
+                    {locationData.latitude.substring(0, 7)}, {locationData.longitude.substring(0, 7)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            
             <TouchableOpacity 
               style={[styles.locationButton, { backgroundColor: theme.colors.accent }]}
               onPress={getCurrentLocation}
@@ -404,60 +532,26 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation, route
               {isLoadingLocation ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
-                <Text style={styles.locationButtonText}>Mevcut Konumu Al</Text>
+                <>
+                  <Ionicons name="navigate" size={16} color="white" style={styles.buttonIcon} />
+                  <Text style={styles.locationButtonText}>Konumumu Kullan</Text>
+                </>
               )}
             </TouchableOpacity>
           </View>
           
-          {/* Enlem */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Enlem (Latitude)</Text>
-            <TextInput
-              style={[
-                styles.input, 
-                { 
-                  backgroundColor: theme.colors.cardBackground,
-                  color: theme.colors.text,
-                  borderColor: validationErrors.latitude ? theme.colors.error : theme.colors.border 
-                }
-              ]}
-              placeholder="Örn: 41.0082"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={locationData.latitude}
-              onChangeText={(text) => handleLocationChange('latitude', text)}
-              keyboardType="numeric"
-            />
-            {validationErrors.latitude ? (
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                {validationErrors.latitude}
+          {/* Konum izin durumu mesajı */}
+          {locationPermission !== 'granted' && (
+            <TouchableOpacity 
+              style={[styles.permissionAlert, { backgroundColor: '#FFF3F3' }]}
+              onPress={openAppSettings}
+            >
+              <Ionicons name="warning-outline" size={20} color={theme.colors.error} />
+              <Text style={[styles.permissionText, { color: theme.colors.error }]}>
+                Konum izni verilmedi. Konumunuzu almak için izin verin.
               </Text>
-            ) : null}
-          </View>
-          
-          {/* Boylam */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Boylam (Longitude)</Text>
-            <TextInput
-              style={[
-                styles.input, 
-                { 
-                  backgroundColor: theme.colors.cardBackground,
-                  color: theme.colors.text,
-                  borderColor: validationErrors.longitude ? theme.colors.error : theme.colors.border 
-                }
-              ]}
-              placeholder="Örn: 28.9784"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={locationData.longitude}
-              onChangeText={(text) => handleLocationChange('longitude', text)}
-              keyboardType="numeric"
-            />
-            {validationErrors.longitude ? (
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                {validationErrors.longitude}
-              </Text>
-            ) : null}
-          </View>
+            </TouchableOpacity>
+          )}
           
           {/* Butonlar */}
           <View style={styles.buttonContainer}>
@@ -560,14 +654,58 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  locationButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  locationCard: {
     borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  locationDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  locationText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  locationCoords: {
+    fontSize: 14,
+  },
+  locationButton: {
+    height: 44,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   locationButtonText: {
     color: 'white',
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  permissionAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  permissionText: {
+    marginLeft: 8,
+    flex: 1,
     fontSize: 14,
   },
   buttonContainer: {

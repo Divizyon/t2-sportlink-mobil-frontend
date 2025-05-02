@@ -5,6 +5,14 @@
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*", "src/*"]
-    }
+    },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "jsx": "react-native"
   }
 }

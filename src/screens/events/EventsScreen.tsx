@@ -589,17 +589,14 @@ export const EventsScreen: React.FC = () => {
                       }}
                       title={event.title}
                       description={event.location_name}
-                      onCalloutPress={() => {
+                      pinColor={theme.colors.accent}
+                      onPress={() => {
                         setMapModalVisible(false);
                         setTimeout(() => {
                           navigation.navigate('EventDetail', { eventId: event.id });
                         }, 300);
                       }}
-                    >
-                      <View style={[styles.markerContainer, {backgroundColor: theme.colors.accent}]}>
-                        <Ionicons name="location" size={20} color="white" />
-                      </View>
-                    </Marker>
+                    />
                   );
                 }
                 return null;
@@ -749,16 +746,7 @@ export const EventsScreen: React.FC = () => {
           <Text style={[styles.title, { color: theme.colors.text }]}>
             Etkinlikler
           </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            {isDateFilterActive && (selectedMonths2025.length > 0 || selectedMonths2026.length > 0)
-              ? `${getSelectedMonthsText()} etkinlikleri (${sortedEvents.length})`
-              : isSearchActive 
-                ? `${searchResults.length} sonuç bulundu`
-                : totalEvents > 0 
-                  ? `${totalEvents} etkinlik arasından keşfet`
-                  : ''
-            }
-          </Text>
+          
         </View>
       </Animated.View>
       
@@ -861,15 +849,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 15,
-    marginTop: 4,
-    opacity: 0.7,
-  },
+ 
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',

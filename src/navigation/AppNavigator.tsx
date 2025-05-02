@@ -201,7 +201,7 @@ const TabNavigator = () => {
 };
 
 export const AppNavigator = () => {
-  const { isAuthenticated, checkAuth } = useAuthStore();
+  const {isAuthenticated, checkAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const { theme } = useThemeStore();
 

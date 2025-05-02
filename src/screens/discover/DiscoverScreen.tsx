@@ -13,6 +13,8 @@ import { useThemeStore } from '../../store/appStore/themeStore';
 import * as Location from 'expo-location';
 import { useProfileStore } from '../../store/userStore/profileStore';
 import { useNavigation } from '@react-navigation/native';
+import { useMapsStore } from '../../store/appStore/mapsStore';
+import { useEventStore } from '../../store/eventStore/eventStore';
 
 // Doğrudan her bir bileşeni import ediyoruz
 import { DiscoverHeader } from '../../components/Discover/DiscoverHeader';
@@ -30,25 +32,29 @@ export const DiscoverScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Kullanıcının konumu
-  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  // Maps ve Event store'ları kullan
+  const { setLastLocation } = useMapsStore();
+  const { 
+    nearbyEvents, 
+    fetchNearbyEvents, 
+    isLoading: isLoadingEvents 
+  } = useEventStore();
   
-  // API veri durumları
-  const [nearbyEvents, setNearbyEvents] = useState<any[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(true);
+  // Diğer yükleme durumları
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [loadingFacilities, setLoadingFacilities] = useState(true);
   
-  // Kullanıcının konumunu al
+  // Kullanıcının konumunu al ve store'a kaydet
   useEffect(() => {
     const getUserLocation = async () => {
       try {
         // Önce profil sayfasından kaydedilen konum var mı diye kontrol et
         if (defaultLocation) {
-          setUserLocation({
-            latitude: defaultLocation.latitude,
-            longitude: defaultLocation.longitude
-          });
+          // defaultLocation'dan sadece latitude ve longitude kullan
+          setLastLocation(
+            defaultLocation.latitude,
+            defaultLocation.longitude
+          );
           return;
         }
         
@@ -61,7 +67,6 @@ export const DiscoverScreen: React.FC = () => {
             'Yakındaki etkinlikleri görebilmek için konum izni vermeniz gerekiyor.',
             [{ text: 'Tamam' }]
           );
-          setLoadingEvents(false);
           return;
         }
         
@@ -70,10 +75,33 @@ export const DiscoverScreen: React.FC = () => {
           accuracy: Location.Accuracy.Balanced
         });
         
-        setUserLocation({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude
-        });
+        // Konum bilgisini mapsStore'a kaydet
+        setLastLocation(
+          location.coords.latitude,
+          location.coords.longitude
+        );
+        
+        // Ters geocoding ile adres bilgisini al
+        try {
+          const addressResponse = await Location.reverseGeocodeAsync({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude
+          });
+          
+          if (addressResponse && addressResponse.length > 0) {
+            const address = addressResponse[0];
+            const addressStr = `${address.street || ''} ${address.name || ''}, ${address.district || ''}, ${address.city || ''}`;
+            
+            // Adres bilgisini konum ile birlikte kaydet
+            setLastLocation(
+              location.coords.latitude,
+              location.coords.longitude,
+              addressStr
+            );
+          }
+        } catch (error) {
+          console.error('Adres alınamadı:', error);
+        }
       } catch (error) {
         console.error('Konum alınamadı:', error);
         Alert.alert(
@@ -81,43 +109,24 @@ export const DiscoverScreen: React.FC = () => {
           'Konum bilgisi alınamadı. Lütfen daha sonra tekrar deneyin.',
           [{ text: 'Tamam' }]
         );
-        setLoadingEvents(false);
       }
     };
     
     getUserLocation();
   }, [defaultLocation]);
   
-  // Konum bilgisi değiştiğinde yakındaki etkinlikleri getir
+  // Maps store'daki konum değiştiğinde yakındaki etkinlikleri getir
   useEffect(() => {
-    if (userLocation) {
-      fetchNearbyEvents();
-    }
-  }, [userLocation]);
-  
-  // Yakındaki etkinlikleri getir
-  const fetchNearbyEvents = async () => {
-    if (!userLocation) return;
+    const lastLocation = useMapsStore.getState().lastLocation;
     
-    setLoadingEvents(true);
-    try {
-      const response = await eventService.getNearbyEvents({
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
+    if (lastLocation) {
+      fetchNearbyEvents({
+        latitude: lastLocation.latitude,
+        longitude: lastLocation.longitude,
         radius: 10 // 10 km yarıçapında
       });
-      
-      if (response.success && response.data && response.data.events) {
-        setNearbyEvents(response.data.events);
-      } else {
-        console.error('Yakındaki etkinlikler alınamadı:', response.message);
-      }
-    } catch (error) {
-      console.error('Yakındaki etkinlikler alınamadı:', error);
-    } finally {
-      setLoadingEvents(false);
     }
-  };
+  }, [useMapsStore.getState().lastLocation]);
   
   // Mock veri yükleme fonksiyonu (şimdilik sadece arkadaşlar ve tesisler)
   const loadData = async () => {
@@ -143,8 +152,14 @@ export const DiscoverScreen: React.FC = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      if (userLocation) {
-        await fetchNearbyEvents();
+      const lastLocation = useMapsStore.getState().lastLocation;
+      
+      if (lastLocation) {
+        await fetchNearbyEvents({
+          latitude: lastLocation.latitude,
+          longitude: lastLocation.longitude,
+          radius: 10
+        });
       }
       await loadData();
     } catch (error) {
@@ -202,7 +217,7 @@ export const DiscoverScreen: React.FC = () => {
         
         {/* Yakındaki Etkinlikler */}
         <NearbyEvents 
-          isLoading={loadingEvents} 
+          isLoading={isLoadingEvents} 
           events={nearbyEvents}
           onSeeAll={handleSeeAllEvents}
         />
