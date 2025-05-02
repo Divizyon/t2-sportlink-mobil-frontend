@@ -42,7 +42,10 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow the app to use your location."
         }
-      ]
+      ],
+      ["react-native-maps", {
+        "isInstalled": true
+      }]
     ],
     "web": {
       "favicon": "./assets/favicon.png"
