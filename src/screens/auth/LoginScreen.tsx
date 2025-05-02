@@ -21,6 +21,7 @@ import { InputField } from '../../components/InputField/InputField';
 import { Button } from '../../components/Button/Button';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useAuthStore } from '../../store/userStore/authStore';
+import { useDeviceStore } from '../../store/userStore/deviceStore';
 import { loginSchema, validateWithSchema } from '../../utils/validators/yupValidators';
 import { getConfigValues } from '../../store/appStore/configStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,6 +54,7 @@ export const LoginScreen: React.FC = () => {
   const route = useRoute();
   const { theme } = useThemeStore();
   const { login, isLoading, isAuthenticated, error, message, clearMessages } = useAuthStore();
+  const { registerDeviceToken, generateDeviceToken } = useDeviceStore();
   
   // Route'dan gelen email parametresini al
   const params = route.params as LoginScreenParams | undefined;
@@ -60,6 +62,15 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
+  // Uygulama başladığında cihaz token'ını oluştur
+  useEffect(() => {
+    const initDeviceToken = async () => {
+      await generateDeviceToken();
+    };
+    
+    initDeviceToken();
+  }, []);
   
   // Route parametresi değiştiğinde email'i güncelle
   useEffect(() => {
@@ -148,8 +159,17 @@ export const LoginScreen: React.FC = () => {
       const loginSuccess = await login({ email, password });
       console.log('Login işlemi tamamlandı, sonuç:', loginSuccess ? 'Başarılı' : 'Başarısız');
       
-      // Giriş başarısız olduysa ve mesaj yoksa varsayılan mesaj göster
-      if (!loginSuccess && !error) {
+      // Giriş başarılıysa cihaz token'ını kaydet
+      if (loginSuccess) {
+        try {
+          await registerDeviceToken();
+          console.log('Cihaz token\'ı başarıyla kaydedildi');
+        } catch (tokenError) {
+          console.error('Cihaz token kaydı sırasında hata:', tokenError);
+          // Token kaydı başarısız olsa bile giriş işlemi tamamlandı sayılır
+        }
+      } else if (!error) {
+        // Giriş başarısız olduysa ve mesaj yoksa varsayılan mesaj göster
         Alert.alert(
           'Giriş Başarısız',
           'Giriş bilgilerinizi kontrol edip tekrar deneyiniz.'
