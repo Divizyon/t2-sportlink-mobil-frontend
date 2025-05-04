@@ -7,6 +7,7 @@ import { HelpScreen } from '../screens/profile/settings/HelpScreen';
 import { SecuritySettingsScreen } from '../screens/profile/settings/SecuritySettingsScreen';
 import { SessionSettings } from '../screens/profile/settings/SessionSettings';
 import { NotificationSettingsScreen } from '../screens/profile/settings/NotificationSettingsScreen';
+import { FriendsListScreen } from '../screens/profile/FriendsListScreen';
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -16,6 +17,7 @@ export type ProfileStackParamList = {
   SecuritySettings: undefined;
   SessionHistory: undefined;
   NotificationSettings: undefined;
+  FriendsList: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -92,6 +94,20 @@ export const ProfileStack = () => {
         component={NotificationSettingsScreen}
         options={{
           headerShown: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="FriendsList" 
+        component={FriendsListScreen}
+        options={{
+          headerShown: true,
+          title: 'Arkadaşlarım',
+          headerTintColor: '#338626',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerShadowVisible: false,
           animation: 'slide_from_right'
         }}
       />

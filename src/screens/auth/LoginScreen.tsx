@@ -9,12 +9,11 @@ import {
   KeyboardAvoidingView, 
   Platform, 
   TouchableOpacity,
-  ImageBackground,
-  Dimensions,
   ActivityIndicator,
   TextInput,
   PixelRatio,
-  useWindowDimensions
+  useWindowDimensions,
+  Dimensions
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { InputField } from '../../components/InputField/InputField';
@@ -199,11 +198,8 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <ImageBackground 
-      source={require('../../../assets/images/sportlink-bg.png')} 
-      style={styles.backgroundImage}
-    >
-      <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.silver }]}>
+      <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
@@ -222,16 +218,18 @@ export const LoginScreen: React.FC = () => {
               ]}
               onPress={() => navigation.navigate('Welcome')}
             >
-              <Ionicons name="arrow-back" size={isSmallScreen ? 20 : 24} color="white" />
+              <Ionicons name="arrow-back" size={isSmallScreen ? 20 : 24} color={theme.colors.primary} />
             </TouchableOpacity>
             
             <View style={styles.headerContainer}>
               <Text style={[
                 styles.headerTitle,
+                { color: theme.colors.primary },
                 isSmallScreen && { fontSize: normalize(22) }
               ]}>SportLink'e Giriş Yap</Text>
               <Text style={[
                 styles.headerSubtitle,
+                { color: theme.colors.primary },
                 isSmallScreen && { fontSize: normalize(14) }
               ]}>
                 Hesabınıza giriş yaparak etkinliklere katılabilirsiniz
@@ -359,19 +357,14 @@ export const LoginScreen: React.FC = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   scrollContainer: {
     flexGrow: 1,

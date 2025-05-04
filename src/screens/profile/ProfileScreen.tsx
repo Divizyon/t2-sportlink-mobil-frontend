@@ -29,9 +29,15 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchUserProfile().catch(err => {
-      console.error('Profil verileri getirilirken hata:', err);
-    });
+    const loadProfileData = async () => {
+      try {
+        await fetchUserProfile();
+      } catch (err) {
+        console.error('Profil verileri getirilirken hata:', err);
+      }
+    };
+    
+    loadProfileData();
   }, []);
 
   const onRefresh = async () => {
@@ -64,8 +70,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
 
   // Arkadaşları görüntüle
   const handleViewFriends = () => {
-    // TODO: Arkadaşlar sayfasına yönlendir
-    console.log('Arkadaşlar sayfasına yönlendirme');
+    navigation.navigate('FriendsList');
   };
 
   // Arkadaşlık isteklerini görüntüle

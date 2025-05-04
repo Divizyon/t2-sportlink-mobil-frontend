@@ -83,6 +83,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     navigation.navigate('EditProfile');
   };
 
+  const handleFriendsPress = () => {
+    // Doğrudan FriendsList ekranına git
+    navigation.navigate('FriendsList');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -131,10 +136,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <Text style={styles.statNumber}>{stats.joinedEvents}</Text>
           <Text style={styles.statLabel}>Katıldığım{'\n'}Etkinlik</Text>
         </View>
-        <View style={styles.statItem}>
+        <TouchableOpacity style={styles.statItem} onPress={handleFriendsPress}>
           <Text style={styles.statNumber}>{stats.friends}</Text>
           <Text style={styles.statLabel}>Arkadaş</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity 

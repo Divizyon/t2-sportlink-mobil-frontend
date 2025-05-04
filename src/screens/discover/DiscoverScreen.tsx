@@ -225,7 +225,6 @@ export const DiscoverScreen: React.FC = () => {
         {/* Spor Arkadaşları */}
         <SportsFriends 
           isLoading={loadingFriends} 
-          friends={[]} 
           onSeeAll={handleSeeAllFriends}
         />
         

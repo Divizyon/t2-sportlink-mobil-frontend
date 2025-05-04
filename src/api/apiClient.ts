@@ -4,6 +4,13 @@ import { tokenManager } from '../utils/tokenManager';
 import { useApiStore } from '../store/appStore/apiStore';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
+// Özel istek konfigürasyonu türü
+interface ExtendedRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+  _retryCount?: number;
+  headers?: any;
+}
+
 // Config değerlerini al
 const { apiBaseUrl, apiTimeout, isDebugMode } = getConfigValues();
 
@@ -23,6 +30,20 @@ const apiClient = axios.create({
 NetInfo.addEventListener((state: NetInfoState) => {
   useApiStore.getState().setOfflineStatus(!state.isConnected);
 });
+
+// Hassas verileri maskeleyen yardımcı fonksiyon
+function maskSensitiveData(data: any): any {
+  if (!data) return data;
+  
+  const maskedData = { ...data };
+  
+  // Hassas alanları maskele
+  if (maskedData.password) maskedData.password = '********';
+  if (maskedData.current_password) maskedData.current_password = '********';
+  if (maskedData.new_password) maskedData.new_password = '********';
+  
+  return maskedData;
+}
 
 // Hata ayıklama için istek ve yanıt bilgilerini logla (sadece development ortamında)
 apiClient.interceptors.request.use(
@@ -94,6 +115,15 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Token yenileme işlemi için bir flag
+let isRefreshing = false;
+
+// Bekleyen istekleri tutan dizi
+let pendingRequests: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
 // Response interceptor - yanıtları ve hata durumlarını işle
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
@@ -111,7 +141,7 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean, headers?: any };
+    const originalRequest = error.config as ExtendedRequestConfig;
     
     // İşlemi API store'da hata ile güncelle
     if (originalRequest?.headers?.['X-Request-ID']) {
@@ -132,7 +162,98 @@ apiClient.interceptors.response.use(
       });
     }
     
- 
+    // 401 hatası (yetkisiz) ve istek henüz yenilenmemişse token yenileme işlemi yap
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // İstek belli bir sayıdan fazla tekrar edilmişse döngüyü kır
+      if (originalRequest._retryCount && originalRequest._retryCount >= 2) {
+        console.error('Maksimum yeniden deneme sayısına ulaşıldı, kullanıcı oturumu sonlandırılıyor');
+        await tokenManager.removeToken();
+        useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+        return Promise.reject(error);
+      }
+
+      // Refresh token kullanarak token yenilemeyi dene
+      try {
+        // Eğer halihazırda bir yenileme işlemi yoksa
+        if (!isRefreshing) {
+          isRefreshing = true;
+          console.log('Access token süresi dolmuş, yenileniyor...');
+          
+          // Token verilerini al
+          const tokenData = await tokenManager.getTokenData();
+          
+          if (tokenData?.refresh_token) {
+            try {
+              // Refresh token ile yeni token al
+              const newToken = await tokenManager.refreshAccessToken(tokenData.refresh_token);
+              
+              if (newToken) {
+                console.log('Token başarıyla yenilendi, bekleyen istekler yeniden gönderiliyor');
+                // Bekleyen tüm istekleri yeni token ile çözümle
+                pendingRequests.forEach(request => request.resolve(newToken));
+                pendingRequests = [];
+                
+                // Orijinal isteği yeni token ile tekrar gönder
+                originalRequest._retry = true;
+                // Yeniden deneme sayısını artır
+                originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                
+                isRefreshing = false;
+                return apiClient(originalRequest);
+              } else {
+                // Token yenileme başarısız, bekleyen istekleri reddet
+                pendingRequests.forEach(request => request.reject(new Error('Token yenileme başarısız')));
+                pendingRequests = [];
+                
+                isRefreshing = false;
+                // Kullanıcı oturumunu sonlandır
+                await tokenManager.removeToken();
+                useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+                return Promise.reject(error);
+              }
+            } catch (refreshError) {
+              console.error('Token yenileme sırasında hata:', refreshError);
+              // Bekleyen istekleri reddet
+              pendingRequests.forEach(request => request.reject(refreshError));
+              pendingRequests = [];
+              
+              isRefreshing = false;
+              // Kullanıcı oturumunu sonlandır
+              await tokenManager.removeToken();
+              useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+              return Promise.reject(error);
+            }
+          } else {
+            console.log('Refresh token bulunamadı, kullanıcı oturumu sonlandırılıyor');
+            isRefreshing = false;
+            await tokenManager.removeToken();
+            useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+            return Promise.reject(error);
+          }
+        } else {
+          // Eğer halihazırda bir token yenileme işlemi devam ediyorsa
+          console.log('Token yenileme işlemi devam ediyor, istek kuyruğa alındı');
+          // İsteği kuyruğa ekle ve yenileme tamamlandığında tekrar dene
+          return new Promise((resolve, reject) => {
+            pendingRequests.push({
+              resolve: (newToken: string) => {
+                originalRequest._retry = true;
+                // Yeniden deneme sayısını artır
+                originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                resolve(apiClient(originalRequest));
+              },
+              reject
+            });
+          });
+        }
+      } catch (refreshError) {
+        console.error('Token yenileme işlemi sırasında beklenmeyen hata:', refreshError);
+        isRefreshing = false;
+        return Promise.reject(error);
+      }
+    }
     
     // 5xx sunucu hataları için genel hata bildirimlerini ayarla
     if (error.response?.status && error.response.status >= 500) {
@@ -142,28 +263,5 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Hassas verileri maskeleme fonksiyonu
-function maskSensitiveData(data: any): any {
-  if (!data) return data;
-  
-  // Nesne kopya oluşturma
-  const maskedData = { ...data };
-  
-  // Hassas alanların maskesi
-  const sensitiveFields = ['password', 'token', 'access_token', 'refresh_token', 'secret', 'key', 'cardNumber', 'cvv'];
-  
-  // Hassas alanları maskele
-  Object.keys(maskedData).forEach(key => {
-    if (sensitiveFields.includes(key.toLowerCase())) {
-      maskedData[key] = '***MASKED***';
-    } else if (typeof maskedData[key] === 'object' && maskedData[key] !== null) {
-      // İç içe nesneleri recursive olarak kontrol et
-      maskedData[key] = maskSensitiveData(maskedData[key]);
-    }
-  });
-  
-  return maskedData;
-}
 
 export { apiClient };

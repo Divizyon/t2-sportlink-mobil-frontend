@@ -37,22 +37,22 @@ export interface DevicesListResponse {
  */
 export const deviceService = {
   /**
-   * Cihaz token'ını kaydeder
+   * Expo Push Notification Token'ı API'ye kaydet
    */
-  async registerToken(token: string, platform: string): Promise<ApiResponse<DeviceResponse>> {
-    return safeApiCall<DeviceResponse>(
+  async registerToken(token: string, platform: 'ios' | 'android' | 'expo'): Promise<ApiResponse<{ success: boolean }>> {
+    return safeApiCall<{ success: boolean }>(
       apiClient.post('/devices/register', { token, platform }),
-      'Cihaz kaydı sırasında bir hata oluştu'
+      'Token kaydedilirken bir hata oluştu'
     );
   },
 
   /**
-   * Cihaz token'ını siler
+   * Token'ı sil/kaldır
    */
-  async unregisterToken(token: string): Promise<ApiResponse<DeviceResponse>> {
-    return safeApiCall<DeviceResponse>(
+  async unregisterToken(token: string): Promise<ApiResponse<{ success: boolean }>> {
+    return safeApiCall<{ success: boolean }>(
       apiClient.post('/devices/unregister', { token }),
-      'Cihaz kaydı silme sırasında bir hata oluştu'
+      'Token silinirken bir hata oluştu'
     );
   },
 

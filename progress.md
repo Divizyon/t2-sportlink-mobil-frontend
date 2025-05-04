@@ -15,6 +15,10 @@
 - [x] Tipografi
 - [x] Temalar (açık/koyu)
 - [x] Stillemeler
+- [x] Giriş, kayıt ve karşılama ekranlarından arka plan resimleri kaldırıldı ve düz renk arka plan kullanıldı
+- [x] Karşılama ekranında buton boyutları eşitlendi ve UI tutarlılığı sağlandı
+- [x] Tüm giriş ekranlarında silver arka plan ve primary metin renklendirmesi uygulandı
+- [x] Karşılama ekranına SVG logo entegre edildi ve tema renkleriyle uyumlu hale getirildi
 
 ### Komponentler
 - [x] Text input
@@ -52,6 +56,10 @@
 - [x] İçerik görüntüleme
 - [x] Merkezi hata yönetimi
 - [x] Token yenileme mekanizması
+  - [x] Token yenileme endpoint entegrasyonu
+  - [x] Bekleyen istekleri yönetme
+  - [x] _isRefreshing bayrağı ile sonsuz döngü engelleme
+  - [x] Yeniden deneme sayısı sınırlaması
 - [x] Modüler API yapısı
 - [x] Standart API yanıt formatı
 - [x] API istek güvenlik kontrolleri
@@ -77,6 +85,17 @@
 - [x] Profil görünümü
 - [x] Çıkış yapma
 - [x] Konum bilgisi ekleme/düzenleme
+
+### Arkadaşlık Özellikleri
+- [x] Arkadaş önerilerini görüntüleme
+- [x] Arkadaşlık isteği gönderme
+- [x] Arkadaşlık isteği iptal etme
+- [x] Arkadaşlık durumunu kontrol etme
+- [x] Arkadaş listesini görüntüleme
+  - [x] ProfileStore'dan alınan gerçek arkadaş verilerini kullanma
+  - [x] Arkadaş listesi ekranında profil resmi, isim ve kullanıcı adı gösterimi
+  - [x] Arkadaş silme işlemi için arayüz hazırlanması
+  - [x] Mock veriler temizlendi ve gerçek API yanıtları entegre edildi
 
 ## Yapılacak İşler
 

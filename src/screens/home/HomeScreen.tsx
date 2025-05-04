@@ -240,7 +240,6 @@ export const HomeScreen: React.FC = () => {
               Bugün {getDayInfo()}, harika bir gün seni bekliyor.
             </Text>
           </View>
-         
         </View>
 
         {/* Duyurular - Yatay Kaydırma */}
@@ -1013,5 +1012,5 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 80,
-  }
+  },
 });

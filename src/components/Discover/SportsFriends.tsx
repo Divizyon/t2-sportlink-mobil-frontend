@@ -1,58 +1,77 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { SportFriendCard } from './SportFriendCard';
+import { useFriendsStore } from '../../store/userStore/friendsStore';
+import { SuggestedFriend } from '../../api/friends/friendsApi';
 
 interface SportsFriendsProps {
-  friends?: any[];
   isLoading?: boolean;
   onSeeAll?: () => void;
 }
 
 export const SportsFriends: React.FC<SportsFriendsProps> = ({
-  friends = [],
-  isLoading = false,
+  isLoading: externalLoading,
   onSeeAll
 }) => {
   const { theme } = useThemeStore();
+  const { 
+    suggestedFriends, 
+    fetchSuggestedFriends, 
+    isLoadingSuggestions, 
+    error 
+  } = useFriendsStore();
 
-  // Mock veriler (gerçek implementasyonda API'den gelecek)
-  const mockFriends = [
-    {
-      id: '1',
-      first_name: 'Ahmet',
-      last_name: 'Yılmaz',
-      age: 28,
-      distance: 2.5,
-      sports: [
-        { name: 'Futbol', icon: 'football-outline' },
-        { name: 'Basketbol', icon: 'basketball-outline' },
-        { name: 'Fitness', icon: 'fitness-outline' }
-      ],
-      profile_picture: 'https://randomuser.me/api/portraits/men/32.jpg'
-    },
-    {
-      id: '2',
-      first_name: 'Ayşe',
-      last_name: 'Kaya',
-      age: 24,
-      distance: 4,
-      sports: [
-        { name: 'Tenis', icon: 'tennisball-outline' },
-        { name: 'Voleybol', icon: 'baseball-outline' },
-      ],
-      profile_picture: 'https://randomuser.me/api/portraits/women/44.jpg'
+  // Component mount olduğunda arkadaş önerilerini çek
+  useEffect(() => {
+    fetchSuggestedFriends(10);
+  }, []);
+
+  // Veri yoksa ve hala yükleniyor değilse yeniden dene
+  useEffect(() => {
+    if (suggestedFriends.length === 0 && !isLoadingSuggestions && !error) {
+      fetchSuggestedFriends(10);
     }
-  ];
+  }, [suggestedFriends, isLoadingSuggestions, error]);
 
-  // Geçici olarak mockFriends kullan
-  const displayFriends = friends.length > 0 ? friends : mockFriends;
+  // Loading state'ini belirle (dışarıdan gelen veya store'dan)
+  const isLoading = externalLoading || isLoadingSuggestions;
+
+  // Spor bilgilerini formatlayan yardımcı fonksiyon
+  const mapSportsData = (friend: SuggestedFriend) => {
+    if (!friend.user_sports || friend.user_sports.length === 0) {
+      return [{ name: 'Spor Belirsiz', icon: 'help-circle-outline' }];
+    }
+    
+    return friend.user_sports.map(sport => ({
+      name: sport.name,
+      icon: sport.icon || 'fitness-outline', // Özel ikon yoksa varsayılan kullan
+    }));
+  };
+
+  // Yaş hesaplama fonksiyonu (belirsiz ise varsayılan kullan)
+  const getAge = (friend: SuggestedFriend) => {
+    return friend.age || Math.floor(20 + Math.random() * 15); // 20-35 arası rastgele yaş
+  };
+
+  // Gösterilecek arkadaş verilerini hazırla
+  const displayFriends = suggestedFriends.map(friend => ({
+    id: friend.id,
+    first_name: friend.first_name,
+    last_name: friend.last_name,
+    username: friend.username,
+    age: getAge(friend),
+    sports: mapSportsData(friend),
+    profile_picture: friend.profile_picture,
+    common_friends: friend.common_friends,
+    common_sports: friend.common_sports
+  }));
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          Spor Arkadaşları
+          Spor Arkadaşları Bul
         </Text>
         <TouchableOpacity onPress={onSeeAll}>
           <Text style={[styles.seeAllText, { color: theme.colors.accent }]}>
@@ -65,6 +84,12 @@ export const SportsFriends: React.FC<SportsFriendsProps> = ({
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={theme.colors.accent} />
         </View>
+      ) : displayFriends.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+            Henüz spor arkadaşı önerisi bulunmuyor
+          </Text>
+        </View>
       ) : (
         <ScrollView
           horizontal
@@ -72,7 +97,10 @@ export const SportsFriends: React.FC<SportsFriendsProps> = ({
           contentContainerStyle={styles.scrollViewContent}
         >
           {displayFriends.map((friend) => (
-            <SportFriendCard key={friend.id} friend={friend} />
+            <SportFriendCard 
+              key={friend.id} 
+              friend={friend} 
+            />
           ))}
         </ScrollView>
       )}
@@ -104,8 +132,18 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   loadingContainer: {
-    height: 160,
+    height: 280,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyContainer: {
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
   }
 }); 

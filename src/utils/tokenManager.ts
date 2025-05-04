@@ -85,7 +85,38 @@ export const tokenManager = {
           const tokenData = JSON.parse(tokenDataStr);
           console.log('TokenData bulundu:', tokenData ? 'token veri mevcut' : 'token veri yok');
           
-     
+          // Token süresi dolmuşsa ve refresh token varsa, yenile
+          if (tokenData.expires_at && tokenData.refresh_token) {
+            const now = Math.floor(Date.now() / 1000);
+            // Token süresi dolmuş mu kontrol et (5 dakika buffer ile)
+            if (tokenData.expires_at - 300 < now) {
+              // Statik bir "yenileniyor" değişkeni ekleyerek sonsuz döngüyü engelle
+              if (tokenManager._isRefreshing) {
+                console.log('Token zaten yenileniyor, mevcut token döndürülüyor');
+                return tokenData.access_token;
+              }
+              
+              console.log('Token süresi dolmuş veya dolmak üzere, yenileniyor...');
+              tokenManager._isRefreshing = true;
+              
+              try {
+                const refreshedToken = await tokenManager.refreshAccessToken(tokenData.refresh_token);
+                tokenManager._isRefreshing = false;
+                
+                if (refreshedToken) {
+                  return refreshedToken;
+                }
+              } catch (refreshError) {
+                tokenManager._isRefreshing = false;
+                console.error('Token yenileme sırasında hata:', refreshError);
+              }
+            }
+          }
+          
+          // Geçerli token varsa döndür
+          if (tokenData.access_token) {
+            return tokenData.access_token;
+          }
         } catch (parseError) {
           console.error('Token verisi JSON parse hatası:', parseError);
         }
@@ -130,7 +161,20 @@ export const tokenManager = {
         return false;
       }
       
-  
+      // Token süresi kontrolü
+      if (tokenData.expires_at) {
+        const now = Math.floor(Date.now() / 1000);
+        // Token süresi dolmuş mu kontrol et
+        if (tokenData.expires_at < now) {
+          // Refresh token varsa otomatik yenilemeyi dene
+          if (tokenData.refresh_token) {
+            console.log('Token süresi dolmuş, yenileniyor...');
+            const isRefreshed = await tokenManager.refreshAccessToken(tokenData.refresh_token);
+            return !!isRefreshed;
+          }
+          return false;
+        }
+      }
       
       // expires_at bilgisi yoksa sadece token varlığını kontrol et
       return true;
@@ -140,7 +184,44 @@ export const tokenManager = {
     }
   },
   
+  /**
+   * Refresh token kullanarak access token'ı yenileme
+   * @param refreshToken Yenileme için kullanılacak refresh token
+   * @returns Yeni access token veya başarısız durumda null
+   */
+  refreshAccessToken: async (refreshToken: string): Promise<string | null> => {
+    try {
+      console.log('Refresh token ile access token yenileniyor...');
+      const response = await authService.refreshToken(refreshToken);
 
+      if (response.success && response.data) {
+        // Session verisi içinden token bilgilerini al
+        if (response.data.session) {
+          const session = response.data.session;
+          const tokenData: TokenData = {
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            expires_at: session.expires_at || 
+                        (session.expires_in ? Math.floor(Date.now() / 1000) + session.expires_in : undefined),
+            token_type: session.token_type || 'Bearer'
+          };
+          
+          // Yeni token verilerini kaydet
+          await tokenManager.setTokenData(tokenData);
+          console.log('Access token başarıyla yenilendi');
+          return tokenData.access_token;
+        }
+      }
+
+      console.error('Token yenileme başarısız:', response.message || 'Bilinmeyen hata');
+      return null;
+    } catch (error) {
+      console.error('Token yenileme sırasında hata oluştu:', error);
+      return null;
+    }
+  },
+
+  _isRefreshing: false
 };
 
 export default tokenManager;

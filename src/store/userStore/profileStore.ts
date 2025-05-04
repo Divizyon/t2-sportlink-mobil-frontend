@@ -31,6 +31,14 @@ export interface FriendSummary {
   mostActiveWith?: string;
 }
 
+export interface Friend {
+  id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  profile_picture: string | null;
+}
+
 export interface ProfileSettings {
   notificationsEnabled: boolean;
   eventNotificationsEnabled: boolean;
@@ -65,6 +73,7 @@ interface ProfileState {
   defaultLocation: UserLocation | null;
   friendsSummary: FriendSummary | null;
   profileSettings: ProfileSettings;
+  friends: Friend[]; // Arkadaş listesi
   
   // Yükleme ve hata durumları
   isLoading: boolean;
@@ -93,6 +102,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   sportPreferences: [],
   defaultLocation: null,
   friendsSummary: null,
+  friends: [], // Boş arkadaş listesi
   profileSettings: {
     notificationsEnabled: true,
     eventNotificationsEnabled: true,
@@ -145,6 +155,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           sportPreferences: response.data.sportPreferences,
           defaultLocation: response.data.defaultLocation,
           friendsSummary: response.data.friendsSummary,
+          friends: response.data.friends || [], // Arkadaş listesini kaydet
           profileSettings,
           isLoading: false
         });

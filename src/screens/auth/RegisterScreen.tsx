@@ -285,9 +285,8 @@ export const RegisterScreen: React.FC = () => {
   };
 
   return (
-    <ImageBackground 
-      source={require('../../../assets/images/sportlink-bg.png')} 
-      style={styles.backgroundImage}
+    <View 
+      style={[styles.backgroundContainer, { backgroundColor: theme.colors.silver }]}
     >
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
@@ -303,14 +302,14 @@ export const RegisterScreen: React.FC = () => {
                 style={styles.backButton}
                 onPress={() => navigation.navigate('Welcome')}
               >
-                <Ionicons name="arrow-back" size={24} color="white" />
+                <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
               </TouchableOpacity>
               
-              <Text style={styles.headerTitle}>Yeni Hesap Oluştur</Text>
+              <Text style={[styles.headerTitle, { color: theme.colors.primary }]}>Yeni Hesap Oluştur</Text>
             </View>
             
             <View style={styles.headerContainer}>
-              <Text style={styles.headerSubtitle}>
+              <Text style={[styles.headerSubtitle, { color: theme.colors.primary }]}>
                 SportLink'e kayıt ol ve spor etkinliklerine katıl
               </Text>
             </View>
@@ -496,19 +495,17 @@ export const RegisterScreen: React.FC = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
+  backgroundContainer: {
     flex: 1,
-    width: '100%',
-    height: '100%',
   },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   scrollContainer: {
     flexGrow: 1,

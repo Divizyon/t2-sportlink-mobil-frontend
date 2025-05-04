@@ -6,7 +6,8 @@ import {
   UserLocation,
   FriendSummary,
   ProfileSettings,
-  UserInfo
+  UserInfo,
+  Friend
 } from '../../store/userStore/profileStore';
 
 interface ProfileResponse {
@@ -16,6 +17,7 @@ interface ProfileResponse {
   defaultLocation?: UserLocation;
   friendsSummary?: FriendSummary;
   settings?: ProfileSettings;
+  friends?: Friend[];
 }
 
 interface UpdateProfileInfoRequest {
@@ -68,7 +70,8 @@ export const userProfileService = {
             latitude: userData.default_location_latitude,
             longitude: userData.default_location_longitude,
             locationName: 'Kullanıcı Konumu'
-          } : undefined
+          } : undefined,
+          friends: Array.isArray(userData.friends) ? userData.friends : []
         };
         
         return {

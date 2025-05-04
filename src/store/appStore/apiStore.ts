@@ -14,6 +14,7 @@ interface ApiState {
   pendingRequests: ApiRequest[];
   requestHistory: ApiRequest[];
   globalError: string | null;
+  authError: string | null;
   isLoading: boolean;
   isOffline: boolean;
   
@@ -22,6 +23,7 @@ interface ApiState {
   completeRequest: (id: string, status: number) => void;
   failRequest: (id: string, error: string) => void;
   setGlobalError: (error: string | null) => void;
+  setAuthError: (error: string | null) => void;
   clearHistory: () => void;
   setOfflineStatus: (isOffline: boolean) => void;
 }
@@ -30,6 +32,7 @@ export const useApiStore = create<ApiState>((set, get) => ({
   pendingRequests: [],
   requestHistory: [],
   globalError: null,
+  authError: null,
   isLoading: false,
   isOffline: false,
   
@@ -90,6 +93,10 @@ export const useApiStore = create<ApiState>((set, get) => ({
   
   setGlobalError: (error) => {
     set({ globalError: error });
+  },
+  
+  setAuthError: (error) => {
+    set({ authError: error });
   },
   
   clearHistory: () => {

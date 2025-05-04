@@ -14,6 +14,14 @@ export interface RegisterRequest {
   phone?: string;
 }
 
+export interface Session {
+  access_token: string;
+  refresh_token: string;
+  expires_at?: number;
+  expires_in?: number;
+  token_type?: string;
+}
+
 export interface AuthResponse {
   success: boolean;
   message?: string;
@@ -26,6 +34,8 @@ export interface AuthResponse {
   expires_at?: number;
   expires_in?: number;
   token_type?: string;
+  // Oturum bilgileri
+  session?: Session;
 }
 
 export interface VerifyEmailRequest {

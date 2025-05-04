@@ -92,5 +92,16 @@ export const authService = {
     );
   },
   
-
+  /**
+   * Refresh token ile yeni access token alır
+   * @param refreshToken Yenileme için kullanılacak refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<ApiResponse<AuthResponse>> {
+    return safeApiCall<AuthResponse>(
+      apiClient.post('/auth/refresh-token', {
+        refresh_token: refreshToken
+      }),
+      'Token yenilenirken bir hata oluştu'
+    );
+  }
 }; 

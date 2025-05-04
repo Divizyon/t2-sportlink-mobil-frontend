@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -8,31 +8,41 @@ import {
   TouchableOpacity, 
   Image,
   RefreshControl,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
+import { useNotificationStore } from '../../store/appStore/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDistanceToNow } from 'date-fns';
+import { tr } from 'date-fns/locale';
+import { Notification, NotificationType } from '../../types/apiTypes/notification.types';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-// Bildirim tipi tanımı
-interface Notification {
-  id: string;
-  type: 'event' | 'friend' | 'system' | 'mention' | 'comment';
-  title: string;
-  message: string;
-  time: string;
-  isRead: boolean;
-  image?: string;
-  actionUrl?: string;
-}
+// Navigasyon için tipleri tanımlama
+type RootStackParamList = {
+  Home: undefined;
+  Events: undefined;
+  Discover: undefined;
+  Notifications: undefined;
+  Profile: undefined;
+  EventDetail: { eventId: string };
+  NewsDetail: { newsId: string };
+  AnnouncementDetail: { announcementId: string };
+};
+
+type NotificationsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Bildirim tiplerine göre ikonlar
-const notificationIcons = {
+const notificationIcons: Record<NotificationType, string> = {
   event: 'calendar-outline',
-  friend: 'person-add-outline',
+  friend_request: 'person-add-outline',
   system: 'notifications-outline',
-  mention: 'at-outline',
-  comment: 'chatbubble-outline',
-} as const;
+  message: 'chatbubble-outline',
+  news: 'newspaper-outline',
+  announcement: 'megaphone-outline'
+};
 
 // Bildirim öğesi bileşeni
 const NotificationItem: React.FC<{ 
@@ -42,261 +52,180 @@ const NotificationItem: React.FC<{
 }> = ({ item, onPress, theme }) => {
   
   // Bildirim tipi ikon ve renklerini belirle
-  const iconName = notificationIcons[item.type];
+  const iconName = notificationIcons[item.type as NotificationType] || 'notifications-outline';
   
   let iconBgColor = '';
   switch (item.type) {
     case 'event':
       iconBgColor = '#4CB944'; // Yeşil
       break;
-    case 'friend':
+    case 'friend_request':
       iconBgColor = '#3498db'; // Mavi
       break;
     case 'system':
       iconBgColor = '#f39c12'; // Turuncu
       break;
-    case 'mention':
+    case 'message':
       iconBgColor = '#9b59b6'; // Mor
       break;
-    case 'comment':
+    case 'news':
+    case 'announcement':
       iconBgColor = '#2ecc71'; // Açık yeşil
       break;
     default:
       iconBgColor = theme.colors.accent;
   }
   
+  // Zaman formatı
+  const timeAgo = item.created_at 
+    ? formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: tr })
+    : '';
+  
   return (
-    <TouchableOpacity
+    <TouchableOpacity 
       style={[
-        styles.notificationItem,
+        styles.notificationItem, 
         { 
-          backgroundColor: item.isRead ? theme.colors.cardBackground : `${iconBgColor}10`,
-          borderColor: theme.colors.border
+          backgroundColor: theme.colors.card,
+          borderLeftColor: item.is_read ? 'transparent' : iconBgColor,
+          borderLeftWidth: item.is_read ? 0 : 4,
         }
       ]}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
     >
-      <View style={[styles.unreadDot, { opacity: item.isRead ? 0 : 1, backgroundColor: iconBgColor }]} />
-      
       <View style={[styles.iconContainer, { backgroundColor: `${iconBgColor}20` }]}>
-        <Ionicons name={iconName} size={20} color={iconBgColor} />
+        <Ionicons name={iconName as any} size={22} color={iconBgColor} />
       </View>
       
       <View style={styles.contentContainer}>
-        <View style={styles.headerContainer}>
-          <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>
+        <View style={styles.titleRow}>
+          <Text 
+            style={[
+              styles.notificationTitle, 
+              { 
+                color: theme.colors.text,
+                fontWeight: item.is_read ? '400' : '700'
+              }
+            ]}
+            numberOfLines={1}
+          >
             {item.title}
           </Text>
-          <Text style={[styles.time, { color: theme.colors.textSecondary }]}>
-            {item.time}
+          <Text style={[styles.timeText, { color: theme.colors.textSecondary }]}>
+            {timeAgo}
           </Text>
         </View>
         
-        <Text style={[styles.message, { color: theme.colors.textSecondary }]} numberOfLines={2}>
-          {item.message}
+        <Text 
+          style={[styles.notificationText, { color: theme.colors.textSecondary }]}
+          numberOfLines={2}
+        >
+          {item.body}
         </Text>
       </View>
     </TouchableOpacity>
   );
 };
-
-// Bildirim türü sekmesi
-const NotificationTypeTab: React.FC<{
-  title: string;
-  isActive: boolean;
-  onPress: () => void;
-  theme: any;
-}> = ({ title, isActive, onPress, theme }) => {
-  return (
-    <TouchableOpacity 
-      style={[
-        styles.tab,
-        isActive && { 
-          backgroundColor: '#4CB94420',
-          borderBottomColor: '#4CB944', 
-          borderBottomWidth: 2 
-        }
-      ]} 
-      onPress={onPress}
-    >
-      <Text 
-        style={[
-          styles.tabText, 
-          { color: isActive ? '#4CB944' : theme.colors.textSecondary }
-        ]}
-      >
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
-};
-
-// Örnek bildirim verileri
-const dummyNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'event',
-    title: 'Yeni Futbol Etkinliği',
-    message: 'Yakınınızda "Pazar Futbol Maçı" etkinliği oluşturuldu. Katılmak ister misiniz?',
-    time: '5 dk önce',
-    isRead: false,
-  },
-  {
-    id: '2',
-    type: 'friend',
-    title: 'Arkadaşlık İsteği',
-    message: 'Ahmet Kaya size arkadaşlık isteği gönderdi. Kabul etmek ister misiniz?',
-    time: '30 dk önce',
-    isRead: false,
-  },
-  {
-    id: '3',
-    type: 'comment',
-    title: 'Yeni Yorum',
-    message: 'Mehmet etkinliğinize yorum yaptı: "Saati 18:00\'e alabilir miyiz?"',
-    time: '1 saat önce',
-    isRead: true,
-  },
-  {
-    id: '4',
-    type: 'mention',
-    title: 'Etkinlikte Etiketlendiniz',
-    message: 'Ayşe sizi "Hafta Sonu Voleybol Turnuvası" etkinliğinde etiketledi.',
-    time: '3 saat önce',
-    isRead: true,
-  },
-  {
-    id: '5',
-    type: 'system',
-    title: 'Hesap Doğrulaması',
-    message: 'E-posta adresiniz başarıyla doğrulandı. Artık tüm özelliklere erişebilirsiniz.',
-    time: '1 gün önce',
-    isRead: true,
-  },
-  {
-    id: '6',
-    type: 'event',
-    title: 'Etkinlik Hatırlatması',
-    message: 'Basketbol maçınız yarın saat 16:00\'da başlayacak.',
-    time: '1 gün önce',
-    isRead: true,
-  },
-  {
-    id: '7',
-    type: 'friend',
-    title: 'Yeni Takipçi',
-    message: 'Zeynep sizi takip etmeye başladı.',
-    time: '2 gün önce',
-    isRead: true,
-  },
-  {
-    id: '8',
-    type: 'system',
-    title: 'Yeni Özellik',
-    message: 'Uygulamamıza etkinlik sohbet odaları özelliği eklendi. Hemen deneyin!',
-    time: '1 hafta önce',
-    isRead: true,
-  },
-];
 
 // Bildirimler ana bileşeni
 export const NotificationsScreen: React.FC = () => {
   const { theme } = useThemeStore();
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
-  const [notifications, setNotifications] = useState<Notification[]>(dummyNotifications);
+  const navigation = useNavigation<NotificationsScreenNavigationProp>();
+  const { 
+    notifications, 
+    isLoading, 
+    unreadCount,
+    error,
+    pagination,
+    fetchNotifications, 
+    fetchUnreadCount,
+    markAsRead,
+    markAllAsRead,
+    refreshNotifications
+  } = useNotificationStore();
   
-  // Bildirim listesini yenile
-  const onRefresh = () => {
-    setRefreshing(true);
-    // Gerçek uygulamada burada API çağrısı olacak
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+  // İlk yükleme
+  useEffect(() => {
+    fetchNotifications();
+    fetchUnreadCount();
+  }, []);
+  
+  // Bildirim yenileme
+  const onRefresh = async () => {
+    await refreshNotifications();
   };
   
-  // Bildirimleri filtrele
-  const getFilteredNotifications = () => {
-    if (activeTab === 'all') {
-      return notifications;
+  // Daha fazla bildirim yükleme
+  const loadMoreNotifications = () => {
+    if (pagination.page < pagination.totalPages && !isLoading) {
+      fetchNotifications(pagination.page + 1, pagination.limit);
+    }
+  };
+  
+  // Bildirime tıklanınca 
+  const handleNotificationPress = (notification: Notification) => {
+    if (!notification.is_read) {
+      markAsRead(notification.id);
     }
     
-    return notifications.filter(notification => notification.type === activeTab);
-  };
-  
-  // Bildirime tıklanınca
-  const handleNotificationPress = (notification: Notification) => {
-    // Bildirimi okundu olarak işaretle
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notification.id ? { ...n, isRead: true } : n
-      )
-    );
+    // Yönlendirme URL varsa ona git
+    if (notification.redirect_url) {
+      // Yönlendirme işlemleri burada yapılacak
+      console.log('Bildirim yönlendirmesi:', notification.redirect_url);
+    }
     
-    // Gerçek uygulamada burada yönlendirme yapılabilir
-    console.log('Bildirime tıklandı:', notification);
+    // Bildirim türüne göre aksiyon almak için
+    switch (notification.type) {
+      case 'event':
+        if (notification.event_id) {
+          // Etkinlik detayına git
+          navigation.navigate('EventDetail', { eventId: notification.event_id });
+        }
+        break;
+      case 'friend_request':
+        // Arkadaşlık istekleri sayfasına git
+        // navigation.navigate('FriendRequests');
+        break;
+      case 'message':
+        // Mesajlaşma sayfasına git
+        // Burada bildirimden gelen data içerisinden conversation_id alınabilir
+        break;
+      case 'news':
+        if (notification.data?.newsId) {
+          navigation.navigate('NewsDetail', { newsId: notification.data.newsId as string });
+        }
+        break;
+      case 'announcement':
+        if (notification.data?.announcementId) {
+          navigation.navigate('AnnouncementDetail', { announcementId: notification.data.announcementId as string });
+        }
+        break;
+      default:
+        // Özel bir yönlendirme yoksa bildirimler ekranında kal
+        break;
+    }
   };
-  
-  // Tüm bildirimleri okundu olarak işaretle
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, isRead: true }))
-    );
-  };
-  
-  // Okunmamış bildirim sayısı
-  const unreadCount = notifications.filter(n => !n.isRead).length;
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
       
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          Bildirimler
-        </Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Bildirimler</Text>
         
         {unreadCount > 0 && (
-          <TouchableOpacity style={styles.readAllButton} onPress={markAllAsRead}>
-            <Text style={[styles.readAllText, { color: '#4CB944' }]}>
-              Tümünü Okundu İşaretle
-            </Text>
+          <TouchableOpacity 
+            style={[styles.markAllButton, { borderColor: theme.colors.border }]}
+            onPress={markAllAsRead}
+          >
+            <Text style={{ color: theme.colors.primary }}>Tümünü Okundu İşaretle</Text>
           </TouchableOpacity>
         )}
       </View>
       
-      <View style={[styles.tabContainer, { borderBottomColor: theme.colors.border, borderBottomWidth: 1 }]}>
-        <NotificationTypeTab 
-          title="Tümü" 
-          isActive={activeTab === 'all'} 
-          onPress={() => setActiveTab('all')}
-          theme={theme}
-        />
-        <NotificationTypeTab 
-          title="Etkinlikler" 
-          isActive={activeTab === 'event'} 
-          onPress={() => setActiveTab('event')}
-          theme={theme}
-        />
-        <NotificationTypeTab 
-          title="Sosyal" 
-          isActive={activeTab === 'friend'} 
-          onPress={() => setActiveTab('friend')}
-          theme={theme}
-        />
-        <NotificationTypeTab 
-          title="Yorumlar" 
-          isActive={activeTab === 'comment'} 
-          onPress={() => setActiveTab('comment')}
-          theme={theme}
-        />
-      </View>
-      
       <FlatList
-        data={getFilteredNotifications()}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
+        data={notifications}
         renderItem={({ item }) => (
           <NotificationItem 
             item={item} 
@@ -304,26 +233,45 @@ export const NotificationsScreen: React.FC = () => {
             theme={theme}
           />
         )}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
+          <RefreshControl 
+            refreshing={isLoading} 
             onRefresh={onRefresh}
-            colors={['#4CB944']}
-            tintColor={theme.colors.accent}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-off-outline" size={64} color={theme.colors.textSecondary} />
-            <Text style={[styles.emptyText, { color: theme.colors.text }]}>
-              Bildirim Bulunamadı
-            </Text>
-            <Text style={[styles.emptySubText, { color: theme.colors.textSecondary }]}>
-              Bu kategoride bildiriminiz bulunmuyor.
-            </Text>
-          </View>
+          isLoading ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="notifications-off-outline" size={60} color={theme.colors.textSecondary} />
+              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                Henüz bildiriminiz bulunmuyor
+              </Text>
+            </View>
+          )
         }
+        onEndReached={loadMoreNotifications}
+        onEndReachedThreshold={0.2}
       />
+      
+      {error && (
+        <View style={[styles.errorContainer, { backgroundColor: theme.colors.card }]}>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+            onPress={refreshNotifications}
+          >
+            <Text style={{ color: 'white' }}>Tekrar Dene</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -337,97 +285,93 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
-  readAllButton: {
-    padding: 8,
-  },
-  readAllText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 8,
-  },
-  tab: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
+  markAllButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   notificationItem: {
     flexDirection: 'row',
     padding: 16,
-    borderRadius: 12,
+    marginHorizontal: 16,
     marginBottom: 8,
-    borderWidth: 1,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: 16,
-    left: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    borderRadius: 12,
+    borderLeftWidth: 4,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   contentContainer: {
     flex: 1,
   },
-  headerContainer: {
+  titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
-  title: {
-    fontSize: 15,
-    fontWeight: '600',
+  notificationTitle: {
+    fontSize: 16,
     flex: 1,
   },
-  time: {
+  timeText: {
     fontSize: 12,
     marginLeft: 8,
   },
-  message: {
+  notificationText: {
     fontSize: 14,
     lineHeight: 20,
   },
   emptyContainer: {
-    padding: 32,
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
     marginTop: 16,
+    fontSize: 16,
   },
-  emptySubText: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
+  errorContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    padding: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
+  errorText: {
+    flex: 1,
+    marginRight: 10,
+  },
+  retryButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  }
 }); 

@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, ViewStyle, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/userStore/authStore';
+import { useFriendsStore } from '../store/userStore/friendsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Screens - Auth
@@ -202,6 +203,7 @@ const TabNavigator = () => {
 
 export const AppNavigator = () => {
   const {isAuthenticated, checkAuth } = useAuthStore();
+  const { resetState: resetFriendsState } = useFriendsStore();
   const [isLoading, setIsLoading] = useState(true);
   const { theme } = useThemeStore();
 
@@ -212,6 +214,13 @@ export const AppNavigator = () => {
     };
     loadToken();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('Kullanıcı oturum açtı, arkadaş durumu sıfırlanıyor...');
+      resetFriendsState();
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
