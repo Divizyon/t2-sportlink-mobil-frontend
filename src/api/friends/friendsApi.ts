@@ -70,7 +70,8 @@ export interface Friend {
 
 // Pagination yanıt tipi
 interface PaginatedResponse<T> {
-  data: T[];
+  data?: T[];
+  friends?: T[];
   pagination: {
     page: number;
     limit: number;

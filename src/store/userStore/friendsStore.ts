@@ -32,6 +32,7 @@ interface FriendsState {
   // İşlemler
   // - Veri Alma
   fetchFriends: (page?: number, limit?: number) => Promise<void>;
+  getFriends: () => Promise<void>;
   fetchSuggestedFriends: (limit?: number) => Promise<void>;
   fetchFriendRequests: (status?: 'pending' | 'accepted' | 'rejected', page?: number, limit?: number) => Promise<void>;
   checkFriendshipStatus: (userId: string) => Promise<FriendshipStatus | null>;
@@ -80,14 +81,21 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
       
       if (response.success && response.data) {
         console.log(`Toplam arkadaş sayısı: ${response.data.pagination.total}`);
-        console.log(`Dönen veri sayısı: ${response.data.data.length}`);
+        
+        // Backend yapısına göre friends veya data alanını kullanmak için kontrol yap
+        const friendsData = response.data.friends || response.data.data;
+        if (!friendsData) {
+          throw new Error('Arkadaş verisi bulunamadı');
+        }
+        
+        console.log(`Dönen veri sayısı: ${friendsData.length}`);
         
         const updatedFriends = page === 1 
-          ? response.data.data 
-          : [...get().friends, ...response.data.data];
+          ? friendsData 
+          : [...get().friends, ...friendsData];
           
         console.log(`Güncellenmiş arkadaş listesi (${updatedFriends.length} adet):`, 
-          updatedFriends.map(f => `${f.first_name} ${f.last_name}`));
+          updatedFriends.map((f: Friend) => `${f.first_name} ${f.last_name}`));
         
         set({
           friends: updatedFriends,
@@ -114,6 +122,11 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
       // API Store'da global hata mesajını güncelle
       useApiStore.getState().setGlobalError(errorMessage);
     }
+  },
+
+  // Arkadaşları getir - Kısayol metodu (varsayılan değerlerle fetchFriends çağırır)
+  getFriends: async () => {
+    await get().fetchFriends(1, 20);
   },
 
   // Arkadaş önerilerini getir
@@ -154,10 +167,12 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
       const response = await friendsApi.getFriendRequests(status, page, limit);
       
       if (response.success && response.data) {
+        const requestsData = response.data.data || [];
+        
         set({
           friendRequests: page === 1 
-            ? response.data.data 
-            : [...get().friendRequests, ...response.data.data],
+            ? requestsData 
+            : [...get().friendRequests, ...requestsData],
           totalRequests: response.data.pagination.total,
           currentRequestsPage: page,
           isLoadingRequests: false,

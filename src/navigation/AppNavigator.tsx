@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, ViewStyle, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, View, ViewStyle, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/userStore/authStore';
 import { useFriendsStore } from '../store/userStore/friendsStore';
@@ -25,6 +25,8 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 // App Screens
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import FriendProfileScreen from '../screens/profile/friends/FriendProfileScreen';
+import { AllSportsFriendsScreen } from '../screens/discover/AllSportsFriendsScreen';
 
 // Screens - Events
 import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDetailScreen';
@@ -41,6 +43,13 @@ import { ProfileStack } from './ProfileStack';
 
 // Store
 import { useThemeStore } from '../store/appStore/themeStore';
+import { useNotificationStore } from '../store/appStore/notificationStore';
+import { useMessageStore } from '../store/messageStore/messageStore';
+
+// Message Screens
+import MessagesScreen from '../screens/messages/MessagesScreen';
+import ConversationDetailScreen from '../screens/messages/ConversationDetailScreen';
+import NewConversationScreen from '../screens/messages/NewConversationScreen';
 
 // Types
 type AuthStackParamList = {
@@ -58,6 +67,11 @@ type AppStackParamList = {
   EditEvent: { eventId: string };
   NewsDetail: { newsId: string };
   AnnouncementDetail: { announcementId: string };
+  FriendProfile: { userId: string };
+  AllSportsFriends: undefined;
+  Messages: undefined;
+  ConversationDetail: { conversationId: string };
+  NewConversation: undefined;
 };
 
 type EventsStackParamList = {
@@ -105,6 +119,23 @@ const EventsStackNavigator = () => {
 // Tab Navigator
 const TabNavigator = () => {
   const { theme } = useThemeStore();
+  const { unreadCount, fetchUnreadCount } = useNotificationStore();
+  const { unreadMessagesCount, getUnreadMessagesCount } = useMessageStore();
+  
+  // Bildirim sayılarını periyodik olarak güncelle
+  useEffect(() => {
+    // İlk yükleme
+    fetchUnreadCount();
+    getUnreadMessagesCount();
+    
+    // 60 saniyede bir güncelle
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      getUnreadMessagesCount();
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount, getUnreadMessagesCount]);
   
   return (
     <Tab.Navigator
@@ -124,7 +155,31 @@ const TabNavigator = () => {
         options={{
           tabBarLabel: 'Ana sayfa',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <View>
+              <Ionicons name="home-outline" size={size} color={color} />
+              {unreadMessagesCount > 0 && (
+                <View style={{
+                  position: 'absolute',
+                  top: -6,
+                  right: -10,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  backgroundColor: theme.colors.accent,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: 4,
+                }}>
+                  <Text style={{
+                    color: 'white',
+                    fontSize: 10,
+                    fontWeight: 'bold',
+                  }}>
+                    {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -142,7 +197,7 @@ const TabNavigator = () => {
         name="Discover" 
         component={DiscoverScreen} 
         options={({ navigation }) => ({
-          tabBarLabel: 'Keşfet',
+          tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -177,13 +232,37 @@ const TabNavigator = () => {
           },
         })}
       />
-      <Tab.Screen 
-        name="Notifications" 
-        component={NotificationsScreen} 
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationsScreen}
         options={{
           tabBarLabel: 'Bildirimler',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
+            <View>
+              <Ionicons name="notifications-outline" size={size} color={color} />
+              {unreadCount > 0 && (
+                <View style={{
+                  position: 'absolute',
+                  top: -6,
+                  right: -10,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  backgroundColor: theme.colors.accent,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: 4,
+                }}>
+                  <Text style={{
+                    color: 'white',
+                    fontSize: 10,
+                    fontWeight: 'bold',
+                  }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -271,10 +350,51 @@ export const AppNavigator = () => {
           <AppStack.Screen 
             name="AnnouncementDetail" 
             component={AnnouncementDetailScreen} 
+            options={{ presentation: 'card' }}
+          />
+          <AppStack.Screen 
+            name="FriendProfile" 
+            component={FriendProfileScreen} 
             options={{ 
-              presentation: 'transparentModal',
-              headerShown: false,
-              contentStyle: { backgroundColor: 'transparent' }
+              presentation: 'card',
+              animation: 'slide_from_right'
+            }}
+          />
+          <AppStack.Screen 
+            name="AllSportsFriends" 
+            component={AllSportsFriendsScreen} 
+            options={{ 
+              presentation: 'card',
+              animation: 'slide_from_right'
+            }}
+          />
+          <AppStack.Screen 
+            name="Messages" 
+            component={MessagesScreen} 
+            options={{ 
+              headerShown: true,
+              title: 'Mesajlar',
+              presentation: 'card',
+              animation: 'slide_from_right'
+            }}
+          />
+          <AppStack.Screen 
+            name="ConversationDetail" 
+            component={ConversationDetailScreen} 
+            options={{ 
+              headerShown: true,
+              presentation: 'card',
+              animation: 'slide_from_right'
+            }}
+          />
+          <AppStack.Screen 
+            name="NewConversation" 
+            component={NewConversationScreen} 
+            options={{ 
+              headerShown: true,
+              title: 'Yeni Mesaj',
+              presentation: 'card',
+              animation: 'slide_from_right'
             }}
           />
         </AppStack.Navigator>

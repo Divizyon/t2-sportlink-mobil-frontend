@@ -14,7 +14,12 @@ export default function App() {
   const notificationStore = useNotificationStore();
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
-
+  const requestPermissionsAsync = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Bildirim izni reddedildi!');
+    }
+  }
   // Uygulama ilk yüklendiğinde push bildirimleri için kayıt ol
   useEffect(() => {
     // Bildirim sistemini yapılandır

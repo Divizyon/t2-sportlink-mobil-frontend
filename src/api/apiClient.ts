@@ -57,10 +57,7 @@ apiClient.interceptors.request.use(
     request.headers['X-Request-ID'] = requestId;
     
     if (isDebugMode) {
-      console.log('API İstek URL:', `${request.baseURL || ''}${request.url || ''}`);
-      console.log('API İstek Metodu:', request.method?.toUpperCase());
-      console.log('API İstek Header:', JSON.stringify(request.headers));
-      
+  
       if (request.data) {
         // Hassas verileri loglamadan önce maske uygula
         const maskedData = maskSensitiveData(request.data);
@@ -152,18 +149,20 @@ apiClient.interceptors.response.use(
       
       useApiStore.getState().failRequest(requestId, errorMessage || 'API isteği başarısız');
     }
-    
-    if (isDebugMode) {
-      console.error('API Yanıt Hatası:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
-      });
-    }
+   
     
     // 401 hatası (yetkisiz) ve istek henüz yenilenmemişse token yenileme işlemi yap
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Token hatası yanıt verisini kontrol et
+      const responseData = error.response?.data as any;
+      if (responseData?.code === 'REFRESH_TOKEN_ERROR' || 
+          responseData?.details?.includes('Already Used')) {
+        console.error('Refresh token zaten kullanılmış veya geçersiz. Oturum sonlandırılıyor.');
+        await tokenManager.removeToken();
+        useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+        return Promise.reject(error);
+      }
+      
       // İstek belli bir sayıdan fazla tekrar edilmişse döngüyü kır
       if (originalRequest._retryCount && originalRequest._retryCount >= 2) {
         console.error('Maksimum yeniden deneme sayısına ulaşıldı, kullanıcı oturumu sonlandırılıyor');
@@ -251,6 +250,9 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         console.error('Token yenileme işlemi sırasında beklenmeyen hata:', refreshError);
         isRefreshing = false;
+        // Tüm token verilerini temizle
+        await tokenManager.removeToken();
+        useApiStore.getState().setAuthError('Oturum hatası. Lütfen tekrar giriş yapın.');
         return Promise.reject(error);
       }
     }

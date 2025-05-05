@@ -9,7 +9,7 @@
     "newArchEnabled": true,
     "sdkVersion": "52.0.0",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -33,8 +33,13 @@
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+        "ACCESS_FINE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "NOTIFICATIONS",
+        "VIBRATE",
+        "android.permission.INTERNET"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       [
@@ -45,10 +50,23 @@
       ],
       ["react-native-maps", {
         "isInstalled": true
-      }]
+      }],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/sounds/notifications.mp3"]
+        }
+      ]
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#FF231F7C",
+      "androidMode": "default"
     },
     "extra": {
       "API_URL": "http://localhost:3000/api",
@@ -56,7 +74,7 @@
       "ENVIRONMENT": "development",
       "SECURE_STORAGE_KEY": "deepvision_secure_storage",
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "a5ef1d73-6a20-40b3-9fb9-37fba05f8d61"
       }
     }
   }

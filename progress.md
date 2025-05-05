@@ -38,6 +38,7 @@
 - [x] Theme store
 - [x] API store
 - [x] Request tracking ve monitoring
+- [x] Message store
 
 ### Form Validasyonu
 - [x] Yup şemaları
@@ -88,6 +89,7 @@
 
 ### Arkadaşlık Özellikleri
 - [x] Arkadaş önerilerini görüntüleme
+  - [x] "Tümünü Gör" butonu ile tüm spor arkadaşlarını görüntüleme sayfası
 - [x] Arkadaşlık isteği gönderme
 - [x] Arkadaşlık isteği iptal etme
 - [x] Arkadaşlık durumunu kontrol etme
@@ -96,6 +98,58 @@
   - [x] Arkadaş listesi ekranında profil resmi, isim ve kullanıcı adı gösterimi
   - [x] Arkadaş silme işlemi için arayüz hazırlanması
   - [x] Mock veriler temizlendi ve gerçek API yanıtları entegre edildi
+- [x] Arkadaş profil detayları görüntüleme
+  - [x] FriendProfileScreen ekranı entegrasyonu
+  - [x] Profil bilgilerini dinamik olarak görüntüleme
+  - [x] İstatistiklerin (oluşturulan etkinlik, katılınan etkinlik, arkadaş sayısı, değerlendirme) dinamik olarak görüntülenmesi
+  - [x] Arkadaşlık işlemlerinin (ekle, iptal et, çıkar) entegrasyonu
+- [x] SportFriendCard bileşeninde iyileştirmeler
+  - [x] Spor verilerini doğru şekilde görüntüleme (sports veya user_sports alanlarını destekleme)
+  - [x] Veri doğrulama ve hata kontrollerinin güçlendirilmesi
+  - [x] Profil detayına yönlendirme entegrasyonu
+
+### Mesajlaşma Özellikleri
+- [x] Mesajlaşma API entegrasyonu
+  - [x] MessageApi servis oluşturulması
+  - [x] Message store oluşturulması
+  - [x] Supabase realtime entegrasyonu
+- [x] Mesajlaşma arayüzü
+  - [x] MessagesScreen ekranı
+  - [x] ConversationList bileşeni
+  - [x] ConversationListItem bileşeni
+  - [x] ConversationDetailScreen ekranı
+  - [x] NewConversationScreen ekranı
+  - [x] UserListItem bileşeni
+  - [x] Ana sayfaya mesajlaşma kısayolu eklenmesi
+- [x] Mesajlaşma özellikleri
+  - [x] Birebir mesajlaşma
+  - [x] Grup mesajlaşma
+  - [x] Mesajlar arasında gezinme
+  - [x] Mesaj okundu bildirimi
+  - [x] Medya gönderimi
+- [x] Mesajlaşma arayüzü iyileştirmeleri
+  - [x] Karşıdan gelen mesajlar için baloncuk tasarımı
+  - [x] Mesaj baloncuklarına gölge ve kenar yuvarlatma eklenmesi
+  - [x] Mesaj zamanı ve içeriği düzenleme
+  - [x] Okunmamış mesaj sayacı ekleme (badge)
+  - [x] MessageStore'a unreadMessagesCount değişkeni ve getUnreadMessagesCount fonksiyonu eklenmesi
+  - [x] MessageApi'ye okunmamış mesaj sayısını getiren endpoint eklenmesi
+  - [x] Ana sayfadaki mesaj ikonuna okunmamış mesaj sayısı gösterimi
+  - [x] HomeScreen bileşeninde mesaj sayısının düzenli güncellenmesi
+
+### Bildirim Sistemi
+- [x] ExpoNotifications entegrasyonu
+- [x] Bildirim izinleri yönetimi
+- [x] Bildirim işlemleri için notificationUtils oluşturulması
+- [x] Bildirim token yönetimi
+- [x] Android cihazlarda bildirim sorunlarının çözümü
+  - [x] notificationUtils.ts dosyasının expo-notifications yapılandırmasının düzeltilmesi
+  - [x] app.json dosyasında bildirim ayarları ve izinlerinin güncellenmesi
+  - [x] Google Firebase yapılandırması için test google-services.json dosyası
+- [x] Farklı bildirim türleri desteği
+  - [x] Etkinlik bildirimleri
+  - [x] Arkadaşlık bildirimleri
+  - [x] Mesajlaşma bildirimleri
 
 ## Yapılacak İşler
 

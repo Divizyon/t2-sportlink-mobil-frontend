@@ -213,10 +213,14 @@ export const tokenManager = {
         }
       }
 
+      // Token yenileme başarısız olduğunda tüm token verilerini temizle
       console.error('Token yenileme başarısız:', response.message || 'Bilinmeyen hata');
+      await tokenManager.removeToken();
       return null;
     } catch (error) {
       console.error('Token yenileme sırasında hata oluştu:', error);
+      // Hata durumunda da tüm token verilerini temizle
+      await tokenManager.removeToken();
       return null;
     }
   },

@@ -1,0 +1,456 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  FlatList, 
+  TextInput, 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform,
+  ActivityIndicator,
+  Image
+} from 'react-native';
+import { useThemeStore } from '../../store/appStore/themeStore';
+import { useAuthStore } from '../../store/userStore/authStore';
+import { useMessageStore } from '../../store/messageStore/messageStore';
+import { Message } from '../../api/messages/messageApi';
+import { Ionicons } from '@expo/vector-icons';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { formatDistanceToNow } from 'date-fns';
+import { tr } from 'date-fns/locale';
+import * as ImagePicker from 'expo-image-picker';
+
+type RouteParams = {
+  ConversationDetail: {
+    conversationId: string;
+  };
+};
+
+export const ConversationDetailScreen: React.FC = () => {
+  const { theme } = useThemeStore();
+  const { user } = useAuthStore();
+  const route = useRoute<RouteProp<RouteParams, 'ConversationDetail'>>();
+  const navigation = useNavigation<any>();
+  const { conversationId } = route.params;
+  const flatListRef = useRef<FlatList>(null);
+  
+  const { 
+    currentConversation,
+    messages,
+    isLoadingMessages,
+    sendMessage,
+    setCurrentConversation,
+    markMessagesAsRead,
+    error
+  } = useMessageStore();
+  
+  const [newMessage, setNewMessage] = useState('');
+  const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  
+  // Konuşma verisini yükle
+  useEffect(() => {
+    const loadConversation = async () => {
+      if (conversationId) {
+        await setCurrentConversation(conversationId);
+      }
+    };
+    
+    loadConversation();
+    
+    // Cleanup - sayfa kapandığında temizle
+    return () => {
+      setCurrentConversation(null);
+    };
+  }, [conversationId]);
+  
+  // Mesajları okundu olarak işaretle
+  useEffect(() => {
+    if (messages.length > 0 && user) {
+      const unreadMessageIds = messages
+        .filter(msg => !msg.is_read && msg.sender_id !== user.id)
+        .map(msg => msg.id);
+      
+      if (unreadMessageIds.length > 0) {
+        markMessagesAsRead(unreadMessageIds);
+      }
+    }
+  }, [messages, user]);
+  
+  // Konuşma başlığını ayarla
+  useEffect(() => {
+    if (currentConversation) {
+      // Başlık oluştur
+      let title = currentConversation.name || '';
+      
+      // Eğer grup değilse ve başlık yoksa, kullanıcı adını göster
+      if (!currentConversation.is_group && !title) {
+        // Diğer katılımcıları bul (kendim hariç)
+        const otherParticipants = currentConversation.participants.filter(
+          p => p.user_id !== user?.id
+        );
+        
+        if (otherParticipants.length > 0) {
+          const otherUser = otherParticipants[0].user;
+          title = `${otherUser.first_name} ${otherUser.last_name}`;
+        } else {
+          title = 'Sohbet';
+        }
+      }
+      
+      // Başlığı güncelle
+      navigation.setOptions({
+        title,
+        headerBackTitle: 'Geri',
+      });
+    }
+  }, [currentConversation, navigation, user]);
+  
+  // Mesaj gönderme işlemi
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !currentConversation) return;
+    
+    try {
+      setIsSending(true);
+      
+      await sendMessage(currentConversation.id, newMessage.trim());
+      
+      // Mesaj kutusunu temizle
+      setNewMessage('');
+      
+      // Listeyi en sona kaydır
+      setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToEnd({ animated: true });
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Mesaj gönderme hatası:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+  
+  // Medya seçme ve gönderme
+  const handlePickImage = async () => {
+    // İzin iste
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (!permissionResult.granted) {
+      alert('Görsel seçmek için izin gerekiyor!');
+      return;
+    }
+    
+    // Görsel seçiciyi aç
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      // TODO: Medya mesajı gönderme işlemi
+      alert('Medya mesajı gönderme özelliği henüz aktif değil. API hazır olduğunda kullanılabilir olacak.');
+    }
+  };
+  
+  // Mesaj renderlama
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isMyMessage = item.sender_id === user?.id;
+    const messageDate = new Date(item.created_at);
+    
+    return (
+      <View
+        style={[
+          styles.messageContainer,
+          isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer
+        ]}
+      >
+        {/* Mesaj içeriği */}
+        <View
+          style={[
+            styles.messageContent,
+            isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
+            { backgroundColor: isMyMessage ? theme.colors.accent : theme.colors.cardBackground }
+          ]}
+        >
+          {/* Eğer medya varsa göster */}
+          {item.media_url && (
+            <View style={styles.mediaContainer}>
+              <Image
+                source={{ uri: item.media_url }}
+                style={styles.mediaImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          
+          {/* Mesaj metni */}
+          <Text 
+            style={[
+              styles.messageText,
+              { color: isMyMessage ? 'white' : theme.colors.text }
+            ]}
+          >
+            {item.content}
+          </Text>
+          
+          {/* Zaman */}
+          <Text
+            style={[
+              styles.messageTime,
+              { color: isMyMessage ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary }
+            ]}
+          >
+            {formatDistanceToNow(messageDate, { addSuffix: true, locale: tr })}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+  
+  // Yükleniyor gösterimi
+  if (isLoadingMessages && messages.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.accent} />
+          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+            Mesajlar yükleniyor...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
+  // Hata gösterimi
+  if (error && messages.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color={theme.colors.error} />
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: theme.colors.accent }]}
+            onPress={() => setCurrentConversation(conversationId)}
+          >
+            <Text style={styles.retryButtonText}>Tekrar Dene</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        {/* Mesaj Listesi */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          style={styles.messagesList}
+          contentContainerStyle={styles.messagesContent}
+          inverted={false}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons 
+                name="chatbubble-ellipses-outline" 
+                size={64} 
+                color={theme.colors.textSecondary} 
+              />
+              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                Henüz mesaj yok. İlk mesajı gönder!
+              </Text>
+            </View>
+          }
+        />
+        
+        {/* Mesaj Girişi */}
+        <View style={[styles.inputContainer, { backgroundColor: theme.colors.cardBackground }]}>
+          {/* Medya Ekleme */}
+          <TouchableOpacity 
+            style={styles.attachButton}
+            onPress={handlePickImage}
+          >
+            <Ionicons name="image-outline" size={24} color={theme.colors.accent} />
+          </TouchableOpacity>
+          
+          {/* Mesaj Input */}
+          <TextInput
+            style={[styles.input, { color: theme.colors.text }]}
+            placeholder="Mesaj yazın..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={newMessage}
+            onChangeText={setNewMessage}
+            multiline
+          />
+          
+          {/* Gönder Butonu */}
+          <TouchableOpacity 
+            style={[
+              styles.sendButton, 
+              { 
+                backgroundColor: newMessage.trim() ? theme.colors.accent : theme.colors.border,
+                opacity: newMessage.trim() ? 1 : 0.5
+              }
+            ]}
+            onPress={handleSendMessage}
+            disabled={!newMessage.trim() || isSending}
+          >
+            {isSending ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="send" size={18} color="white" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 16,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  messagesList: {
+    flex: 1,
+  },
+  messagesContent: {
+    padding: 10,
+    paddingBottom: 20,
+  },
+  messageContainer: {
+    marginBottom: 10,
+    flexDirection: 'row',
+  },
+  myMessageContainer: {
+    justifyContent: 'flex-end',
+  },
+  otherMessageContainer: {
+    justifyContent: 'flex-start',
+  },
+  messageContent: {
+    padding: 12,
+    maxWidth: '75%',
+  },
+  myMessageBubble: {
+    borderRadius: 18,
+    borderBottomRightRadius: 5,
+  },
+  otherMessageBubble: {
+    borderRadius: 18,
+    borderBottomLeftRadius: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.04)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  messageTime: {
+    fontSize: 12,
+    alignSelf: 'flex-end',
+    marginTop: 5,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  input: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    fontSize: 16,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  attachButton: {
+    padding: 10,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  mediaContainer: {
+    marginBottom: 8,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  mediaImage: {
+    width: '100%',
+    height: 200,
+  },
+  emptyContainer: {
+    padding: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+});
+
+export default ConversationDetailScreen; 

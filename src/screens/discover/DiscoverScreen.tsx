@@ -183,7 +183,8 @@ export const DiscoverScreen: React.FC = () => {
   };
   
   const handleSeeAllFriends = () => {
-    console.log('Tüm spor arkadaşları görüntüleniyor');
+    // AllSportsFriends ekranına yönlendir
+    navigation.navigate('AllSportsFriends');
   };
   
   const handleSeeAllFacilities = () => {

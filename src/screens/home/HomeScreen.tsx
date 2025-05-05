@@ -13,13 +13,17 @@ import {
   Animated,
   Platform
 } from 'react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, NavigationProp, CompositeNavigationProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useHomeStore } from '../../store/appStore/homeStore';
 import { useAuthStore } from '../../store/userStore/authStore';
 import { Event } from '../../types/eventTypes/event.types';
 import { News, Sport, Announcement } from '../../types/apiTypes/api.types';
 import { Ionicons } from '@expo/vector-icons';
+import { useMessageStore } from '../../store/messageStore/messageStore';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Komponentler
 import SectionHeader from '../../components/Home/SectionHeader/SectionHeader';
@@ -29,7 +33,16 @@ import AnnouncementCard from '../../components/Home/AnnouncementCard/Announcemen
 import NewsCard from '../../components/Home/NewsCard/NewsCard';
 
 // Navigasyon için type tanımı
-type RootStackParamList = {
+type TabParamList = {
+  Home: undefined;
+  Events: undefined; 
+  Discover: undefined;
+  Notifications: undefined;
+  Profile: undefined;
+};
+
+type StackParamList = {
+  MainTabs: undefined;
   EventDetail: { eventId: string };
   EventsList: undefined;
   NewsDetail: { newsId: string };
@@ -37,7 +50,16 @@ type RootStackParamList = {
   Notifications: undefined;
   Search: undefined;
   Profile: undefined;
+  Messages: undefined;
+  ConversationDetail: { conversationId: string };
+  NewConversation: undefined;
 };
+
+// Birleşik navigasyon tipi
+type NavigationType = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Home'>,
+  NativeStackNavigationProp<StackParamList>
+>;
 
 // Event tipini genişletiyoruz
 interface ExtendedEvent extends Event {
@@ -46,7 +68,7 @@ interface ExtendedEvent extends Event {
 
 export const HomeScreen: React.FC = () => {
   const { theme } = useThemeStore();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NavigationType>();
   const { user } = useAuthStore();
   
   // Store verilerini al
@@ -65,6 +87,8 @@ export const HomeScreen: React.FC = () => {
     isLoadingAnnouncements,
     refreshAll
   } = useHomeStore();
+  
+  const { fetchConversations, getUnreadMessagesCount } = useMessageStore();
   
   // State tanımları
   const [refreshing, setRefreshing] = useState(false);
@@ -89,7 +113,16 @@ export const HomeScreen: React.FC = () => {
   // İlk yükleme
   useEffect(() => {
     refreshAll();
+    fetchConversations();
+    getUnreadMessagesCount();
   }, []);
+  
+  // Ekran odaklandığında okunmamış mesaj sayısını güncelle
+  useFocusEffect(
+    React.useCallback(() => {
+      getUnreadMessagesCount();
+    }, [getUnreadMessagesCount])
+  );
   
   // Spor seçimine göre etkinlikleri filtrele
   useEffect(() => {
@@ -120,7 +153,7 @@ export const HomeScreen: React.FC = () => {
   
   // Bildirimler sayfasına git
   const handleNotifications = () => {
-    navigation.navigate('Notifications' as any);
+    navigation.navigate('Notifications');
   };
 
   // Yeni içerik ekleme
@@ -139,7 +172,7 @@ export const HomeScreen: React.FC = () => {
 
   // Profil sayfasına git
   const handleProfilePress = () => {
-    navigation.navigate('Profile' as any);
+    navigation.navigate('Profile');
   };
 
   // Spor seçimi - Sport tipinde parametre alacak şekilde düzeltildi
@@ -150,6 +183,11 @@ export const HomeScreen: React.FC = () => {
   // Haber detayına git
   const handleNewsPress = (news: News) => {
     navigation.navigate('NewsDetail', { newsId: news.id });
+  };
+
+  // Mesajlar sayfasına git
+  const handleMessagesPress = () => {
+    navigation.navigate('Messages');
   };
 
   // Animasyon değeri hesapla
@@ -187,9 +225,7 @@ export const HomeScreen: React.FC = () => {
           borderBottomColor: theme.colors.border
         }
       ]}>
-        <TouchableOpacity style={styles.menuButton}>
-          <Ionicons name="menu-outline" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
+       
         
         <Text style={[styles.logoText, { color: theme.colors.text }]}>
           <Text style={{color: '#4CAF50'}}>Sport</Text>
@@ -197,17 +233,12 @@ export const HomeScreen: React.FC = () => {
         </Text>
         
         <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={handleNotifications}
-          >
-            <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
+         
           <TouchableOpacity 
             style={[styles.headerActionButton, { backgroundColor: theme.colors.accent }]}
-            onPress={handleAddContent}
+            onPress={handleMessagesPress}
           >
-            <Ionicons name="add" size={20} color="white" />
+            <Ionicons name="chatbubble-outline" size={20} color="white" />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -230,6 +261,8 @@ export const HomeScreen: React.FC = () => {
         )}
         scrollEventThrottle={16}
       >
+       
+
         {/* Kişisel selam */}
         <View style={styles.greetingContainer}>
           <View>
@@ -720,6 +753,7 @@ const styles = StyleSheet.create({
   },
   greetingContainer: {
     paddingHorizontal: 16,
+    marginTop: 10,
     marginBottom: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1013,4 +1047,40 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 80,
   },
+  messageBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  messageIconContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  messageContent: {
+    flex: 1,
+  },
+  messageTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  messageSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
 });
+
+export default HomeScreen;

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { useFriendsStore } from '../../store/userStore/friendsStore';
+import { useNavigation } from '@react-navigation/native';
 
 interface SportFriend {
   id: string;
@@ -11,19 +12,43 @@ interface SportFriend {
   last_name: string;
   username?: string;
   age?: number;
-  sports?: { name: string; icon: string }[];
+  user_sports?: {
+    user_id?: string;
+    sport_id: string;
+    skill_level?: string;
+    sport: {
+      id: string;
+      name: string;
+      description?: string;
+      icon: string;
+    };
+  }[];
+  sports?: {
+    id: string;
+    name: string;
+    icon: string;
+    skill_level?: string;
+  }[];
   profile_picture?: string;
   common_friends?: number;
   common_sports?: number;
+  interests?: {
+    id: string;
+    name: string;
+    icon: string;
+    skill_level?: string;
+  }[];
 }
 
 interface SportFriendCardProps {
   friend: SportFriend;
   onPress?: () => void;
+  cardStyle?: object;
 }
 
-export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPress }) => {
+export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPress, cardStyle }) => {
   const { theme } = useThemeStore();
+  const navigation = useNavigation<any>();
   const { 
     sendFriendRequest, 
     cancelFriendRequest,
@@ -113,6 +138,15 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
     }
   };
 
+  // Mesaj gönderme işlemi
+  const handleSendMessage = () => {
+    // Konuşma başlatmak için "NewConversation" ekranına yönlendir
+    // ve başlatılacak konuşmanın kullanıcısını seç
+    navigation.navigate('NewConversation', {
+      preSelectedUser: friend.id
+    });
+  };
+
   // Buton içeriğini ve davranışını belirle
   const renderButton = () => {
     if (isCheckingStatus) {
@@ -125,15 +159,20 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
 
     if (friendshipStatus === 'friend') {
       return (
-        <TouchableOpacity 
-          style={[styles.addButton, { backgroundColor: theme.colors.accent, borderColor: theme.colors.accent }]}
-          disabled={true}
-        >
-          <Ionicons name="checkmark" size={20} color="white" />
-          <Text style={[styles.addButtonText, { color: "white" }]}>
-            Arkadaş
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={[styles.friendButton, { backgroundColor: theme.colors.accent, borderColor: theme.colors.accent }]}
+            disabled={true}
+          >
+            <Ionicons name="checkmark" size={18} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.messageButton, { borderColor: theme.colors.accent }]}
+            onPress={handleSendMessage}
+          >
+            <Ionicons name="chatbubble-outline" size={18} color={theme.colors.accent} />
+          </TouchableOpacity>
+        </View>
       );
     }
 
@@ -192,12 +231,99 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
       </TouchableOpacity>
     );
   };
+  
+  // Profil detaylarına git
+  const handleProfilePress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      // Navigasyon ile kullanıcı profil detayına git
+      navigation.navigate('FriendProfile', { userId: friend.id });
+    }
+  };
+
+  // Farklı formatlardaki spor verilerini standardize et ve getir
+  const getSportsList = () => {
+    // API verilerinin yapısını kontrol et
+    console.log("Friend spor verileri:", {
+      id: friend.id,
+      name: `${friend.first_name} ${friend.last_name}`,
+      interests: friend.interests ? friend.interests.length : 0,
+      user_sports: friend.user_sports ? friend.user_sports.length : 0,
+      sports: friend.sports ? friend.sports.length : 0
+    });
+
+    // Detaylı debug - user_sports yapısı
+    if (friend.user_sports && friend.user_sports.length > 0) {
+      console.log("User sports detayları:", 
+        friend.user_sports.map(s => ({
+          sport_id: s.sport_id,
+          skill: s.skill_level,
+          sport_name: s.sport?.name || "bilinmiyor",
+          sport_icon: s.sport?.icon || "bilinmiyor"
+        }))
+      );
+    }
+    
+    // 1. Öncelikle interests alanını kontrol et - en basit format
+    if (friend.interests && friend.interests.length > 0) {
+      return friend.interests;
+    }
+    
+    // 2. user_sports alanını kontrol et - API'den gelen kompleks format
+    if (friend.user_sports && friend.user_sports.length > 0) {
+      // user_sports'u standart formata dönüştür
+      return friend.user_sports.map(item => ({
+        id: item.sport_id || (item.sport && item.sport.id) || "",
+        name: (item.sport && item.sport.name) || "Spor Bilgisi Yok",
+        icon: (item.sport && item.sport.icon) || "fitness-outline",
+        skill_level: item.skill_level || "beginner"
+      }));
+    }
+    
+    // 3. Basit sports alanını kontrol et
+    if (friend.sports && friend.sports.length > 0) {
+      return friend.sports;
+    }
+    
+    // Hiçbir spor verisi bulunamadıysa boş dizi döndür
+    return [];
+  };
+
+  const sportsList = getSportsList();
+
+  // Spor ikonunu güvenli şekilde al (varsayılan değer ile)
+  const getSportIcon = (item: any) => {
+    // İkon adını ayarla, varsayılan olarak 'fitness-outline' kullan
+    let iconName = 'fitness-outline';
+    
+    if (typeof item === 'object' && item !== null) {
+      if (item.icon) {
+        iconName = item.icon;
+      }
+    }
+    
+    // İkon adı sabit değerlerden birine uyuyorsa doğrudan döndür
+    if (['football-icon', 'football-outline', 'basketball-icon', 'basketball-outline', 
+         'tennis-icon', 'tennis-outline', 'fitness-outline', 'bicycle-outline', 
+         'walk-outline', 'water-outline'].includes(iconName)) {
+      return iconName;
+    }
+    
+    // İkon eşleştirme - API'den gelen özel format
+    if (iconName === 'football-icon') return 'football-outline';
+    if (iconName === 'basketball-icon') return 'basketball-outline';
+    if (iconName === 'tennis-icon') return 'tennisball-outline';
+    
+    // Aksi takdirde varsayılan ikonu döndür
+    return 'fitness-outline';
+  };
 
   return (
     <>
       <TouchableOpacity
-        style={[styles.container, { backgroundColor: theme.colors.cardBackground }]}
-        onPress={onPress}
+        style={[styles.container, { backgroundColor: theme.colors.cardBackground }, cardStyle]}
+        onPress={handleProfilePress}
         activeOpacity={0.7}
       >
         <View style={styles.contentContainer}>
@@ -217,15 +343,10 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
             )}
           </View>
 
-          {/* İsim ve Yaş */}
+          {/* İsim */}
           <Text style={[styles.name, { color: theme.colors.text }]}>
             {friend.first_name} {friend.last_name}
           </Text>
-          {friend.age && (
-            <Text style={[styles.age, { color: theme.colors.textSecondary }]}>
-              {friend.age} yaş
-            </Text>
-          )}
 
           {/* Ortak Arkadaşlar veya Sporlar (Varsa) */}
           {(friend.common_friends || friend.common_sports) && (
@@ -245,17 +366,29 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
 
           {/* Sporlar */}
           <View style={styles.sportsContainer}>
-            {friend.sports && friend.sports.slice(0, 2).map((sport, index) => (
-              <View key={index} style={styles.sportItem}>
-                <Ionicons name={sport.icon as any} size={16} color={theme.colors.textSecondary} />
-                <Text style={[styles.sportText, { color: theme.colors.textSecondary }]}>
-                  {sport.name}
-                </Text>
-              </View>
-            ))}
-            {friend.sports && friend.sports.length > 2 && (
-              <Text style={[styles.moreSports, { color: theme.colors.textSecondary }]}>
-                +{friend.sports.length - 2}
+            {sportsList.length > 0 ? (
+              <>
+                {sportsList.slice(0, 2).map((sport, index) => (
+                  <View key={index} style={styles.sportItem}>
+                    <Ionicons 
+                      name={getSportIcon(sport) as any} 
+                      size={16} 
+                      color={theme.colors.textSecondary} 
+                    />
+                    <Text style={[styles.sportText, { color: theme.colors.textSecondary }]}>
+                      {sport.name || "Spor Belirsiz"}
+                    </Text>
+                  </View>
+                ))}
+                {sportsList.length > 2 && (
+                  <Text style={[styles.moreSports, { color: theme.colors.textSecondary }]}>
+                    +{sportsList.length - 2}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text style={[styles.sportText, { color: theme.colors.textSecondary, fontStyle: 'italic' }]}>
+                Spor bilgisi belirtilmemiş
               </Text>
             )}
           </View>
@@ -382,5 +515,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 4,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  friendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+  },
+  messageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 18, 
+    width: '70%',
+    height: 36,
   },
 }); 

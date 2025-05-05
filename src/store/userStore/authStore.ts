@@ -42,6 +42,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Kullanıcı bilgilerini kaydet
         await AsyncStorage.setItem('@user_data', JSON.stringify(response.data.user));
         
+        // Token bilgisini doğru şekilde kaydet
+        if (response.data.session) {
+          const session = response.data.session;
+          await tokenManager.setTokenData({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            expires_at: session.expires_at || 
+                         (session.expires_in ? Math.floor(Date.now() / 1000) + session.expires_in : undefined),
+            token_type: session.token_type || 'Bearer'
+          });
+        }
+        
         set({ 
           user: response.data.user, 
           isAuthenticated: true, 
@@ -141,6 +153,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
+      // Tüm token verilerini kontrol et
+      const tokenData = await tokenManager.getTokenData();
+      
+      // Token yoksa oturum yok demektir
+      if (!tokenData || !tokenData.access_token) {
+        set({ 
+          user: null, 
+          isAuthenticated: false, 
+          isLoading: false 
+        });
+        return;
+      }
+      
       // Token geçerliliğini kontrol et
       const isValid = await tokenManager.isTokenValid();
       
@@ -178,11 +203,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
         } catch (apiError) {
           console.error('API\'den kullanıcı verisi alınırken hata:', apiError);
+          // API hatası durumunda tokenları temizle
+          await tokenManager.removeToken();
         }
       }
       
       // Token geçersiz veya kullanıcı bilgisi yoksa, oturumu kapat
       await AsyncStorage.removeItem('@user_data');
+      await tokenManager.removeToken(); // Tüm token verilerini temizle
+      
       set({ 
         user: null, 
         isAuthenticated: false, 
@@ -193,6 +222,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const errorMessage = error instanceof Error ? 
         error.message : 
         'Oturum durumu kontrol edilirken bir sorun oluştu.';
+      
+      // Hata durumunda tüm token ve oturum verilerini temizle  
+      await AsyncStorage.removeItem('@user_data');
+      await tokenManager.removeToken();
         
       set({ 
         error: errorMessage,
