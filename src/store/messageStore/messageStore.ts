@@ -15,6 +15,7 @@ interface MessageStore {
   error: string | null;
   activeChannel: any; // Supabase channel
   unreadMessagesCount: number; // Okunmamış mesaj sayacı
+  lastUnreadCountCheck: number; // Son okunmamış mesaj sayısı hesaplama zamanı
   
   // Konuşmalar
   fetchConversations: () => Promise<void>;
@@ -49,6 +50,7 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
   error: null,
   activeChannel: null,
   unreadMessagesCount: 0,
+  lastUnreadCountCheck: 0,
   
   // Konuşmaları getir
   fetchConversations: async () => {
@@ -58,6 +60,12 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       const response = await messageApi.getConversations();
       
       if (response.success && response.data) {
+        // Konuşmalar boş dizi mi kontrol et
+        if (!Array.isArray(response.data) || response.data.length === 0) {
+          set({ conversations: [], isLoadingConversations: false });
+          return;
+        }
+        
         // Konuşmaları en son mesaj tarihine göre sırala
         const sortedConversations = response.data.sort((a, b) => {
           return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -66,7 +74,11 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
         set({ conversations: sortedConversations });
         
         // Okunmamış mesaj sayısını güncelle
-        await get().getUnreadMessagesCount();
+        try {
+          await get().getUnreadMessagesCount();
+        } catch (countError) {
+          console.error('Okunmamış mesaj sayısı alınırken hata:', countError);
+        }
       } else {
         throw new Error(response.message || 'Konuşmalar getirilemedi');
       }
@@ -143,16 +155,32 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       }
       
       // Önce mevcut konuşmalar içinden bul
-      const conversation = get().conversations.find(c => c.id === conversationId);
+      const conversations = get().conversations;
+      
+      if (!Array.isArray(conversations) || conversations.length === 0) {
+        set({ error: 'Konuşmalar henüz yüklenmedi', currentConversation: null });
+        return;
+      }
+      
+      const conversation = conversations.find(c => c.id === conversationId);
       
       if (conversation) {
         set({ currentConversation: conversation });
         
         // Mesajları getir
-        await get().fetchConversationMessages(conversationId);
+        try {
+          await get().fetchConversationMessages(conversationId);
+        } catch (messagesError) {
+          console.error('Mesajlar getirilirken hata:', messagesError);
+          set({ error: 'Mesajlar yüklenirken bir hata oluştu' });
+        }
         
         // Supabase realtime aboneliği
-        get().subscribeToConversation(conversationId);
+        try {
+          get().subscribeToConversation(conversationId);
+        } catch (subscriptionError) {
+          console.error('Supabase aboneliği sırasında hata:', subscriptionError);
+        }
       } else {
         // Konuşma mevcut değilse hata göster
         set({ error: 'Konuşma bulunamadı', currentConversation: null });
@@ -317,33 +345,60 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
   // Okunmamış mesaj sayısını hesapla
   getUnreadMessagesCount: async () => {
     try {
+      // Son hesaplamadan bu yana 5 dakikadan az bir süre geçtiyse ve değer varsa, önbellekten döndür
+      const lastCheckedTime = get().lastUnreadCountCheck;
+      const now = Date.now();
+      
+      if (lastCheckedTime && (now - lastCheckedTime < 5 * 60 * 1000) && get().unreadMessagesCount >= 0) {
+        console.log('Okunmamış mesaj sayısı önbellekten alındı:', get().unreadMessagesCount);
+        return get().unreadMessagesCount;
+      }
+      
       // Backend'den okunmamış mesaj sayısını getir
       const response = await messageApi.getUnreadMessagesCount();
       
       if (response.success && response.data !== undefined) {
-        set({ unreadMessagesCount: response.data.count });
+        set({ 
+          unreadMessagesCount: response.data.count,
+          lastUnreadCountCheck: Date.now()
+        });
         return response.data.count;
       } else {
-        // API'den veri alınamazsa, konuşmalardan hesapla
+        throw new Error('Geçersiz API yanıtı');
+      }
+    } catch (error: any) {
+      // Daha az korkutucu bir hata mesajı
+      console.log('Okunmamış mesaj sayısı getirme hatası:', error?.message || 'Bilinmeyen hata');
+      
+      // API isteği başarısız oldu, yerel hesaplama yap
+      try {
         const { conversations } = get();
         let unreadCount = 0;
         
-        conversations.forEach(conversation => {
-          const lastMessage = conversation.messages && conversation.messages.length > 0 
-            ? conversation.messages[0] 
-            : null;
-            
-          if (lastMessage && !lastMessage.is_read) {
-            unreadCount++;
-          }
-        });
+        // conversations dizisi tanımlı ise hesaplama yap
+        if (Array.isArray(conversations)) {
+          conversations.forEach(conversation => {
+            // messages dizisi tanımlı mı kontrol et
+            if (conversation.messages && Array.isArray(conversation.messages) && conversation.messages.length > 0) {
+              const lastMessage = conversation.messages[0];
+              // Bu mesaj bana ait değilse ve okunmamışsa sayacı artır
+              if (lastMessage && !lastMessage.is_read) {
+                unreadCount++;
+              }
+            }
+          });
+        }
         
-        set({ unreadMessagesCount: unreadCount });
+        set({ 
+          unreadMessagesCount: unreadCount,
+          lastUnreadCountCheck: Date.now() 
+        });
         return unreadCount;
+      } catch (innerError) {
+        console.log('Yerel okunmamış mesaj hesaplama hatası:', innerError);
+        set({ unreadMessagesCount: 0 });
+        return 0;
       }
-    } catch (error) {
-      console.error('Okunmamış mesaj sayısı hesaplanırken hata:', error);
-      return 0;
     }
   },
   
@@ -428,7 +483,8 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       isLoadingMessages: false,
       error: null,
       activeChannel: null,
-      unreadMessagesCount: 0
+      unreadMessagesCount: 0,
+      lastUnreadCountCheck: 0
     });
   }
 })); 

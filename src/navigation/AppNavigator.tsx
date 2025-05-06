@@ -11,6 +11,8 @@ import { useThemeStore } from '../store/appStore/themeStore';
 import { useNotificationStore } from '../store/appStore/notificationStore';
 import { useMessageStore } from '../store/messageStore/messageStore';
 import { useMapsStore } from '../store/appStore/mapsStore';
+import FriendRequestsScreen from '../screens/profile/friends/FriendRequestsScreen';
+
 
 // Screens - Auth
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -73,6 +75,7 @@ type AppStackParamList = {
   ConversationDetail: { conversationId: string };
   NewConversation: undefined;
   AllNewsScreen: undefined;
+  FriendRequests: undefined;
 };
 
 type EventsStackParamList = {
@@ -414,6 +417,19 @@ export const AppNavigator = () => {
             options={{ 
               presentation: 'card',
               animation: 'slide_from_right'
+            }}
+          />
+          <AppStack.Screen 
+            name="FriendRequests" 
+            component={FriendRequestsScreen}
+            options={{
+              headerShown: true,
+              title: 'Arkadaşlık İstekleri',
+              headerTintColor: '#338626',
+              headerStyle: {
+                backgroundColor: '#fff',
+              },
+              headerShadowVisible: false,
             }}
           />
         </AppStack.Navigator>

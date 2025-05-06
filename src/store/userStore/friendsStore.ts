@@ -126,6 +126,22 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
 
   // Arkadaşları getir - Kısayol metodu (varsayılan değerlerle fetchFriends çağırır)
   getFriends: async () => {
+    // Eğer arkadaşlar zaten yüklüyse ve boş değilse, tekrar yükleme yapma
+    const currentState = get();
+    
+    // Halihazırda arkadaşlar yüklüyse ve isLoadingFriends false ise, yeniden yükleme yapma
+    if (currentState.friends.length > 0 && !currentState.isLoadingFriends) {
+      console.log('Arkadaşlar zaten yüklü, önbellekten kullanılıyor');
+      return;
+    }
+    
+    // Eğer yükleme işlemi devam ediyorsa, tekrarlama
+    if (currentState.isLoadingFriends) {
+      console.log('Arkadaşlar şu anda yükleniyor, işlem tekrarlanmayacak');
+      return;
+    }
+    
+    // Arkadaşları yükle (sayfa 1, limit 20)
     await get().fetchFriends(1, 20);
   },
 

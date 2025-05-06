@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ export const NewConversationScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RouteParams, 'params'>>();
-  const { friends, getFriends, isLoadingFriends } = useFriendsStore();
+  const { friends, getFriends, isLoadingFriends, error } = useFriendsStore();
   const { createConversation } = useMessageStore();
   
   const preSelectedUser = route.params?.preSelectedUser;
@@ -39,10 +39,23 @@ export const NewConversationScreen: React.FC = () => {
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  
+  // Arkadaşları yükle, debounce ile tekrar deneme eklenmiş
+  const loadFriends = useCallback(async () => {
+    try {
+      setLoadError(null);
+      await getFriends();
+    } catch (err) {
+      setLoadError(error || 'Arkadaşlar yüklenirken bir hata oluştu');
+      console.error('Arkadaşlar yüklenirken hata:', err);
+    }
+  }, [getFriends, error]);
   
   // Arkadaşları yükle
   useEffect(() => {
-    getFriends();
+    loadFriends();
     
     // Önceden seçilmiş kullanıcı varsa ve henüz yüklenmemişse, doğrudan mesaj başlatma işlemini yap
     if (preSelectedUser && selectedUsers.length === 1 && !isCreatingGroup) {
@@ -58,6 +71,18 @@ export const NewConversationScreen: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [preSelectedUser, friends, isLoadingFriends]);
+  
+  // API çağrısı başarısız olduğunda tekrar deneme mekanizması
+  useEffect(() => {
+    if (error && friends.length === 0 && retryCount < 3) {
+      const retryTimer = setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        loadFriends();
+      }, 2000); // 2 saniye sonra tekrar dene
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [error, friends.length, retryCount, loadFriends]);
   
   // Kullanıcı seçme işlemi
   const toggleUserSelection = (userId: string) => {
@@ -201,6 +226,11 @@ export const NewConversationScreen: React.FC = () => {
           <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
             Arkadaşlar yükleniyor...
           </Text>
+          {retryCount > 0 && (
+            <Text style={[styles.retryText, { color: theme.colors.textSecondary }]}>
+              Tekrar deneniyor ({retryCount}/3)...
+            </Text>
+          )}
         </View>
       ) : (
         <FlatList
@@ -217,12 +247,32 @@ export const NewConversationScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                {searchQuery
-                  ? `"${searchQuery}" için sonuç bulunamadı`
-                  : 'Henüz arkadaşınız yok'}
-              </Text>
+              {loadError ? (
+                <>
+                  <Ionicons name="alert-circle-outline" size={64} color={theme.colors.error} />
+                  <Text style={[styles.emptyText, { color: theme.colors.error }]}>
+                    {loadError}
+                  </Text>
+                  <TouchableOpacity 
+                    style={[styles.retryButton, { backgroundColor: theme.colors.accent }]}
+                    onPress={() => {
+                      setRetryCount(0);
+                      loadFriends();
+                    }}
+                  >
+                    <Text style={styles.retryButtonText}>Tekrar Dene</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
+                  <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                    {searchQuery
+                      ? `"${searchQuery}" için sonuç bulunamadı`
+                      : 'Henüz arkadaşınız yok'}
+                  </Text>
+                </>
+              )}
             </View>
           }
         />
@@ -246,6 +296,16 @@ export const NewConversationScreen: React.FC = () => {
             </>
           )}
         </TouchableOpacity>
+      )}
+      
+      {/* Hata mesajı gösterimi */}
+      {error && (
+        <View style={[styles.errorContainer, { backgroundColor: theme.colors.error }]}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="close-circle" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -309,6 +369,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
+  retryText: {
+    marginTop: 8,
+    fontSize: 14,
+    opacity: 0.8,
+  },
   list: {
     flex: 1,
   },
@@ -324,6 +389,16 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: '500',
   },
   startButton: {
     position: 'absolute',
@@ -343,6 +418,22 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorContainer: {
+    position: 'absolute',
+    bottom: 80,
+    left: 20,
+    right: 20,
+    padding: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'white',
+    flex: 1,
+    marginRight: 8,
   },
 });
 

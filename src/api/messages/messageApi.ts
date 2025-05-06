@@ -184,7 +184,7 @@ export const messageApi = {
    */
   async getUnreadMessagesCount(): Promise<ApiResponse<UnreadMessagesCountResponse>> {
     try {
-      const response = await apiClient.get('/messages/unread-count');
+      const response = await apiClient.get('/messages/messages/unread-count');
       return response.data;
     } catch (error) {
       console.error('Okunmamış mesaj sayısını getirme hatası:', error);

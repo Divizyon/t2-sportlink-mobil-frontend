@@ -86,13 +86,10 @@ apiClient.interceptors.request.use(
       }
       
       const token = await tokenManager.getToken();
-      console.log('Token alındı:', token ? 'Token mevcut' : 'Token yok', 
-                  token ? `Token uzunluğu: ${token.length}` : '');
-      
+     
       if (token) {
         // Token formatını kontrol et (bazı API'ler "Bearer " öneki olmadan token bekleyebilir)
         config.headers.Authorization = `Bearer ${token}`;
-        console.log('Authorization header eklendi:', config.headers.Authorization);
       } else {
         console.log('Token bulunamadı, Authorization header eklenemedi');
       }
@@ -149,8 +146,16 @@ apiClient.interceptors.response.use(
       
       useApiStore.getState().failRequest(requestId, errorMessage || 'API isteği başarısız');
     }
-   
     
+    // 404 hatası için özel işlem - bu durumda sadece hatayı iletip işlemi sonlandırabiliriz
+    if (error.response?.status === 404) {
+      console.error('Endpoint bulunamadı:', originalRequest?.url);
+      if (isDebugMode) {
+        console.log('404 hatası - İstek endpoint\'i:', originalRequest?.url);
+      }
+      return Promise.reject(error);
+    }
+   
     // 401 hatası (yetkisiz) ve istek henüz yenilenmemişse token yenileme işlemi yap
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Token hatası yanıt verisini kontrol et

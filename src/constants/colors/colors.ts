@@ -2,6 +2,7 @@ export const colors = {
   primary: '#192A56',   // Primary (koyu mavi)
   secondary: '#273C75', // Secondary (daha açık mavi)
   accent: '#338626',    // Accent (yeşil)
+  accentDark: '#2F4F4F',    // Accent (yeşil)
   dark: '#89939E',      // Dark (gri-mavi)
   light: '#D1D8E0',     // Light (açık gri)
   silver: '#F5F7FA',    // Silver (gümüş)

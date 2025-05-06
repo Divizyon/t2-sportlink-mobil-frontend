@@ -26,7 +26,7 @@ export const notificationService = {
    */
   async getUnreadCount(): Promise<ApiResponse<NotificationCountResponse>> {
     return safeApiCall<NotificationCountResponse>(
-      apiClient.get('/notifications/unread'),
+      apiClient.get('/notifications/unread/count'),
       'Okunmamış bildirim sayısı alınırken bir hata oluştu'
     );
   },

@@ -25,6 +25,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMessageStore } from '../../store/messageStore/messageStore';
 import { useFocusEffect } from '@react-navigation/native';
 import Constants from 'expo-constants';
+import { useFriendsStore } from '../../store/userStore/friendsStore';
+import { colors } from '../../constants/colors/colors';
 
 // Komponentler
 import SectionHeader from '../../components/Home/SectionHeader/SectionHeader';
@@ -72,6 +74,7 @@ export const HomeScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<NavigationType>();
   const { user } = useAuthStore();
+  const { friendRequests } = useFriendsStore();
   
   // Store verilerini al
   const { 
@@ -90,7 +93,7 @@ export const HomeScreen: React.FC = () => {
     refreshAll
   } = useHomeStore();
   
-  const { fetchConversations, getUnreadMessagesCount } = useMessageStore();
+  const { fetchConversations, getUnreadMessagesCount, unreadMessagesCount } = useMessageStore();
   
   // State tanımları
   const [refreshing, setRefreshing] = useState(false);
@@ -256,6 +259,12 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('Profile');
   };
 
+  // Arkadaşlık isteklerini görüntüle
+  const handleFriendRequests = () => {
+    // Arkadaşlık istekleri sayfasına yönlendirme yapılabilir
+    console.log("Arkadaşlık istekleri görüntüleniyor");
+  };
+
   // Spor seçimi - Sport tipinde parametre alacak şekilde düzeltildi
   const handleSportSelect = (sport: Sport) => {
     setSelectedSportId(sport.id);
@@ -375,12 +384,36 @@ export const HomeScreen: React.FC = () => {
         </Text>
         
         <View style={styles.headerButtons}>
-         
+         {/* Arkadaşlık İstekleri Butonu */}
+         <TouchableOpacity 
+            style={styles.headerActionButton}
+            onPress={handleFriendRequests}
+          >
+            <View>
+              <Ionicons name="heart-outline" size={30} color={colors.accentDark} />
+              {friendRequests.length > 0 && (
+                <View style={[styles.badgeContainer, { backgroundColor: theme.colors.error, top: -4, right: -4 }]}>
+                  <Text style={styles.badgeText}>
+                    {friendRequests.length > 99 ? '99+' : friendRequests.length}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.headerActionButton, { backgroundColor: theme.colors.accent }]}
+            style={styles.headerActionButton}
             onPress={handleMessagesPress}
           >
-            <Ionicons name="chatbubble-outline" size={20} color="white" />
+            <View>
+              <Ionicons name="chatbubble-outline" size={30} color={colors.accent} />
+              {unreadMessagesCount > 0 && (
+                <View style={[styles.badgeContainer, { backgroundColor: '#2F4F4F', top: -2, right: -5 }]}>
+                  <Text style={styles.badgeText}>
+                    {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -802,7 +835,7 @@ export const HomeScreen: React.FC = () => {
                           style={styles.horizontalEventImage}
                           resizeMode="cover"
                         />
-                      ) : event.sport_id.toLowerCase().includes('koş') ? (
+                      ) : event.sport_id.toLowerCase().includes('futbol') ? (
                         <Image 
                           source={{uri: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571'}}
                           style={styles.horizontalEventImage}
@@ -820,12 +853,7 @@ export const HomeScreen: React.FC = () => {
                         </View>
                       )}
                       
-                      {/* Kategori etiketi */}
-                      <View style={[styles.eventCategoryBadge, { backgroundColor: theme.colors.background + 'E6' }]}>
-                        <Text style={[styles.eventCategoryText, { color: theme.colors.accent }]}>
-                          {event.sport_id}
-                        </Text>
-                      </View>
+                   
                     </View>
                     
                     {/* Etkinlik bilgileri */}
@@ -834,13 +862,7 @@ export const HomeScreen: React.FC = () => {
                         {event.title}
                       </Text>
                       
-                      <View style={styles.horizontalEventTagContainer}>
-                        <View style={[styles.eventTag, { backgroundColor: theme.colors.accent + '20' }]}>
-                          <Text style={[styles.eventTagText, { color: theme.colors.accent }]}>
-                            {event.sport_id}
-                          </Text>
-                        </View>
-                      </View>
+                     
                       
                       <View style={styles.horizontalEventDetails}>
                         <View style={styles.horizontalEventDetailRow}>
@@ -1671,6 +1693,17 @@ const styles = StyleSheet.create({
   eventCategoryText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    padding: 1,
+    paddingHorizontal: 6,
+    borderRadius: 16,
+  },
+  badgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
 
