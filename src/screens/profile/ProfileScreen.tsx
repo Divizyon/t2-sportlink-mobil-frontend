@@ -5,14 +5,18 @@ import {
   SafeAreaView, 
   ScrollView, 
   ActivityIndicator, 
-  RefreshControl
+  RefreshControl,
+  Text,
+  TouchableOpacity
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useProfileStore } from '../../store/userStore/profileStore';
+import { useMapsStore } from '../../store/appStore/mapsStore';
 import { ProfileHeader } from '../../components/Profile/ProfileHeader';
 import { SportPreferencesCard } from '../../components/Profile/SportPreferencesCard';
 import { FriendsCard } from '../../components/Profile/FriendsCard';
 import { LocationCard } from '../../components/Profile/LocationCard';
+import { Ionicons } from '@expo/vector-icons';
 
 export const ProfileScreen: React.FC = ({ navigation }: any) => {
   const { theme } = useThemeStore();
@@ -26,7 +30,16 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     fetchUserProfile
   } = useProfileStore();
   
+  // Güncel konum bilgisini al
+  const { 
+    lastLocation, 
+    locationStatus, 
+    refreshLocation,
+    getLastLocation
+  } = useMapsStore();
+  
   const [refreshing, setRefreshing] = useState(false);
+  const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -44,10 +57,24 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     setRefreshing(true);
     try {
       await fetchUserProfile();
+      // Konum bilgisini de yenile
+      await refreshLocation();
     } catch (error) {
       console.error('Profil yenilenirken hata:', error);
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  // Konumu güncelle
+  const handleRefreshLocation = async () => {
+    setIsRefreshingLocation(true);
+    try {
+      await refreshLocation();
+    } catch (error) {
+      console.error('Konum güncellenirken hata:', error);
+    } finally {
+      setIsRefreshingLocation(false);
     }
   };
 
@@ -64,8 +91,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
 
   // Konum düzenleme
   const handleEditLocation = () => {
-    // TODO: Konum düzenleme sayfasına yönlendir
-    console.log('Konum düzenleme sayfasına yönlendirme');
+    navigation.navigate('EditProfile', { showLocationSection: true });
   };
 
   // Arkadaşları görüntüle
@@ -132,7 +158,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
           onEditSports={handleEditSports}
         />
         
-        {/* Konum Bilgisi */}
+        {/* Varsayılan Konum Bilgisi */}
         {defaultLocation && (
           <LocationCard 
             location={defaultLocation}
@@ -144,6 +170,60 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
             }}
             onEditLocation={handleEditLocation}
           />
+        )}
+        
+        {/* Güncel Konum Bilgisi */}
+        {lastLocation && (
+          <View style={[styles.currentLocationContainer, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.locationHeader}>
+              <View style={styles.headerTitleContainer}>
+                <Ionicons name="navigate" size={20} color={theme.colors.accent} style={styles.headerIcon} />
+                <Text style={[styles.currentLocationTitle, { color: theme.colors.text }]}>
+                  Güncel Konumum
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.refreshButton} 
+                onPress={handleRefreshLocation}
+                disabled={isRefreshingLocation}
+              >
+                {isRefreshingLocation ? (
+                  <ActivityIndicator size="small" color={theme.colors.accent} />
+                ) : (
+                  <Ionicons name="refresh" size={22} color={theme.colors.accent} />
+                )}
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.locationDetailsContainer}>
+              <View style={[styles.locationIconContainer, { backgroundColor: theme.colors.accent + '20' }]}>
+                <Ionicons name="location" size={24} color={theme.colors.accent} />
+              </View>
+              
+              <View style={styles.locationTextContainer}>
+                <Text style={[styles.locationAddressText, { color: theme.colors.text }]}>
+                  {lastLocation.address || 'Bilinmeyen adres'}
+                </Text>
+                <Text style={[styles.coordinatesText, { color: theme.colors.textSecondary }]}>
+                  {lastLocation.latitude.toFixed(6)}, {lastLocation.longitude.toFixed(6)}
+                </Text>
+                <Text style={[styles.timestampText, { color: theme.colors.textSecondary }]}>
+                  Son güncelleme: {new Date(lastLocation.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.updateButton, { borderColor: theme.colors.accent }]} 
+              onPress={handleRefreshLocation}
+              disabled={isRefreshingLocation}
+            >
+              <Ionicons name="navigate-outline" size={16} color={theme.colors.accent} style={styles.buttonIcon} />
+              <Text style={[styles.updateButtonText, { color: theme.colors.accent }]}>
+                Konumu Güncelle
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
         
         {/* Arkadaşlık Durumu */}
@@ -181,5 +261,81 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingVertical: 16,
     paddingHorizontal: 16,
-  }
+  },
+  // Güncel konum için stiller
+  currentLocationContainer: {
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    marginRight: 6,
+  },
+  currentLocationTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  refreshButton: {
+    padding: 6,
+  },
+  locationDetailsContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  locationIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  locationTextContainer: {
+    flex: 1,
+  },
+  locationAddressText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  coordinatesText: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  timestampText: {
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
+  updateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 20,
+    alignSelf: 'center',
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  updateButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
 }); 

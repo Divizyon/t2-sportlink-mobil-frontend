@@ -50,7 +50,7 @@ interface MapsState {
 }
 
 // Konum yenileme eşik değerleri
-const LOCATION_REFRESH_THRESHOLD_MS = 10 * 60 * 1000; // 10 dakika
+const LOCATION_REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 dakika (10 dakikadan değiştirildi)
 
 // İki konum arasındaki mesafeyi hesapla (Haversine formülü)
 const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -301,20 +301,28 @@ export const useMapsStore = create<MapsState>()(
         return null;
       },
       
-      // Konumun yenilenmesi gerekiyor mu kontrol et
+      // Konumun yenilenmesi gerekip gerekmediğini kontrol et
       shouldRefreshLocation: () => {
         const state = get();
         
-        // Konum yoksa yenileme gerekli
+        // Hiç konum yoksa yenilenmelidir
         if (!state.lastLocation) {
           return true;
         }
         
-        // Son güncellemeden bu yana geçen süre
-        const timeSinceLastUpdate = Date.now() - state.lastLocation.timestamp;
+        // Son konum zamanını kontrol et
+        const now = Date.now();
+        const lastLocationTime = state.lastLocation.timestamp;
         
-        // Eşik değerinden fazla süre geçtiyse yenileme gerekli
-        return timeSinceLastUpdate > LOCATION_REFRESH_THRESHOLD_MS;
+        // Konumun son güncellenme zamanından bu yana threshold değerinden fazla zaman geçmiş mi?
+        const shouldRefresh = (now - lastLocationTime) > LOCATION_REFRESH_THRESHOLD_MS;
+        
+        // Debug log
+        if (shouldRefresh) {
+          console.log(`Konum güncellenecek. Son güncellenmeden bu yana ${((now - lastLocationTime) / 1000 / 60).toFixed(1)} dakika geçti.`);
+        }
+        
+        return shouldRefresh;
       },
       
       calculateDistance: async (origin, destination, mode = 'driving') => {

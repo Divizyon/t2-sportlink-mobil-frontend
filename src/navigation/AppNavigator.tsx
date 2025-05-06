@@ -7,6 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/userStore/authStore';
 import { useFriendsStore } from '../store/userStore/friendsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useThemeStore } from '../store/appStore/themeStore';
+import { useNotificationStore } from '../store/appStore/notificationStore';
+import { useMessageStore } from '../store/messageStore/messageStore';
+import { useMapsStore } from '../store/appStore/mapsStore';
 
 // Screens - Auth
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -41,11 +45,6 @@ import AllNewsScreen from '../screens/news/AllNewsScreen';
 
 // Navigation
 import { ProfileStack } from './ProfileStack';
-
-// Store
-import { useThemeStore } from '../store/appStore/themeStore';
-import { useNotificationStore } from '../store/appStore/notificationStore';
-import { useMessageStore } from '../store/messageStore/messageStore';
 
 // Message Screens
 import MessagesScreen from '../screens/messages/MessagesScreen';
@@ -283,17 +282,27 @@ const TabNavigator = () => {
 };
 
 export const AppNavigator = () => {
-  const {isAuthenticated, checkAuth } = useAuthStore();
+  const { isAuthenticated, checkAuth } = useAuthStore();
   const { resetState: resetFriendsState } = useFriendsStore();
   const [isLoading, setIsLoading] = useState(true);
   const { theme } = useThemeStore();
+  const { initLocation } = useMapsStore();
 
   useEffect(() => {
-    const loadToken = async () => {
+    const loadApp = async () => {
+      // Konum bilgisini başlat (izinleri kontrol edecek)
+      try {
+        await initLocation();
+        console.log('Uygulama açılışında konum bilgisi başlatıldı');
+      } catch (locationError) {
+        console.error('Konum başlatılırken hata:', locationError);
+      }
+      
+      // Token kontrolü yap
       await checkAuth();
       setIsLoading(false);
     };
-    loadToken();
+    loadApp();
   }, []);
 
   useEffect(() => {

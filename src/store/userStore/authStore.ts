@@ -5,6 +5,7 @@ import { User } from '../../types/userTypes/user.types';
 import { authService } from '../../api/auth';
 import { tokenManager } from '../../utils/tokenManager';
 import { useApiStore } from '../appStore/apiStore';
+import { useMapsStore } from '../appStore/mapsStore';
 
 interface AuthState {
   user: User | null;
@@ -60,6 +61,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           message: response.message || 'Giriş başarılı!'
         });
+
+        // Giriş başarılı olduğunda konum bilgisini başlat/güncelle
+        try {
+          const mapsStore = useMapsStore.getState();
+          await mapsStore.initLocation();
+          console.log('Giriş sonrası konum bilgisi güncellendi');
+        } catch (locationError) {
+          console.error('Giriş sonrası konum güncellenirken hata:', locationError);
+        }
+        
         return true;
       } else {
         set({ 
@@ -181,6 +192,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               isAuthenticated: true, 
               isLoading: false 
             });
+
+            // Token ile otomatik giriş yapıldığında konum bilgisini başlat/güncelle
+            try {
+              const mapsStore = useMapsStore.getState();
+              await mapsStore.initLocation();
+              console.log('Token girişi sonrası konum bilgisi güncellendi');
+            } catch (locationError) {
+              console.error('Token girişi sonrası konum güncellenirken hata:', locationError);
+            }
+            
             return;
           } catch (parseError) {
             console.error('Kullanıcı verisi doğru formatta değil:', parseError);
@@ -199,6 +220,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               isAuthenticated: true,
               isLoading: false
             });
+
+            // API'den kullanıcı bilgisi alındığında konum bilgisini başlat/güncelle
+            try {
+              const mapsStore = useMapsStore.getState();
+              await mapsStore.initLocation();
+              console.log('API kullanıcı doğrulaması sonrası konum bilgisi güncellendi');
+            } catch (locationError) {
+              console.error('API kullanıcı doğrulaması sonrası konum güncellenirken hata:', locationError);
+            }
+            
             return;
           }
         } catch (apiError) {
