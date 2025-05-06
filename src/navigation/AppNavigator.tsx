@@ -37,6 +37,7 @@ import { EditEventScreen } from '../screens/events/EditEventScreen';
 // Screens - News & Announcements
 import { NewsDetailScreen } from '../screens/news/NewsDetailScreen';
 import { AnnouncementDetailScreen } from '../screens/announcements/AnnouncementDetailScreen';
+import AllNewsScreen from '../screens/news/AllNewsScreen';
 
 // Navigation
 import { ProfileStack } from './ProfileStack';
@@ -72,6 +73,7 @@ type AppStackParamList = {
   Messages: undefined;
   ConversationDetail: { conversationId: string };
   NewConversation: undefined;
+  AllNewsScreen: undefined;
 };
 
 type EventsStackParamList = {
@@ -393,6 +395,14 @@ export const AppNavigator = () => {
             options={{ 
               headerShown: true,
               title: 'Yeni Mesaj',
+              presentation: 'card',
+              animation: 'slide_from_right'
+            }}
+          />
+          <AppStack.Screen 
+            name="AllNewsScreen" 
+            component={AllNewsScreen} 
+            options={{ 
               presentation: 'card',
               animation: 'slide_from_right'
             }}

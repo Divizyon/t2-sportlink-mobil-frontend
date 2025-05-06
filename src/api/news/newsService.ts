@@ -10,14 +10,26 @@ export const newsService = {
     page?: number; 
     limit?: number
   }): Promise<NewsListResponse> => {
-    const response = await apiClient.get(BASE_PATH, { params });
-    return response.data;
+    try {
+      const response = await apiClient.get(BASE_PATH, { params });
+      console.log('API Yanıt (getNews):', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error) {
+      console.error('API Hatası (getNews):', error);
+      throw error;
+    }
   },
 
   // Haber detayı getir
   getNewsDetail: async (newsId: string): Promise<NewsResponse> => {
-    const response = await apiClient.get(`${BASE_PATH}/${newsId}`);
-    return response.data;
+    try {
+      const response = await apiClient.get(`${BASE_PATH}/${newsId}`);
+      console.log('API Yanıt (getNewsDetail):', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error) {
+      console.error('API Hatası (getNewsDetail):', error);
+      throw error;
+    }
   },
 
   // Spora göre haberleri getir
@@ -25,8 +37,14 @@ export const newsService = {
     page?: number; 
     limit?: number 
   }): Promise<NewsListResponse> => {
-    const response = await apiClient.get(`${BASE_PATH}/sport/${sportId}`, { params });
-    return response.data;
+    try {
+      const response = await apiClient.get(`${BASE_PATH}/sport/${sportId}`, { params });
+      console.log('API Yanıt (getNewsBySport):', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error) {
+      console.error('API Hatası (getNewsBySport):', error);
+      throw error;
+    }
   }
 };
 

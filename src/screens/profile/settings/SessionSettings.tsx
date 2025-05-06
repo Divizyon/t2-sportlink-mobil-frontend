@@ -262,10 +262,12 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
     if (!token || token.trim() === '') {
       console.warn('Silinecek cihaz token\'ı bulunamadı, deviceId kullanılacak:', deviceId);
       
-      // API dokümanlarına göre burada yapılan işlem doğru değil
-      // API'de cihaz ID ile silme endpoint'i yok, bu yüzden önce cihazları listeleyelim ve token alalım
       try {
         console.log('Cihazları listeleniyor, ID\'ye göre token bulunacak');
+        
+        // Timeout kontrolü ile istek gönderme
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
         // Cihazları listele
         const response = await axios.get(
@@ -274,9 +276,12 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
             headers: {
               Authorization: `Bearer ${authToken}`,
               'Content-Type': 'application/json'
-            }
+            },
+            signal: controller.signal
           }
         );
+        
+        clearTimeout(timeoutId);
         
         if (response.status === 200 && response.data.success) {
           const devices = response.data.data.devices;
@@ -319,11 +324,21 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
             return false;
           }
         } else {
-          console.error('Cihazları listeleme yanıtı başarısız:', response.status);
+          console.error('Cihazları listeleme yanıtı başarısız:', response.status, response.data);
           return false;
         }
       } catch (error) {
-        console.error('Cihazları listeleme hatası:', error);
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ECONNABORTED' || error.name === 'AbortError') {
+            console.error('Cihaz listeleme isteği zaman aşımına uğradı');
+          } else {
+            console.error('API hatası:', error.message);
+            console.error('Yanıt durumu:', error.response?.status);
+            console.error('Yanıt verisi:', error.response?.data);
+          }
+        } else {
+          console.error('Cihazları listeleme hatası:', error);
+        }
         return false;
       }
     }
@@ -344,6 +359,8 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
         await AsyncStorage.removeItem(DEVICE_TOKEN_KEY);
         useDeviceStore.setState({ deviceToken: null });
         console.log('Mevcut cihaz token\'ı başarıyla silindi');
+      } else {
+        console.error('DeviceStore unregisterDeviceToken başarısız oldu');
       }
       
       return success;
@@ -353,7 +370,13 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
       return await performTokenDeletion(token, authToken, apiBaseUrl);
     }
   } catch (error) {
-    console.error('Cihaz oturumu kapatma hatası:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('API hatası:', error.message);
+      console.error('Yanıt durumu:', error.response?.status);
+      console.error('Yanıt verisi:', error.response?.data);
+    } else {
+      console.error('Cihaz oturumu kapatma hatası:', error);
+    }
     return false;
   }
 };
@@ -361,29 +384,46 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
 // Token silme işlemini gerçekleştiren yardımcı fonksiyon
 const performTokenDeletion = async (token: string, authToken: string, apiBaseUrl: string): Promise<boolean> => {
   try {
+    // Token geçerlilik kontrolü
+    if (!token || token.trim() === '') {
+      console.error('Geçersiz token değeri, silme işlemi yapılamıyor');
+      return false;
+    }
+    
     console.log('Token silme isteği gönderiliyor:', token);
     
     // API isteği - devices/unregister endpoint'i
     const response = await axios.post(
       `${apiBaseUrl}/devices/unregister`,
-      { token },
+      { token },  // API sadece token bekliyor
       {
         headers: {
           Authorization: `Bearer ${authToken}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 10000 // 10 saniye timeout ekleyin
       }
     );
     
-    if (response.status === 200 && response.data.success) {
+    console.log('API yanıtı:', response.status, response.data);
+    
+    // API yanıtı kontrolü - succcess değerini kontrol et
+    if (response.data && response.data.success === true) {
       console.log('Token başarıyla silindi:', token);
       return true;
     } else {
       console.error('Token silme yanıtı başarısız:', response.data);
       return false;
     }
-  } catch (error) {
-    console.error('Token silme hatası:', error);
+  } catch (error: any) {
+    // Detaylı hata bilgisi
+    if (axios.isAxiosError(error)) {
+      console.error('API hatası:', error.message);
+      console.error('Yanıt durumu:', error.response?.status);
+      console.error('Yanıt verisi:', error.response?.data);
+    } else {
+      console.error('Token silme hatası:', error);
+    }
     return false;
   }
 };
@@ -790,16 +830,16 @@ export const SessionSettings: React.FC = () => {
     console.log('Mevcut cihaz token:', currentDeviceToken);
     
     // Mevcut cihaz mı kontrol et
-    const isCurrent = token === currentDeviceToken;
+    const isCurrent = token === currentDeviceToken || deviceId === devices.find(d => d.isCurrentDevice)?.id;
     
-    // Eğer token parametresi yoksa ama deviceId'yi biliyorsak, devamDa bug olmasın
+    // Eğer token parametresi yoksa ama deviceId'yi biliyorsak, devamda bug olmasın
     const effectiveToken = token || '';
     
     Alert.alert(
       'Oturumu Kapat',
       isCurrent ? 
         'Bu işlem mevcut cihazınızdaki oturumu kapatacak ve çıkış yapmanıza neden olacaktır. Devam etmek istiyor musunuz?' :
-      'Bu cihaz için oturumu kapatmak istediğinizden emin misiniz?',
+        'Bu cihaz için oturumu kapatmak istediğinizden emin misiniz?',
       [
         {
           text: 'İptal',
@@ -809,44 +849,71 @@ export const SessionSettings: React.FC = () => {
           text: 'Oturumu Kapat',
           style: 'destructive',
           onPress: async () => {
-            // İşlem başladığını bildir
-            Alert.alert('İşlem Başladı', 'Oturum kapatılıyor, lütfen bekleyin...');
+            // İşlem başladı uyarısı göster
+            const loadingAlert = Alert.alert('İşlem Başladı', 'Oturum kapatılıyor, lütfen bekleyin...');
             
-            console.log('Oturum kapatma işlemi başlatılıyor:', { deviceId, token: effectiveToken, isCurrent });
-            const success = await revokeDevice(deviceId, effectiveToken);
-            console.log('Oturum kapatma işlemi sonucu:', { success });
-            
-            if (success) {
-              if (isCurrent) {
-                // Kendi cihazının oturumunu kapattıysa, uygulamada da çıkış yap
-                Alert.alert('Başarılı', 'Oturumunuz kapatıldı, çıkış yapılıyor');
-                
-                try {
-                  // AuthStore'dan logout metodunu çağır
-                  await useAuthStore.getState().logout();
+            try {
+              console.log('Oturum kapatma işlemi başlatılıyor:', { deviceId, token: effectiveToken, isCurrent });
+              
+              // Cihaz token değerini sil
+              const success = await revokeDevice(deviceId, effectiveToken);
+              console.log('Oturum kapatma işlemi sonucu:', { success });
+              
+              if (success) {
+                if (isCurrent) {
+                  // Kendi cihazının oturumunu kapattıysa, uygulamada da çıkış yap
+                  Alert.alert('Başarılı', 'Oturumunuz kapatıldı, çıkış yapılıyor');
                   
-                  // Cihaz token'ını da kaldır
-                  await AsyncStorage.removeItem(DEVICE_TOKEN_KEY);
-                  
-                  // Tüm oturum verilerini temizle ve çıkış yap
-                  setTimeout(() => {
-                    // Giriş ekranına yönlendir (navigation reset yapılmalı)
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'Auth' as any }],
-                    });
-                  }, 1000);
-                } catch (error) {
-                  console.error('Çıkış yapma hatası:', error);
-                  Alert.alert('Hata', 'Çıkış yapılırken bir sorun oluştu');
+                  try {
+                    // AuthStore'dan logout metodunu çağır
+                    await useAuthStore.getState().logout();
+                    
+                    // Cihaz token'ını da kaldır
+                    await AsyncStorage.removeItem(DEVICE_TOKEN_KEY);
+                    
+                    // Tüm oturum verilerini temizle ve çıkış yap
+                    setTimeout(() => {
+                      // Giriş ekranına yönlendir (navigation reset yapılmalı)
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Auth' as any }],
+                      });
+                    }, 1000);
+                  } catch (error) {
+                    console.error('Çıkış yapma hatası:', error);
+                    Alert.alert('Hata', 'Çıkış yapılırken bir sorun oluştu. Lütfen uygulamayı kapatıp tekrar açın.');
+                  }
+                } else {
+                  Alert.alert('Başarılı', 'Cihaz oturumu kapatıldı');
+                  // Cihaz listesini yenile
+                  fetchDevices();
                 }
               } else {
-              Alert.alert('Başarılı', 'Cihaz oturumu kapatıldı');
-                // Cihaz listesini yenile
-                fetchDevices();
+                Alert.alert(
+                  'Hata', 
+                  'Cihaz oturumu kapatılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+                  [
+                    { 
+                      text: 'Tekrar Dene', 
+                      onPress: () => handleRevokeDevice(deviceId, token) 
+                    },
+                    { text: 'İptal', style: 'cancel' }
+                  ]
+                );
               }
-            } else {
-              Alert.alert('Hata', 'Cihaz oturumu kapatılamadı');
+            } catch (error) {
+              console.error('Cihaz oturumu kapatma sırasında beklenmeyen hata:', error);
+              Alert.alert(
+                'Hata', 
+                'Cihaz oturumu kapatılırken beklenmeyen bir hata oluştu.', 
+                [
+                  { 
+                    text: 'Tekrar Dene', 
+                    onPress: () => handleRevokeDevice(deviceId, token) 
+                  },
+                  { text: 'İptal', style: 'cancel' }
+                ]
+              );
             }
           }
         }
@@ -987,30 +1054,88 @@ export const SessionSettings: React.FC = () => {
                   text: 'Tüm Oturumları Kapat', 
                   style: 'destructive',
                   onPress: async () => {
-                    // Tüm cihazları kapat
-                    let allSuccess = true;
-                    const currentDeviceToken = useDeviceStore.getState().deviceToken;
+                    // İşlem başladı bildirisi göster
+                    const loadingAlert = Alert.alert(
+                      'İşlem Başladı',
+                      'Diğer cihazlardaki oturumlar kapatılıyor, lütfen bekleyin...'
+                    );
                     
-                    for (const device of devices) {
-                      // Sadece mevcut cihaz dışındaki oturumları kapat
-                      if (!device.isCurrentDevice && device.token !== currentDeviceToken) {
-                        const success = await revokeDevice(device.id, device.token);
-                        if (!success) {
+                    try {
+                      // Tüm cihazları kapat
+                      let allSuccess = true;
+                      let failedDeviceCount = 0;
+                      const currentDeviceToken = useDeviceStore.getState().deviceToken;
+                      
+                      // Çıkış yapılacak cihazları kontrol et
+                      const otherDevices = devices.filter(
+                        device => !device.isCurrentDevice && device.token !== currentDeviceToken
+                      );
+                      
+                      if (otherDevices.length === 0) {
+                        Alert.alert('Bilgi', 'Kapatılacak başka oturum bulunamadı. Sadece bu cihazda oturum açmış durumdasınız.');
+                        return;
+                      }
+                      
+                      console.log(`${otherDevices.length} cihazdan çıkış yapılacak`);
+                      
+                      // Her cihaz için çıkış işlemi başlat
+                      const results = await Promise.allSettled(
+                        otherDevices.map(device => 
+                          revokeDevice(device.id, device.token || '')
+                        )
+                      );
+                      
+                      // Sonuçları kontrol et
+                      results.forEach((result, index) => {
+                        if (result.status === 'rejected' || (result.status === 'fulfilled' && !result.value)) {
+                          console.error(`Cihaz ${otherDevices[index].id} çıkış işlemi başarısız oldu:`, result);
                           allSuccess = false;
+                          failedDeviceCount++;
+                        }
+                      });
+                      
+                      // İşlem sonucunu kullanıcıya bildir
+                      if (allSuccess) {
+                        Alert.alert('Başarılı', 'Tüm diğer cihazlardaki oturumlar kapatıldı');
+                        // Cihaz listesini yenile
+                        fetchDevices();
+                      } else {
+                        if (failedDeviceCount === otherDevices.length) {
+                          // Hiçbir cihazdan çıkış yapılamadı
+                          Alert.alert(
+                            'Hata', 
+                            'Hiçbir cihazın oturumu kapatılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+                            [
+                              { 
+                                text: 'Tekrar Dene', 
+                                onPress: () => document.getElementById('logoutAllButton')?.click() 
+                              },
+                              { text: 'İptal', style: 'cancel' }
+                            ]
+                          );
+                        } else {
+                          // Bazı cihazlardan çıkış yapılamadı
+                          const successCount = otherDevices.length - failedDeviceCount;
+                          Alert.alert(
+                            'Kısmen Başarılı', 
+                            `${successCount} cihazın oturumu kapatıldı, ${failedDeviceCount} cihazın oturumu kapatılamadı. Kalan cihazlar için tekrar deneyebilirsiniz.`,
+                            [{ text: 'Tamam', onPress: () => fetchDevices() }]
+                          );
                         }
                       }
-                    }
-                    
-                    if (allSuccess) {
-                    Alert.alert('Başarılı', 'Tüm diğer cihazlardaki oturumlar kapatıldı');
-                    } else {
-                      Alert.alert('Uyarı', 'Bazı cihazların oturumları kapatılamadı. Lütfen tekrar deneyin.');
+                    } catch (error) {
+                      console.error('Toplu çıkış işlemi sırasında hata:', error);
+                      Alert.alert(
+                        'Hata', 
+                        'Oturumlar kapatılırken beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+                      );
                     }
                   }
                 },
               ]
             );
           }}
+          id="logoutAllButton"
         >
           <Ionicons 
             name="exit-outline" 

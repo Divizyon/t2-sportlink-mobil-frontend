@@ -34,6 +34,7 @@ export interface Event {
   creator_id: string;
   creator_name?: string;
   creator_avatar?: string;
+  img_url?: string;  // Etkinlik görseli
   created_at: string;
   updated_at: string;
   average_rating?: number;

@@ -11,11 +11,12 @@ export interface ApiResponse<T> {
   message?: string;
   error?: string;
   statusCode?: number;
-  pagination?: Pagination;
 }
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: Pagination;
+export interface PaginatedResponse<T> extends ApiResponse<T> {
+  data: {
+    pagination: Pagination;
+  } & T;
 }
 
 // Spor Tipi
@@ -29,7 +30,7 @@ export interface Sport {
 }
 
 export interface SportResponse extends ApiResponse<Sport> {}
-export interface SportsListResponse extends PaginatedResponse<Sport> {}
+export interface SportsListResponse extends PaginatedResponse<{sports: Sport[]}> {}
 
 // Haber Tipi
 export interface News {
@@ -41,12 +42,19 @@ export interface News {
   source_url: string;
   sport_id: string;
   sport: Sport;
+  author?: string;
   created_at: string;
   updated_at: string;
 }
 
+export interface NewsData {
+  news: News[];
+  pagination: Pagination;
+  sports?: Sport[];
+}
+
 export interface NewsResponse extends ApiResponse<News> {}
-export interface NewsListResponse extends PaginatedResponse<News> {}
+export interface NewsListResponse extends ApiResponse<NewsData> {}
 
 // Duyuru Tipi
 export interface Announcement {
