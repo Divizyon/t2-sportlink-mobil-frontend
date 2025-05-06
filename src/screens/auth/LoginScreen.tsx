@@ -3,22 +3,16 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView, 
-  Alert, 
-  SafeAreaView, 
-  KeyboardAvoidingView, 
-  Platform, 
-  TouchableOpacity,
-  ActivityIndicator,
   TextInput,
-  PixelRatio,
-  useWindowDimensions,
+  TouchableOpacity,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
   Dimensions
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { InputField } from '../../components/InputField/InputField';
-import { Button } from '../../components/Button/Button';
-import { useThemeStore } from '../../store/appStore/themeStore';
 import { useAuthStore } from '../../store/userStore/authStore';
 import { useDeviceStore } from '../../store/userStore/deviceStore';
 import { loginSchema, validateWithSchema } from '../../utils/validators/yupValidators';
@@ -30,28 +24,11 @@ type LoginScreenParams = {
   registeredEmail?: string;
 };
 
-// Responsive tasarım için yardımcı fonksiyonlar
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const scale = SCREEN_WIDTH / 375; // iPhone 8 genişliği baz alınarak 
-
-const normalize = (size: number): number => {
-  const newSize = size * scale;
-  if (Platform.OS === 'ios') {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
-  } 
-  return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
-};
+const { width } = Dimensions.get('window');
 
 export const LoginScreen: React.FC = () => {
-  // Ekran boyutu değiştiğinde güncellemek için useWindowDimensions kullanıyoruz
-  const { width, height } = useWindowDimensions();
-  const isSmallScreen = width < 360;
-  const isMediumScreen = width >= 360 && width < 410;
-  const isLargeScreen = width >= 410;
-  
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const { theme } = useThemeStore();
   const { login, isLoading, isAuthenticated, error, message, clearMessages } = useAuthStore();
   const { registerDeviceToken, generateDeviceToken } = useDeviceStore();
   
@@ -108,7 +85,7 @@ export const LoginScreen: React.FC = () => {
         
         Alert.alert(
           'E-posta Doğrulanmamış',
-          'Hesabınız henüz doğrulanmamış. Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin. E-posta kutunuzu ve spam klasörünü kontrol etmeyi unutmayın.',
+          'Hesabınız henüz doğrulanmamış. Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin.',
           [
             { 
               text: 'Tamam'
@@ -116,7 +93,6 @@ export const LoginScreen: React.FC = () => {
             {
               text: 'Yeniden Gönder',
               onPress: () => {
-                // Burada e-posta doğrulama linkini yeniden gönderme API'si çağrılabilir
                 Alert.alert('Bilgi', 'Doğrulama e-postası tekrar gönderildi. Lütfen e-posta kutunuzu kontrol edin.');
               }
             }
@@ -132,8 +108,6 @@ export const LoginScreen: React.FC = () => {
     
     if (message) {
       console.log('Login Mesajı:', message);
-      
-      // Sadece mesajı göster, ana sayfaya yönlendirme otomatik olacak
       Alert.alert('Bilgi', message);
       clearMessages();
     }
@@ -165,17 +139,13 @@ export const LoginScreen: React.FC = () => {
           console.log('Cihaz token\'ı başarıyla kaydedildi');
         } catch (tokenError) {
           console.error('Cihaz token kaydı sırasında hata:', tokenError);
-          // Token kaydı başarısız olsa bile giriş işlemi tamamlandı sayılır
         }
       } else if (!error) {
-        // Giriş başarısız olduysa ve mesaj yoksa varsayılan mesaj göster
         Alert.alert(
           'Giriş Başarısız',
           'Giriş bilgilerinizi kontrol edip tekrar deneyiniz.'
         );
       }
-      
-      // useEffect isAuthenticated değişikliğini izleyerek yönlendirme yapacak
     } catch (error) {
       console.error('Login işlemi sırasında bir hata oluştu:', error);
       Alert.alert(
@@ -198,221 +168,146 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.silver }]}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView 
-            contentContainerStyle={[
-              styles.scrollContainer,
-              isSmallScreen && { padding: 12 }
-            ]}
-            keyboardShouldPersistTaps="handled"
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <TouchableOpacity 
-              style={[
-                styles.backButton,
-                isSmallScreen && { width: 36, height: 36 }
-              ]}
-              onPress={() => navigation.navigate('Welcome')}
-            >
-              <Ionicons name="arrow-back" size={isSmallScreen ? 20 : 24} color={theme.colors.primary} />
-            </TouchableOpacity>
-            
-            <View style={styles.headerContainer}>
-              <Text style={[
-                styles.headerTitle,
-                { color: theme.colors.primary },
-                isSmallScreen && { fontSize: normalize(22) }
-              ]}>SportLink'e Giriş Yap</Text>
-              <Text style={[
-                styles.headerSubtitle,
-                { color: theme.colors.primary },
-                isSmallScreen && { fontSize: normalize(14) }
-              ]}>
-                Hesabınıza giriş yaparak etkinliklere katılabilirsiniz
-              </Text>
-            </View>
-            
+            <Ionicons name="chevron-back" size={24} color="#333" />
+          </TouchableOpacity>
+
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>E-posta</Text>
             <View style={[
-              styles.card, 
-              isSmallScreen && { padding: 14 }
+              styles.inputContainer,
+              validationErrors.email && styles.inputError
             ]}>
-              <View style={styles.inputGroup}>
-                <Text style={[
-                  styles.inputLabel,
-                  isSmallScreen && { fontSize: normalize(14) }
-                ]}>E-posta</Text>
-                <View style={[
-                  styles.inputContainer,
-                  validationErrors.email ? styles.inputError : null,
-                  isSmallScreen && { height: 45 }
-                ]}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      isSmallScreen && { fontSize: normalize(14) }
-                    ]}
-                    placeholder="E-posta adresinizi girin"
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    placeholderTextColor="#A0A0A0"
-                  />
-                </View>
-                {validationErrors.email && (
-                  <Text style={[
-                    styles.errorText,
-                    isSmallScreen && { fontSize: normalize(10) }
-                  ]}>{validationErrors.email}</Text>
-                )}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={[
-                  styles.inputLabel,
-                  isSmallScreen && { fontSize: normalize(14) }
-                ]}>Şifre</Text>
-                <View style={[
-                  styles.inputContainer,
-                  validationErrors.password ? styles.inputError : null,
-                  isSmallScreen && { height: 45 }
-                ]}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      isSmallScreen && { fontSize: normalize(14) }
-                    ]}
-                    placeholder="Şifrenizi girin"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!isPasswordVisible}
-                    placeholderTextColor="#A0A0A0"
-                  />
-                  <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-                    <Ionicons
-                      name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-                      size={isSmallScreen ? 20 : 24}
-                      color="#A0A0A0"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {validationErrors.password && (
-                  <Text style={[
-                    styles.errorText,
-                    isSmallScreen && { fontSize: normalize(10) }
-                  ]}>{validationErrors.password}</Text>
-                )}
-              </View>
-              
-              <TouchableOpacity 
-                onPress={navigateToForgotPassword}
-                style={styles.forgotPasswordContainer}
-              >
-                <Text style={[
-                  styles.forgotPasswordText,
-                  isSmallScreen && { fontSize: normalize(13) }
-                ]}>
-                  Şifremi Unuttum
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.loginButton,
-                  isSmallScreen && { height: 45 }
-                ]}
-                onPress={handleLogin}
-                disabled={isLoading}
-                activeOpacity={0.8}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={[
-                    styles.buttonText,
-                    isSmallScreen && { fontSize: normalize(15) }
-                  ]}>Giriş Yap</Text>
-                )}
-              </TouchableOpacity>
-              
-              <View style={styles.registerContainer}>
-                <Text style={[
-                  styles.registerText,
-                  isSmallScreen && { fontSize: normalize(13) }
-                ]}>
-                  Hesabınız yok mu? 
-                </Text>
-                <TouchableOpacity onPress={navigateToRegister}>
-                  <Text style={[
-                    styles.registerLink,
-                    isSmallScreen && { fontSize: normalize(13) }
-                  ]}>Kayıt Ol</Text>
-                </TouchableOpacity>
-              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="E-posta adresinizi girin"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+            {validationErrors.email && (
+              <Text style={styles.errorText}>{validationErrors.email}</Text>
+            )}
+
+            <Text style={styles.title}>Şifre</Text>
+            <View style={[
+              styles.inputContainer,
+              validationErrors.password && styles.inputError
+            ]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Şifrenizi girin"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!isPasswordVisible}
+              />
+              <TouchableOpacity 
+                style={styles.eyeIcon} 
+                onPress={togglePasswordVisibility}
+              >
+                <Ionicons 
+                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
+                  size={24} 
+                  color="#777" 
+                />
+              </TouchableOpacity>
+            </View>
+            {validationErrors.password && (
+              <Text style={styles.errorText}>{validationErrors.password}</Text>
+            )}
+
+            <TouchableOpacity 
+              style={styles.forgotPasswordContainer}
+              onPress={navigateToForgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.loginButton} 
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              <Text style={styles.loginButtonText}>Giriş Yap</Text>
+            </TouchableOpacity>
+
+            <View style={styles.orContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.orText}>Or Login with</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <View style={styles.socialButtonsContainer}>
+              <TouchableOpacity style={styles.socialButton}>
+                <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialButton}>
+                <Ionicons name="logo-google" size={24} color="#DB4437" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialButton}>
+                <Ionicons name="logo-apple" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Hesabınız yok mu?</Text>
+              <TouchableOpacity onPress={navigateToRegister}>
+                <Text style={styles.registerLink}>Kayıt Ol</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: '#FFF',
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContainer: {
-    flexGrow: 1,
-    padding: 16,
+    padding: 20,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
     marginBottom: 20,
   },
-  headerContainer: {
-    marginBottom: 30,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 10,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: 'white',
-    opacity: 0.9,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+  formContainer: {
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingHorizontal: 10,
   },
-  inputGroup: {
-    marginBottom: 15,
-  },
-  inputLabel: {
+  title: {
     fontSize: 16,
-    fontWeight: '500',
     color: '#333',
+    fontWeight: '600',
     marginBottom: 8,
+    marginTop: 16,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -421,6 +316,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     height: 50,
+    marginBottom: 8,
   },
   inputError: {
     borderWidth: 1,
@@ -437,11 +333,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 12,
-    marginTop: 5,
+    marginBottom: 8,
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',
     marginBottom: 20,
+    marginTop: 10,
   },
   forgotPasswordText: {
     color: '#338626',
@@ -454,17 +351,47 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
   },
-  buttonText: {
+  loginButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  orText: {
+    marginHorizontal: 10,
+    color: '#888',
+    fontSize: 14,
+  },
+  socialButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 30,
+  },
+  socialButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 10,
   },
   registerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 10,
   },
   registerText: {
     fontSize: 14,
@@ -473,7 +400,7 @@ const styles = StyleSheet.create({
   registerLink: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2D68C4',
-    marginLeft: 4,
+    color: '#338626',
+    marginLeft: 5,
   },
 }); 

@@ -3,26 +3,23 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  Alert, 
-  SafeAreaView, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView,
-  ImageBackground,
+  TextInput,
   TouchableOpacity,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
   Dimensions
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { InputField } from '../../components/InputField/InputField';
-import { Button } from '../../components/Button/Button';
-import { useThemeStore } from '../../store/appStore/themeStore';
 import { useForgotPasswordStore } from '../../store/userStore/forgotPasswordStore';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
 export const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { theme } = useThemeStore();
   const { resetPassword, isLoading, success, error, message, clearState } = useForgotPasswordStore();
   
   const [email, setEmail] = useState('');
@@ -76,129 +73,171 @@ export const ForgotPasswordScreen: React.FC = () => {
   };
 
   return (
-    <ImageBackground 
-      source={require('../../../assets/images/sportlink-bg.png')} 
-      style={styles.backgroundImage}
-    >
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView 
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <View style={styles.card}>
-              <View style={styles.headerContainer}>
-                <Text style={[styles.title, { color: theme.colors.text }]}>
-                  Şifremi Unuttum
-                </Text>
-                <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                  Şifre sıfırlama bağlantısı için e-posta adresinizi girin
-                </Text>
-              </View>
-              
-              <View style={styles.formContainer}>
-                <InputField
-                  label="E-posta"
-                  placeholder="E-posta adresinizi girin"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    setEmailError(undefined);
-                  }}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  error={emailError}
-                />
-                
-                <Button
-                  title="Şifre Sıfırlama Bağlantısı Gönder"
-                  onPress={handleResetPassword}
-                  loading={isLoading}
-                  buttonStyle={styles.resetButton}
-                  variant="accent"
-                />
-                
-                <View style={styles.loginContainer}>
-                  <Text style={[styles.loginText, { color: theme.colors.textSecondary }]}>
-                    Şifrenizi hatırladınız mı?
-                  </Text>
-                  <TouchableOpacity onPress={navigateToLogin}>
-                    <Text style={[styles.loginLink, { color: theme.colors.accent }]}>
-                      Giriş Yap
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+            <Ionicons name="chevron-back" size={24} color="#333" />
+          </TouchableOpacity>
+          
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Şifremi Unuttum</Text>
+            <Text style={styles.subtitle}>
+              Endişelenmeyin! Hesabınızla ilişkili e-posta adresini girmeniz yeterli.
+            </Text>
+          </View>
+          
+          <View style={styles.formContainer}>
+            <Text style={styles.inputLabel}>E-posta</Text>
+            <View style={[
+              styles.inputContainer,
+              emailError && styles.inputError
+            ]}>
+              <TextInput
+                style={styles.input}
+                placeholder="E-posta adresinizi girin"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setEmailError(undefined);
+                }}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ImageBackground>
+            {emailError && (
+              <Text style={styles.errorText}>{emailError}</Text>
+            )}
+            
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleResetPassword}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>Kod Gönder</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>
+                Şifrenizi hatırladınız mı?
+              </Text>
+              <TouchableOpacity onPress={navigateToLogin}>
+                <Text style={styles.loginLink}>Giriş Yap</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: '#FFF',
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
   },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    width: width > 600 ? 500 : '100%',
-    alignSelf: 'center',
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   headerContainer: {
     marginBottom: 30,
-    alignItems: 'center',
+    paddingHorizontal: 10,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
+    color: '#333',
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    textAlign: 'center',
+    color: '#666',
+    lineHeight: 22,
   },
   formContainer: {
     width: '100%',
+    paddingHorizontal: 10,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    height: 50,
+    marginBottom: 8,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: 'red',
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 16,
   },
   resetButton: {
+    backgroundColor: '#338626',
+    borderRadius: 8,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 20,
+    marginBottom: 20,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
   },
   loginContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    gap: 8,
+    marginTop: 10,
   },
   loginText: {
     fontSize: 14,
+    color: '#666',
   },
   loginLink: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#338626',
+    marginLeft: 5,
   },
 }); 

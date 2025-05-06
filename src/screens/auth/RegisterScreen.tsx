@@ -33,12 +33,14 @@ export const RegisterScreen: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isValid, setIsValid] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
     message: '',
@@ -283,6 +285,10 @@ export const RegisterScreen: React.FC = () => {
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
+  
+  const toggleConfirmPasswordVisibility = () => {
+    setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
+  };
 
   return (
     <View 
@@ -465,6 +471,35 @@ export const RegisterScreen: React.FC = () => {
                 <Text style={styles.passwordHint}>
                   En az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir
                 </Text>
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Şifre Tekrarı</Text>
+                <View style={[
+                  styles.inputContainer, 
+                  (formErrors.confirmPassword || validationErrors.confirmPassword) ? styles.inputError : null
+                ]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Şifrenizi tekrar girin"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!isConfirmPasswordVisible}
+                    placeholderTextColor="#A0A0A0"
+                  />
+                  <TouchableOpacity onPress={toggleConfirmPasswordVisibility} style={styles.eyeIcon}>
+                    <Ionicons
+                      name={isConfirmPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                      size={24}
+                      color="#A0A0A0"
+                    />
+                  </TouchableOpacity>
+                </View>
+                {formErrors.confirmPassword ? (
+                  <Text style={styles.errorText}>{formErrors.confirmPassword}</Text>
+                ) : validationErrors.confirmPassword ? (
+                  <Text style={styles.errorText}>{validationErrors.confirmPassword}</Text>
+                ) : null}
               </View>
               
               <TouchableOpacity 
