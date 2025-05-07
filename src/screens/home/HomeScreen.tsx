@@ -408,7 +408,7 @@ export const HomeScreen: React.FC = () => {
             onPress={handleMessagesPress}
           >
             <View>
-              <Ionicons name="chatbubble-outline" size={30} color={colors.accent} />
+              <Ionicons name="chatbubble-outline" size={30} color={colors.accentDark} />
               {unreadMessagesCount > 0 && (
                 <View style={[styles.badgeContainer, { backgroundColor: '#2F4F4F', top: -2, right: -5 }]}>
                   <Text style={styles.badgeText}>
@@ -466,28 +466,26 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.sectionHeaderLeft}>
               <View style={{
                 marginRight: 8, 
-                backgroundColor: '#FF6B6B20', 
                 borderRadius: 12, 
                 padding: 4,
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Ionicons name="megaphone-outline" size={20} color="#FF6B6B" />
+                <Ionicons name="megaphone-outline" size={20} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Duyurular</Text>
             </View>
             <TouchableOpacity>
               <View style={{
-                borderWidth: 1,
-                borderColor: '#FF6B6B40',
-                borderRadius: 16,
                 paddingHorizontal: 12,
                 paddingVertical: 6,
+                paddingRight: 5,
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'flex-end'
               }}>
-                <Text style={[styles.viewAllText, { color: '#FF6B6B' }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color="#FF6B6B" />
+                <Text style={[styles.viewAllText, { color: colors.accent }]}>
+                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
                 </Text>
               </View>
             </TouchableOpacity>
@@ -605,7 +603,7 @@ export const HomeScreen: React.FC = () => {
                 })
               ) : (
                 <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
-                  <Ionicons name="information-circle-outline" size={24} color={theme.colors.textSecondary} />
+                  <Ionicons name="information-circle-outline" size={24} color={colors.accentDark} />
                   <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
                     Duyuru bulunamadı
                   </Text>
@@ -621,28 +619,26 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.sectionHeaderLeft}>
               <View style={{
                 marginRight: 8, 
-                backgroundColor: '#FFD70020', 
                 borderRadius: 12, 
                 padding: 4,
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Ionicons name="star-outline" size={20} color="#FFD700" />
+                <Ionicons name="star-outline" size={20} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Sana Özel</Text>
             </View>
             <TouchableOpacity onPress={handleViewAllEvents}>
               <View style={{
-                borderWidth: 1,
-                borderColor: '#E6B80060',
-                borderRadius: 16,
                 paddingHorizontal: 12,
                 paddingVertical: 6,
+                paddingRight: 5,
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'flex-end'
               }}>
-                <Text style={[styles.viewAllText, { color: '#E6B800' }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color="#E6B800" />
+                <Text style={[styles.viewAllText, { color: colors.accent }]}>
+                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
                 </Text>
               </View>
             </TouchableOpacity>
@@ -684,7 +680,7 @@ export const HomeScreen: React.FC = () => {
                         />
                       ) : (
                         <View style={[styles.eventImagePlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
-                          <Ionicons name="star" size={40} color="#FFD700" />
+                          <Ionicons name="star" size={40} color={colors.accentDark} />
                         </View>
                       )}
                     </View>
@@ -695,7 +691,7 @@ export const HomeScreen: React.FC = () => {
                         <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={1}>
                           {event.title}
                         </Text>
-                        <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
+                        <Ionicons name="chevron-forward" size={18} color={colors.accentDark} />
                       </View>
                       
                       <View style={styles.eventTagContainer}>
@@ -717,18 +713,18 @@ export const HomeScreen: React.FC = () => {
                       
                       <View style={styles.eventDetails}>
                         <View style={styles.eventDetailRow}>
-                          <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
+                          <Ionicons name="location-outline" size={16} color={colors.accentDark} />
                           <Text style={[styles.eventDetailText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                             {event.location_name || 'Konum bilgisi yok'}
                           </Text>
                         </View>
                         
                         <View style={styles.eventDetailRow}>
-                          <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
+                          <Ionicons name="calendar-outline" size={16} color={colors.accentDark} />
                           <Text style={[styles.eventDetailText, { color: theme.colors.textSecondary }]}>
                             {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                           </Text>
-                          <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} style={{ marginLeft: 8 }} />
+                          <Ionicons name="time-outline" size={16} color={colors.accentDark} style={{ marginLeft: 8 }} />
                           <Text style={[styles.eventDetailText, { color: theme.colors.textSecondary }]}>
                             {event.start_time || '00:00'}
                           </Text>
@@ -736,7 +732,7 @@ export const HomeScreen: React.FC = () => {
                         
                         <View style={styles.eventActionRow}>
                           <View style={[styles.participantsBadge, { backgroundColor: theme.colors.primary + '15' }]}>
-                            <Ionicons name="people" size={14} color={theme.colors.primary} />
+                            <Ionicons name="people" size={14} color={colors.accentDark} />
                             <Text style={[styles.participantsCount, { color: theme.colors.primary }]}>
                               {event.current_participants || 0}/{event.max_participants || 'sınırsız'}
                             </Text>
@@ -763,7 +759,7 @@ export const HomeScreen: React.FC = () => {
             </View>
           ) : (
             <View style={[styles.emptyCardWide, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="star-outline" size={24} color={theme.colors.textSecondary} />
+              <Ionicons name="star-outline" size={24} color={colors.accentDark} />
               <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
                 Senin için önerilen etkinlik bulunamadı
               </Text>
@@ -777,28 +773,26 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.sectionHeaderLeft}>
               <View style={{
                 marginRight: 8, 
-                backgroundColor: '#8BC34A15', 
                 borderRadius: 12, 
                 padding: 4,
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Ionicons name="location-outline" size={20} color="#4CAF50" />
+                <Ionicons name="location-outline" size={20} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Yakındaki Etkinlikler</Text>
             </View>
             <TouchableOpacity onPress={handleViewAllEvents}>
               <View style={{
-                borderWidth: 1,
-                borderColor: '#4CAF5040',
-                borderRadius: 16,
                 paddingHorizontal: 12,
                 paddingVertical: 6,
+                paddingRight: 5,
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'flex-end'
               }}>
-                <Text style={[styles.viewAllText, { color: '#4CAF50' }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color="#4CAF50" />
+                <Text style={[styles.viewAllText, { color: colors.accent }]}>
+                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
                 </Text>
               </View>
             </TouchableOpacity>
@@ -855,7 +849,7 @@ export const HomeScreen: React.FC = () => {
                         />
                       ) : (
                         <View style={[styles.horizontalEventImagePlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
-                          <Ionicons name="fitness-outline" size={32} color={theme.colors.accent} />
+                          <Ionicons name="fitness-outline" size={32} color={colors.accentDark} />
                         </View>
                       )}
                       
@@ -872,21 +866,21 @@ export const HomeScreen: React.FC = () => {
                       
                       <View style={styles.horizontalEventDetails}>
                         <View style={styles.horizontalEventDetailRow}>
-                          <Ionicons name="location-outline" size={14} color={theme.colors.textSecondary} />
+                          <Ionicons name="location-outline" size={14} color={colors.accentDark} />
                           <Text style={[styles.horizontalEventDetailText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                             {event.location_name || 'Konum bilgisi yok'}
                           </Text>
                         </View>
                         
                         <View style={styles.horizontalEventDetailRow}>
-                          <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} />
+                          <Ionicons name="calendar-outline" size={14} color={colors.accentDark} />
                           <Text style={[styles.horizontalEventDetailText, { color: theme.colors.textSecondary }]}>
                             {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                           </Text>
                         </View>
                         
                         <View style={styles.horizontalEventDetailRow}>
-                          <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
+                          <Ionicons name="time-outline" size={14} color={colors.accentDark} />
                           <Text style={[styles.horizontalEventDetailText, { color: theme.colors.textSecondary }]}>
                             {event.start_time || '00:00'}
                           </Text>
@@ -895,7 +889,7 @@ export const HomeScreen: React.FC = () => {
                       
                       <View style={styles.horizontalEventActionRow}>
                         <View style={[styles.participantsBadge, { backgroundColor: theme.colors.primary + '15' }]}>
-                          <Ionicons name="people" size={12} color={theme.colors.primary} />
+                          <Ionicons name="people" size={12} color={colors.accentDark} />
                           <Text style={[styles.participantsCount, { color: theme.colors.primary }]}>
                             {event.current_participants || 0}/{event.max_participants || 'sınırsız'}
                           </Text>
@@ -917,18 +911,18 @@ export const HomeScreen: React.FC = () => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.viewAllContent}>
-                    <Ionicons name="grid-outline" size={24} color={theme.colors.primary} style={{ marginBottom: 10 }} />
+                    <Ionicons name="grid-outline" size={24} color={colors.accentDark} style={{ marginBottom: 10 }} />
                     <Text style={[styles.viewAllText, { color: theme.colors.primary, fontWeight: '600' }]}>
                       Tümünü Gör
                     </Text>
-                    <Ionicons name="chevron-forward-circle" size={24} color={theme.colors.primary} style={{ marginTop: 10 }} />
+                    <Ionicons name="chevron-forward-circle" size={24} color={colors.accentDark} style={{ marginTop: 10 }} />
                   </View>
                 </TouchableOpacity>
               )}
             </ScrollView>
           ) : (
             <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="location-outline" size={24} color={theme.colors.textSecondary} />
+              <Ionicons name="location-outline" size={24} color={colors.accentDark} />
               <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
                 Yakınında etkinlik bulunamadı
               </Text>
@@ -942,28 +936,26 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.sectionHeaderLeft}>
               <View style={{
                 marginRight: 8, 
-                backgroundColor: '#2196F320', 
                 borderRadius: 12, 
                 padding: 4,
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Ionicons name="newspaper-outline" size={20} color="#2196F3" />
+                <Ionicons name="newspaper-outline" size={20} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Spor Haberleri</Text>
             </View>
             <TouchableOpacity onPress={() => navigation.navigate('AllNewsScreen')}>
               <View style={{
-                borderWidth: 1,
-                borderColor: '#2196F340',
-                borderRadius: 16,
                 paddingHorizontal: 12,
                 paddingVertical: 6,
+                paddingRight: 5,
                 flexDirection: 'row',
                 alignItems: 'center',
+                justifyContent: 'flex-end'
               }}>
-                <Text style={[styles.viewAllText, { color: '#2196F3' }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color="#2196F3" />
+                <Text style={[styles.viewAllText, { color: colors.accent }]}>
+                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
                 </Text>
               </View>
             </TouchableOpacity>
@@ -995,7 +987,7 @@ export const HomeScreen: React.FC = () => {
                       />
                     ) : (
                       <View style={[styles.horizontalNewsImagePlaceholder, { backgroundColor: theme.colors.accent + '20' }]}>
-                        <Ionicons name="newspaper" size={30} color={theme.colors.accent} />
+                        <Ionicons name="newspaper" size={30} color={colors.accentDark} />
                       </View>
                     )}
                     <View style={[styles.newsCategory, { backgroundColor: theme.colors.primary + '20' }]}>
@@ -1026,7 +1018,7 @@ export const HomeScreen: React.FC = () => {
                         flexDirection: 'row',
                         alignItems: 'center',
                       }}>
-                        <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} style={{ marginRight: 4 }} />
+                        <Ionicons name="person-outline" size={12} color={colors.accentDark} style={{ marginRight: 4 }} />
                         <Text style={{ color: theme.colors.textSecondary, fontSize: 12, fontWeight: '500' }}>
                           {newsItem.author || 'İsimsiz Yazar'}
                         </Text>
@@ -1036,7 +1028,7 @@ export const HomeScreen: React.FC = () => {
                 </TouchableOpacity>
               )) : (
                 <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
-                  <Ionicons name="newspaper-outline" size={24} color={theme.colors.textSecondary} />
+                  <Ionicons name="newspaper-outline" size={24} color={colors.accentDark} />
                   <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
                     Haberler yüklenirken bir sorun oluştu
                   </Text>
@@ -1050,11 +1042,11 @@ export const HomeScreen: React.FC = () => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.viewAllContent}>
-                    <Ionicons name="newspaper" size={24} color={theme.colors.accent} style={{ marginBottom: 10 }} />
+                    <Ionicons name="newspaper" size={24} color={colors.accentDark} style={{ marginBottom: 10 }} />
                     <Text style={[styles.viewAllText, { color: theme.colors.accent, fontWeight: '600' }]}>
                       Tümünü Gör
                     </Text>
-                    <Ionicons name="chevron-forward-circle" size={24} color={theme.colors.accent} style={{ marginTop: 10 }} />
+                    <Ionicons name="chevron-forward-circle" size={24} color={colors.accentDark} style={{ marginTop: 10 }} />
                   </View>
                 </TouchableOpacity>
               )}
@@ -1080,7 +1072,7 @@ export const HomeScreen: React.FC = () => {
           <Ionicons 
             name="calendar-outline" 
             size={16} 
-            color={theme.colors.textSecondary} 
+            color={colors.accentDark} 
             style={{ marginRight: 4 }}
           />
           <Text style={{
@@ -1120,7 +1112,7 @@ export const HomeScreen: React.FC = () => {
             width: 44,
             height: 44,
             borderRadius: 22,
-            backgroundColor: '#2196F3',
+            backgroundColor: colors.accentDark,
             justifyContent: 'center',
             alignItems: 'center',
             shadowColor: '#000',
