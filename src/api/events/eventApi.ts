@@ -166,7 +166,13 @@ const eventService = {
   // Yakındaki etkinlikler
   getNearbyEvents: async (params: {latitude: number, longitude: number, radius?: number}): Promise<ApiResponse<{events: Event[]}>> => {
     try {
-      const response = await apiClient.get('/events/nearby', { params });
+      // Her zaman Distance Matrix API kullanmak için parametreye ekleme yap
+      const enhancedParams = {
+        ...params,
+        useDistanceMatrix: true, // Google Maps Distance Matrix API kullanımını standartlaştır
+      };
+      
+      const response = await apiClient.get('/events/nearby', { params: enhancedParams });
       return response.data;
     } catch (error) {
       console.error('Yakındaki etkinlikler alınırken hata:', error);

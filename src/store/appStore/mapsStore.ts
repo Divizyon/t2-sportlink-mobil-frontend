@@ -1,59 +1,28 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DistanceResult, BulkDistanceResults, mapsApi } from '../../api/maps/mapsApi';
-import { useApiStore } from './apiStore';
-import { useProfileStore } from '../userStore/profileStore';
+import { useEventStore } from '../eventStore/eventStore';
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 
-interface MapsState {
-  // Son konum bilgisi
-  lastLocation: {
-    latitude: number;
-    longitude: number;
-    address?: string;
-    timestamp: number; // Son güncellenme zamanı
-  } | null;
-  
-  // Konum durumu
-  locationStatus: 'unavailable' | 'permission_denied' | 'success' | 'error' | 'loading' | 'not_initialized';
-  locationError: string | null;
-  
-  // Konum ayarları
-  defaultSearchRadius: number; // Varsayılan arama yarıçapı (km)
-  
-  // Hesaplanan uzaklık verileri önbelleği
-  distanceCache: Record<string, DistanceResult>;
-  
-  // Yükleme durumları
-  isCalculatingDistance: boolean;
-  isCalculatingBulkDistances: boolean;
-  
-  // Hata durumları
-  distanceError: string | null;
-  bulkDistanceError: string | null;
-  
-  // Son hesaplanan uzaklıklar
-  lastCalculatedDistance: DistanceResult | null;
-  lastCalculatedBulkDistances: BulkDistanceResults | null;
-  
-  // İşlem fonksiyonları
-  initLocation: () => Promise<void>; // Konumu ilk kez başlat
-  refreshLocation: () => Promise<void>; // Konumu elle yenile
-  setLastLocation: (latitude: number, longitude: number, address?: string) => void;
-  getLastLocation: () => Promise<{latitude: number, longitude: number, address?: string} | null>; // Konum bilgisini getir
-  shouldRefreshLocation: () => boolean; // Konumun yenilenmesi gerekiyor mu?
-  calculateDistance: (origin: string, destination: string, mode?: string) => Promise<DistanceResult | null>;
-  calculateBulkDistances: (origin: string, destinations: string[], mode?: string) => Promise<BulkDistanceResults | null>;
-  clearDistanceCache: () => void;
-  clearErrors: () => void;
+// Mesafe ve süre sonuç tipi
+interface DistanceResult {
+  distance: {
+    text: string;    // "5 km" gibi formatlı mesafe
+    value: number;   // metre cinsinden mesafe
+  };
+  duration: {
+    text: string;    // "10 dakika" gibi formatlı süre
+    value: number;   // saniye cinsinden süre
+  };
+  status: string;    // "OK" veya hata durumu
 }
 
-// Konum yenileme eşik değerleri
-const LOCATION_REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 dakika (10 dakikadan değiştirildi)
-
-// İki konum arasındaki mesafeyi hesapla (Haversine formülü)
-const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+// Kuş uçuşu mesafe hesaplama fonksiyonu
+const calculateHaversineDistance = (
+  lat1: number, 
+  lon1: number, 
+  lat2: number, 
+  lon2: number
+): number => {
   const R = 6371; // Dünya yarıçapı (km)
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
@@ -69,358 +38,251 @@ const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lo
   return distance;
 };
 
-// Dereceyi radyana çevir
+// Derece cinsinden değeri radyana çevirir
 const toRad = (deg: number): number => {
   return deg * Math.PI / 180;
 };
 
-// Önbellek anahtarı oluşturucu
-const getCacheKey = (origin: string, destination: string, mode: string = 'driving'): string => {
-  return `${origin}|${destination}|${mode}`;
-};
+// Konum tipi
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
 
-export const useMapsStore = create<MapsState>()(
-  persist(
-    (set, get) => ({
-      lastLocation: null,
-      locationStatus: 'not_initialized',
-      locationError: null,
-      defaultSearchRadius: 10, // 10 km varsayılan arama yarıçapı
-      distanceCache: {},
-      isCalculatingDistance: false,
-      isCalculatingBulkDistances: false,
-      distanceError: null,
-      bulkDistanceError: null,
-      lastCalculatedDistance: null,
-      lastCalculatedBulkDistances: null,
+interface MapsState {
+  lastLocation: LocationData | null;
+  isLocationServiceEnabled: boolean;
+  locationPermissionStatus: Location.PermissionStatus;
+  // Google API anahtarını saklama
+  googleApiKey: string | null;
+  // Metotlar
+  setLastLocation: (latitude: number, longitude: number, address?: string) => void;
+  setLocationServiceStatus: (isEnabled: boolean) => void;
+  setLocationPermissionStatus: (status: Location.PermissionStatus) => void;
+  initLocation: () => Promise<LocationData | null>;
+  // Google Distance Matrix API ile mesafe hesaplama
+  calculateDistance: (origin: string, destination: string, mode?: 'driving' | 'walking' | 'bicycling' | 'transit') => Promise<DistanceResult | null>;
+  setGoogleApiKey: (apiKey: string) => void;
+}
+
+export const useMapsStore = create<MapsState>((set, get) => ({
+  lastLocation: null,
+  isLocationServiceEnabled: false,
+  locationPermissionStatus: Location.PermissionStatus.UNDETERMINED,
+  googleApiKey: "YOUR_GOOGLE_API_KEY", // Gerçek API anahtarınızı buraya ekleyin
+  
+  // Konum bilgisini güncelle ve gerekirse yakındaki etkinlikleri yeniden yükle
+  setLastLocation: (latitude: number, longitude: number, address?: string) => {
+    // Önceki konumu al
+    const previousLocation = get().lastLocation;
+    
+    console.log('Konum güncelleniyor:', { latitude, longitude, address });
+    
+    if (!previousLocation) {
+      console.log('İlk konum alındı, yakındaki etkinlikler yüklenecek');
+    } else {
+      // Önceki ve yeni konum arasındaki mesafeyi hesapla
+      const distanceFromPrevious = calculateHaversineDistance(
+        latitude,
+        longitude,
+        previousLocation.latitude,
+        previousLocation.longitude
+      );
       
-      // Uygulamanın başlangıcında konum bilgisini başlat
-      initLocation: async () => {
-        set({ locationStatus: 'loading' });
-        
-        try {
-          // Önce izin kontrolü
-          const { status } = await Location.requestForegroundPermissionsAsync();
-          
-          if (status !== 'granted') {
-            console.log('Konum izni verilmedi, ProfileStore varsayılan konumu kullanılacak');
-            set({ locationStatus: 'permission_denied' });
-            
-            // Izin yoksa ProfileStore'dan varsayılan konumu al
-            const profileStore = useProfileStore.getState();
-            const defaultLocation = profileStore.defaultLocation;
-            
-            if (defaultLocation) {
-              console.log('ProfileStore varsayılan konumu kullanılıyor');
-              set({
-                lastLocation: {
-                  latitude: defaultLocation.latitude,
-                  longitude: defaultLocation.longitude,
-                  address: defaultLocation.locationName,
-                  timestamp: Date.now()
-                },
-                locationStatus: 'success'
-              });
-              return;
-            } else {
-              console.log('Varsayılan konum bulunamadı, konum kullanılamıyor');
-              set({ locationStatus: 'unavailable' });
-              return;
-            }
-          }
-          
-          // Konum izni verildi, konumu al
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced
-          });
-          
-          // Adres bilgisini almaya çalış
-          let address: string | undefined = undefined;
-          try {
-            const addressResponse = await Location.reverseGeocodeAsync({
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude
-            });
-            
-            if (addressResponse && addressResponse.length > 0) {
-              const addressData = addressResponse[0];
-              address = `${addressData.street || ''} ${addressData.name || ''}, ${addressData.district || ''}, ${addressData.city || ''}`.trim();
-            }
-          } catch (error) {
-            console.error('Adres bulunamadı:', error);
-          }
-          
-          // Konum bilgisini kaydet
-          set({
-            lastLocation: {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-              address,
-              timestamp: Date.now()
-            },
-            locationStatus: 'success',
-            locationError: null
-          });
-          
-          console.log('Konum başarıyla alındı');
-        } catch (error) {
-          console.error('Konum alınamadı:', error);
-          
-          set({ 
-            locationStatus: 'error',
-            locationError: error instanceof Error ? error.message : 'Konum alınırken bir hata oluştu'
-          });
-          
-          // Hata durumunda ProfileStore'dan varsayılan konumu almayı dene
-          try {
-            const profileStore = useProfileStore.getState();
-            const defaultLocation = profileStore.defaultLocation;
-            
-            if (defaultLocation) {
-              console.log('Hata durumunda ProfileStore varsayılan konumu kullanılıyor');
-              set({
-                lastLocation: {
-                  latitude: defaultLocation.latitude,
-                  longitude: defaultLocation.longitude,
-                  address: defaultLocation.locationName,
-                  timestamp: Date.now()
-                },
-                locationStatus: 'success'
-              });
-            }
-          } catch (fallbackError) {
-            console.error('Yedek konum da alınamadı:', fallbackError);
-          }
-        }
-      },
+      console.log(`Önceki konuma uzaklık: ${distanceFromPrevious.toFixed(3)} km`);
+    }
+    
+    // Konum değişimi önemli mi kontrol et (100m'den fazla değişim varsa)
+    const shouldRefreshNearbyEvents = !previousLocation || calculateHaversineDistance(
+      latitude,
+      longitude,
+      previousLocation.latitude,
+      previousLocation.longitude
+    ) > 0.1; // 100m = 0.1km
+    
+    // Yeni konum bilgisini kaydet
+    set({
+      lastLocation: {
+        latitude,
+        longitude,
+        address: address || previousLocation?.address || ''
+      }
+    });
+    
+    // Konum değişimi önemliyse yakındaki etkinlikleri yenile
+    if (shouldRefreshNearbyEvents) {
+      console.log('Konum önemli ölçüde değişti (>100m), yakındaki etkinlikler yenileniyor');
       
-      // Konumu elle yenile
-      refreshLocation: async () => {
-        const currentState = get();
-        
-        // Zaten yükleme durumundaysa tekrar çağırma
-        if (currentState.locationStatus === 'loading') {
-          return;
-        }
-        
-        set({ locationStatus: 'loading' });
-        
-        try {
-          // Konum izni kontrolü
-          const { status } = await Location.getForegroundPermissionsAsync();
-          
-          if (status !== 'granted') {
-            set({ locationStatus: 'permission_denied' });
-            return;
-          }
-          
-          // Konumu al
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced
-          });
-          
-          // Adres bilgisini almaya çalış
-          let address = currentState.lastLocation?.address;
-          try {
-            const addressResponse = await Location.reverseGeocodeAsync({
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude
-            });
-            
-            if (addressResponse && addressResponse.length > 0) {
-              const addressData = addressResponse[0];
-              address = `${addressData.street || ''} ${addressData.name || ''}, ${addressData.district || ''}, ${addressData.city || ''}`.trim();
-            }
-          } catch (error) {
-            console.error('Adres bulunamadı:', error);
-          }
-          
-          // Konum bilgisini kaydet
-          set({
-            lastLocation: {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-              address,
-              timestamp: Date.now()
-            },
-            locationStatus: 'success',
-            locationError: null
-          });
-        } catch (error) {
-          console.error('Konum yenilenirken hata:', error);
-          
-          set({ 
-            locationStatus: 'error',
-            locationError: error instanceof Error ? error.message : 'Konum yenilenirken bir hata oluştu'
-          });
-        }
-      },
+      // Önbelleği temizle ve yakındaki etkinlikleri yeniden getir
+      const eventStore = useEventStore.getState();
+      console.log('Konum önbelleği temizleniyor...');
+      eventStore.clearNearbyEventsCache();
       
-      // Konum bilgisini manuel olarak ayarla (örn. varsayılan konumdan veya simülasyon için)
-      setLastLocation: (latitude, longitude, address) => {
-        set({
-          lastLocation: {
-            latitude,
-            longitude,
-            address,
-            timestamp: Date.now()
-          },
-          locationStatus: 'success'
+      console.log(`Yakındaki etkinlikler ${latitude}, ${longitude} koordinatları için yükleniyor (yarıçap: 10km)...`);
+      eventStore.fetchNearbyEvents({
+        latitude,
+        longitude,
+        radius: 10 // 10km yarıçapında
+      });
+    } else if (previousLocation) {
+      console.log('Konum değişimi önemsiz (<100m), yakındaki etkinlikler yenilenmiyor');
+    }
+  },
+  
+  setLocationServiceStatus: (isEnabled: boolean) => {
+    console.log(`Konum servisi durumu güncellendi: ${isEnabled ? 'etkin' : 'devre dışı'}`);
+    set({ isLocationServiceEnabled: isEnabled });
+  },
+  
+  setLocationPermissionStatus: (status: Location.PermissionStatus) => {
+    console.log(`Konum izin durumu güncellendi: ${status}`);
+    set({ locationPermissionStatus: status });
+  },
+
+  // Konum başlatma ve izinleri alma
+  initLocation: async () => {
+    console.log('Konum başlatılıyor...');
+    try {
+      // Konum servislerinin açık olup olmadığını kontrol et
+      const serviceEnabled = await Location.hasServicesEnabledAsync();
+      get().setLocationServiceStatus(serviceEnabled);
+      
+      if (!serviceEnabled) {
+        console.warn('Konum servisleri kapalı!');
+        return null;
+      }
+      
+      // Konum izinlerini iste
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      get().setLocationPermissionStatus(status);
+      
+      if (status !== Location.PermissionStatus.GRANTED) {
+        console.warn('Konum izni reddedildi!');
+        return null;
+      }
+      
+      // Mevcut konumu al
+      console.log('Kullanıcı konumu alınıyor...');
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced
+      });
+      
+      // Adres bilgisini almaya çalış
+      let addressStr = '';
+      try {
+        const addressResponse = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
         });
-      },
+        
+        if (addressResponse && addressResponse.length > 0) {
+          const address = addressResponse[0];
+          addressStr = `${address.street || ''} ${address.name || ''}, ${address.district || ''}, ${address.city || ''}`;
+          console.log('Adres başarıyla alındı:', addressStr);
+        }
+      } catch (geocodeError) {
+        console.error('Adres alınırken hata oluştu:', geocodeError);
+      }
       
-      // Konum bilgisini güvenli şekilde getir
-      getLastLocation: async () => {
-        const state = get();
+      // Konum bilgisini store'a kaydet
+      get().setLastLocation(
+        location.coords.latitude,
+        location.coords.longitude,
+        addressStr
+      );
+      
+      console.log('Konum başlatma tamamlandı:', {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        address: addressStr
+      });
+      
+      return {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        address: addressStr
+      };
+    } catch (error) {
+      console.error('Konum başlatma hatası:', error);
+      return null;
+    }
+  },
+  
+  // API anahtarını ayarla
+  setGoogleApiKey: (apiKey: string) => {
+    set({ googleApiKey: apiKey });
+  },
+  
+  // Google Distance Matrix API ile mesafe hesapla
+  calculateDistance: async (origin, destination, mode = 'driving') => {
+    const apiKey = get().googleApiKey;
+    
+    if (!apiKey) {
+      console.error('Google API anahtarı tanımlanmamış');
+      return null;
+    }
+    
+    console.log(`Mesafe hesaplanıyor: ${origin} -> ${destination} (${mode})`);
+    
+    try {
+      // Google Distance Matrix API URL
+      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&mode=${mode}&key=${apiKey}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      console.log('Google Distance Matrix API yanıtı:', data);
+      
+      // API yanıtını kontrol et
+      if (data.status === 'OK' && data.rows[0].elements[0].status === 'OK') {
+        const result: DistanceResult = {
+          distance: data.rows[0].elements[0].distance,
+          duration: data.rows[0].elements[0].duration,
+          status: data.rows[0].elements[0].status
+        };
         
-        // Mevcut konum varsa ve güncel ise kullan
-        if (state.lastLocation && !get().shouldRefreshLocation()) {
+        console.log(`Mesafe hesaplandı: ${result.distance.text}, ${result.duration.text}`);
+        return result;
+      } else {
+        console.warn('Mesafe hesaplanamadı:', data.status);
+        
+        // API yanıt vermezse, kuş uçuşu mesafe hesapla
+        if (origin.includes(',') && destination.includes(',')) {
+          console.log('Kuş uçuşu mesafe hesaplanıyor...');
+          
+          const [originLat, originLng] = origin.split(',').map(coord => parseFloat(coord.trim()));
+          const [destLat, destLng] = destination.split(',').map(coord => parseFloat(coord.trim()));
+          
+          const distance = calculateHaversineDistance(originLat, originLng, destLat, destLng);
+          const distanceInMeters = distance * 1000;
+          
+          // Kuş uçuşu mesafe için ortalama hız 30 km/saat (8.33 m/s) varsayalım
+          const durationInSeconds = distanceInMeters / 8.33;
+          
+          // Sonuç formatını API ile aynı şekilde döndür
           return {
-            latitude: state.lastLocation.latitude,
-            longitude: state.lastLocation.longitude,
-            address: state.lastLocation.address
-          };
-        }
-        
-        // Konum yoksa veya güncel değilse yenileme işlemi başlat
-        if (state.locationStatus !== 'loading') {
-          await get().refreshLocation();
-        }
-        
-        // Yenileme sonrası konum kontrolü
-        const updatedState = get();
-        
-        if (updatedState.lastLocation) {
-          return {
-            latitude: updatedState.lastLocation.latitude,
-            longitude: updatedState.lastLocation.longitude,
-            address: updatedState.lastLocation.address
+            distance: {
+              text: distance < 1 ? `${Math.round(distanceInMeters)} m` : `${distance.toFixed(1)} km`,
+              value: Math.round(distanceInMeters)
+            },
+            duration: {
+              text: durationInSeconds < 60 
+                ? `${Math.round(durationInSeconds)} sn` 
+                : durationInSeconds < 3600 
+                  ? `${Math.floor(durationInSeconds / 60)} dk` 
+                  : `${Math.floor(durationInSeconds / 3600)} sa ${Math.floor((durationInSeconds % 3600) / 60)} dk`,
+              value: Math.round(durationInSeconds)
+            },
+            status: 'OK (estimated)'
           };
         }
         
         return null;
-      },
-      
-      // Konumun yenilenmesi gerekip gerekmediğini kontrol et
-      shouldRefreshLocation: () => {
-        const state = get();
-        
-        // Hiç konum yoksa yenilenmelidir
-        if (!state.lastLocation) {
-          return true;
-        }
-        
-        // Son konum zamanını kontrol et
-        const now = Date.now();
-        const lastLocationTime = state.lastLocation.timestamp;
-        
-        // Konumun son güncellenme zamanından bu yana threshold değerinden fazla zaman geçmiş mi?
-        const shouldRefresh = (now - lastLocationTime) > LOCATION_REFRESH_THRESHOLD_MS;
-        
-        // Debug log
-        if (shouldRefresh) {
-          console.log(`Konum güncellenecek. Son güncellenmeden bu yana ${((now - lastLocationTime) / 1000 / 60).toFixed(1)} dakika geçti.`);
-        }
-        
-        return shouldRefresh;
-      },
-      
-      calculateDistance: async (origin, destination, mode = 'driving') => {
-        set({ isCalculatingDistance: true, distanceError: null });
-        
-        try {
-          // Önbellekte bu mesafe var mı kontrol et
-          const cacheKey = getCacheKey(origin, destination, mode);
-          const cachedResult = get().distanceCache[cacheKey];
-          
-          if (cachedResult) {
-            set({ 
-              lastCalculatedDistance: cachedResult,
-              isCalculatingDistance: false 
-            });
-            return cachedResult;
-          }
-          
-          // API çağrısı yap
-          const response = await mapsApi.getDistance(origin, destination, mode);
-          const result = response.data;
-          
-          // Sonucu önbelleğe ekle
-          const updatedCache = { ...get().distanceCache };
-          updatedCache[cacheKey] = result;
-          
-          set({
-            distanceCache: updatedCache,
-            lastCalculatedDistance: result,
-            isCalculatingDistance: false
-          });
-          
-          return result;
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Mesafe hesaplanırken bir hata oluştu';
-          set({ 
-            distanceError: errorMessage,
-            isCalculatingDistance: false 
-          });
-          
-          useApiStore.getState().setGlobalError(errorMessage);
-          return null;
-        }
-      },
-      
-      calculateBulkDistances: async (origin, destinations, mode = 'driving') => {
-        set({ isCalculatingBulkDistances: true, bulkDistanceError: null });
-        
-        try {
-          // API çağrısı yap
-          const response = await mapsApi.getBulkDistances(origin, destinations, mode);
-          const result = response.data;
-          
-          // Sonuçları önbelleğe ekle (her bir bireysel mesafe için)
-          const updatedCache = { ...get().distanceCache };
-          
-          if (result.results && Array.isArray(result.results)) {
-            result.results.forEach(distanceResult => {
-              const cacheKey = getCacheKey(distanceResult.origin, distanceResult.destination, mode);
-              updatedCache[cacheKey] = distanceResult;
-            });
-          }
-          
-          set({
-            distanceCache: updatedCache,
-            lastCalculatedBulkDistances: result,
-            isCalculatingBulkDistances: false
-          });
-          
-          return result;
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Toplu mesafe hesaplanırken bir hata oluştu';
-          set({ 
-            bulkDistanceError: errorMessage, 
-            isCalculatingBulkDistances: false 
-          });
-          
-          useApiStore.getState().setGlobalError(errorMessage);
-          return null;
-        }
-      },
-      
-      clearDistanceCache: () => {
-        set({ distanceCache: {} });
-      },
-      
-      clearErrors: () => {
-        set({ distanceError: null, bulkDistanceError: null, locationError: null });
       }
-    }),
-    {
-      name: 'maps-storage',
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
-        lastLocation: state.lastLocation,
-        distanceCache: state.distanceCache,
-        defaultSearchRadius: state.defaultSearchRadius,
-      }),
+    } catch (error) {
+      console.error('Mesafe hesaplama hatası:', error);
+      return null;
     }
-  )
-); 
+  }
+}));

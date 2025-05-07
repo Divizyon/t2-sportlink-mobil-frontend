@@ -15,15 +15,13 @@ import { useProfileStore } from '../../store/userStore/profileStore';
 import { useNavigation } from '@react-navigation/native';
 import { useMapsStore } from '../../store/appStore/mapsStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
+import { useHomeStore } from '../../store/appStore/homeStore';
 
 // Doğrudan her bir bileşeni import ediyoruz
 import { DiscoverHeader } from '../../components/Discover/DiscoverHeader';
-import { NearbyEvents } from '../../components/Discover/NearbyEvents';
 import { SportsFriends } from '../../components/Discover/SportsFriends';
 import { NearbyFacilities } from '../../components/Discover/NearbyFacilities';
-
-// Event servisini import et
-import { eventService } from '../../api/events/eventApi';
+import NearbyEventsComponent from '../../components/Shared/NearbyEventsComponent';
 
 export const DiscoverScreen: React.FC = () => {
   const { theme } = useThemeStore();
@@ -35,10 +33,13 @@ export const DiscoverScreen: React.FC = () => {
   // Maps ve Event store'ları kullan
   const { setLastLocation } = useMapsStore();
   const { 
-    nearbyEvents, 
-    fetchNearbyEvents, 
-    isLoading: isLoadingEvents 
+    fetchNearbyEvents,
+    isLoading: isLoadingEvents,
+    fetchAllEventsByDistance
   } = useEventStore();
+  
+  // HomeStore'dan yükleme durumunu al - tutarlılık için
+  const { isLoadingNearbyEvents } = useHomeStore();
   
   // Diğer yükleme durumları
   const [loadingFriends, setLoadingFriends] = useState(true);
@@ -120,11 +121,11 @@ export const DiscoverScreen: React.FC = () => {
     const lastLocation = useMapsStore.getState().lastLocation;
     
     if (lastLocation) {
-      fetchNearbyEvents({
-        latitude: lastLocation.latitude,
-        longitude: lastLocation.longitude,
-        radius: 10 // 10 km yarıçapında
-      });
+      // Etkinlikleri mesafeye göre sırala
+      fetchAllEventsByDistance(true);
+    } else {
+      // Konum yoksa tarih sırasına göre sırala
+      fetchAllEventsByDistance(false);
     }
   }, [useMapsStore.getState().lastLocation]);
   
@@ -155,11 +156,11 @@ export const DiscoverScreen: React.FC = () => {
       const lastLocation = useMapsStore.getState().lastLocation;
       
       if (lastLocation) {
-        await fetchNearbyEvents({
-          latitude: lastLocation.latitude,
-          longitude: lastLocation.longitude,
-          radius: 10
-        });
+        // Etkinlikleri mesafeye göre sırala
+        await fetchAllEventsByDistance(true);
+      } else {
+        // Konum yoksa tarih sırasına göre sırala
+        await fetchAllEventsByDistance(false);
       }
       await loadData();
     } catch (error) {
@@ -191,8 +192,6 @@ export const DiscoverScreen: React.FC = () => {
     console.log('Tüm tesisler görüntüleniyor');
   };
   
-  console.log('DiscoverScreen rendering with theme:', theme);
-  
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar 
@@ -216,11 +215,10 @@ export const DiscoverScreen: React.FC = () => {
         {/* Başlık ve Arama */}
         <DiscoverHeader onSearch={handleSearch} />
         
-        {/* Yakındaki Etkinlikler */}
-        <NearbyEvents 
-          isLoading={isLoadingEvents} 
-          events={nearbyEvents}
+        {/* Yakındaki Etkinlikler - Ortak Komponent */}
+        <NearbyEventsComponent 
           onSeeAll={handleSeeAllEvents}
+          maxItems={5}
         />
         
         {/* Spor Arkadaşları */}

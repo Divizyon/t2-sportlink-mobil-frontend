@@ -195,4 +195,12 @@
   - [x] Marker ile etkileşim ve navigasyon desteği
   - [x] Mesafe aralığına göre filtreleme
   - [x] Tip güvenliği ve performans optimizasyonları
-  - [x] DiscoverScreen ve NearbyEventCard'da mesafe gösterimi 
+  - [x] DiscoverScreen ve NearbyEventCard'da mesafe gösterimi
+  - [x] EventStore'da yakındaki etkinlikler için tek bir veri kaynağı oluşturulması
+  - [x] Google Distance Matrix API kullanımının standardizasyonu
+  - [x] Konum ve mesafe verilerinin önbelleklenmesi
+  - [x] Konum değişikliklerini merkezi olarak izleme sistemi
+  - [x] Mesafe ve süre formatlarının tüm ekranlarda standartlaştırılması
+  - [x] MapsStore'da initLocation fonksiyonu ile konum izinleri yönetimi
+  - [x] MapsStore'da calculateDistance fonksiyonu ile Google Distance Matrix API kullanımı
+  - [x] API yanıt vermediğinde kuş uçuşu mesafe hesaplama (Haversine formülü) ile yedek hesaplama 

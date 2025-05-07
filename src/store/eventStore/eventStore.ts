@@ -8,6 +8,44 @@ import {
   Sport
 } from '../../types/eventTypes/event.types';
 import { useApiStore } from '../appStore/apiStore';
+import { useMapsStore } from '../appStore/mapsStore';
+
+// Event tipini genişlet - mesafe bilgisi için
+interface EventWithDistance extends Event {
+  latitude?: number;
+  longitude?: number;
+  distance_info?: {
+    distance: number;
+    duration: number;
+  };
+}
+
+// Kuş uçuşu mesafe hesaplama fonksiyonu (haversine formülü)
+const calculateHaversineDistance = (
+  lat1: number, 
+  lon1: number, 
+  lat2: number, 
+  lon2: number
+): number => {
+  const R = 6371; // Dünya yarıçapı (km)
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+    
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c; // Kilometre cinsinden mesafe
+  
+  return distance;
+};
+
+// Derece cinsinden değeri radyana çevirir
+const toRad = (deg: number): number => {
+  return deg * Math.PI / 180;
+};
 
 interface EventState {
   // Etkinlik listesi
@@ -35,6 +73,10 @@ interface EventState {
   error: string | null;
   message: string | null;
   
+  // Önbellek bilgileri
+  lastNearbyEventsTimestamp: number | null;
+  lastNearbyEventsLocation: { latitude: number, longitude: number } | null;
+  
   // Metotlar
   fetchEvents: (params?: any) => Promise<void>;
   fetchEventDetail: (eventId: string) => Promise<void>;
@@ -50,13 +92,15 @@ interface EventState {
   searchEvents: (params: any) => Promise<void>;
   fetchRecommendedEvents: () => Promise<void>;
   fetchSports: () => Promise<void>;
+  fetchAllEventsByDistance: (useLocation?: boolean) => Promise<void>;
   clearError: () => void;
   clearMessage: () => void;
   resetEventDetail: () => void;
-  clearLoading: () => void; // Yeni eklenen fonksiyon
+  clearLoading: () => void;
+  clearNearbyEventsCache: () => void;
 }
 
-export const useEventStore = create<EventState >((set, get) => ({
+export const useEventStore = create<EventState>((set, get) => ({
   // Başlangıç durumu
   events: [],
   totalEvents: 0,
@@ -72,6 +116,10 @@ export const useEventStore = create<EventState >((set, get) => ({
   isLoading: false,
   error: null,
   message: null,
+  
+  // Önbellek başlangıç değerleri
+  lastNearbyEventsTimestamp: null,
+  lastNearbyEventsLocation: null,
   
   // Etkinlikleri getir
   fetchEvents: async (params = {}) => {
@@ -527,15 +575,49 @@ export const useEventStore = create<EventState >((set, get) => ({
   
   // Yakındaki etkinlikleri getir
   fetchNearbyEvents: async (params: {latitude: number, longitude: number, radius?: number}) => {
+    const { 
+      lastNearbyEventsTimestamp, 
+      lastNearbyEventsLocation, 
+      nearbyEvents 
+    } = get();
+    
+    const now = Date.now();
+    const CACHE_TTL = 5 * 60 * 1000; // 5 dakika (ms cinsinden)
+    const DISTANCE_THRESHOLD = 0.1; // 100 metre (km cinsinden)
+    
+    // Önbellek kontrolü: Son sorgudan bu yana 5 dakikadan az zaman geçtiyse
+    // ve kullanıcı 100m'den daha az hareket ettiyse önbellekteki veriyi kullan
+    if (
+      lastNearbyEventsTimestamp && 
+      lastNearbyEventsLocation &&
+      nearbyEvents.length > 0 &&
+      now - lastNearbyEventsTimestamp < CACHE_TTL && 
+      calculateHaversineDistance(
+        params.latitude,
+        params.longitude,
+        lastNearbyEventsLocation.latitude,
+        lastNearbyEventsLocation.longitude
+      ) < DISTANCE_THRESHOLD
+    ) {
+      console.log('Yakındaki etkinlikler önbellekten kullanılıyor');
+      return;
+    }
+    
     try {
       set({ isLoading: true, error: null });
       
       const response = await eventService.getNearbyEvents(params);
       
       if (response.success && response.data) {
+        // Verileri kaydet ve aynı zamanda önbellek bilgilerini güncelle
         set({ 
           nearbyEvents: response.data.events, 
-          isLoading: false 
+          isLoading: false,
+          lastNearbyEventsTimestamp: now,
+          lastNearbyEventsLocation: {
+            latitude: params.latitude,
+            longitude: params.longitude
+          }
         });
       } else {
         set({ 
@@ -641,6 +723,109 @@ export const useEventStore = create<EventState >((set, get) => ({
     }
   },
   
+  // Tüm etkinlikleri mesafeye göre sıralama
+  fetchAllEventsByDistance: async (useLocation: boolean = true) => {
+    console.log('Tüm etkinlikler mesafeye göre sıralanıyor...');
+    
+    try {
+      set({ isLoading: true, error: null });
+      
+      // Önce tüm aktif etkinlikleri getir
+      const response = await eventService.getEvents({ 
+        status: 'active',
+        page: 1,
+        limit: 100 // Daha fazla etkinlik almak için limit yüksek tutuldu
+      });
+      
+      if (!response.success || !response.data || !response.data.events) {
+        throw new Error('Etkinlikler alınamadı');
+      }
+      
+      // Tip dönüşümü: Event[] -> EventWithDistance[]
+      let events = response.data.events as EventWithDistance[];
+      console.log(`Toplam ${events.length} etkinlik alındı, mesafeye göre sıralanıyor...`);
+      
+      // Konum bilgisini al
+      const mapsStore = useMapsStore.getState();
+      const location = mapsStore.lastLocation;
+      
+      if (location && useLocation) {
+        // Kullanıcının konumu varsa, her etkinliğe mesafe bilgisi ekle
+        events = events.map(event => {
+          // Etkinliğin konum bilgisi yoksa, hesaplama yapma
+          if (!event.latitude || !event.longitude) {
+            return {
+              ...event,
+              distance_info: {
+                distance: Number.MAX_SAFE_INTEGER, // Çok uzak bir mesafe olarak işaretle
+                duration: 0
+              }
+            };
+          }
+          
+          // Mesafeyi hesapla
+          const distance = calculateHaversineDistance(
+            location.latitude,
+            location.longitude,
+            event.latitude,
+            event.longitude
+          );
+          
+          // Metre cinsinden mesafe (km * 1000)
+          const distanceInMeters = distance * 1000;
+          
+          // Ortalama yürüme hızı: 5 km/saat = 1.38 m/s
+          // Koşma hızı: 10 km/saat = 2.77 m/s
+          // Araba hızı: 40 km/saat = 11.11 m/s (şehir içi)
+          
+          // Arabayla tahmini süre (saniye)
+          const durationInSeconds = distanceInMeters / 11.11;
+          
+          return {
+            ...event,
+            distance_info: {
+              distance: distanceInMeters, // metre cinsinden mesafe
+              duration: durationInSeconds // saniye cinsinden süre
+            }
+          };
+        });
+        
+        // Yakın etkinlikleri önce göster
+        events.sort((a, b) => {
+          const distanceA = a.distance_info?.distance || Number.MAX_SAFE_INTEGER;
+          const distanceB = b.distance_info?.distance || Number.MAX_SAFE_INTEGER;
+          return distanceA - distanceB;
+        });
+        
+        console.log('Etkinlikler mesafeye göre sıralandı');
+      } else {
+        // Kullanıcının konumu yoksa veya kullanılmayacaksa, tarihe göre sırala
+        events.sort((a, b) => {
+          const dateA = new Date(a.event_date);
+          const dateB = new Date(b.event_date);
+          return dateA.getTime() - dateB.getTime();
+        });
+        
+        console.log('Etkinlikler tarihe göre sıralandı (konum bilgisi kullanılmadı)');
+      }
+      
+      // Hem nearbyEvents hem de events listelerini güncelle
+      set({ 
+        nearbyEvents: events, 
+        events: events,
+        isLoading: false 
+      });
+      
+      console.log('Etkinlikler başarıyla güncellendi');
+    } catch (error) {
+      console.error('Etkinlikleri mesafeye göre sıralama hatası:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Etkinlikleri yüklerken bir hata oluştu.', 
+        isLoading: false 
+      });
+    }
+  },
+  
   // Hata temizleme
   clearError: () => set({ error: null }),
   
@@ -651,5 +836,11 @@ export const useEventStore = create<EventState >((set, get) => ({
   resetEventDetail: () => set({ currentEvent: null }),
   
   // Yükleme durumunu sıfırla
-  clearLoading: () => set({ isLoading: false })
+  clearLoading: () => set({ isLoading: false }),
+  
+  // Yakındaki etkinlikler önbelleğini temizle
+  clearNearbyEventsCache: () => set({ 
+    lastNearbyEventsTimestamp: null,
+    lastNearbyEventsLocation: null
+  })
 }));

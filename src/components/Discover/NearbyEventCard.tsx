@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useMapsStore } from '../../store/appStore/mapsStore';
@@ -15,6 +15,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const [isJoined, setIsJoined] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [distance, setDistance] = useState<string | null>(null);
+  const [duration, setDuration] = useState<string | null>(null);
   const [isLoadingDistance, setIsLoadingDistance] = useState(false);
   
   const { lastLocation, calculateDistance } = useMapsStore();
@@ -31,30 +32,66 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   // Etkinliğin mesafesini hesapla
   useEffect(() => {
     const fetchDistance = async () => {
-      if (!lastLocation || !event.location_latitude || !event.location_longitude) {
+      // Etkinliğin konum bilgisi yoksa hesaplama yapma
+      if (!event.location_latitude || !event.location_longitude) {
+        setDistance('Konum bilgisi yok');
+        setIsLoadingDistance(false);
         return;
       }
       
       setIsLoadingDistance(true);
       
       try {
-        const origin = `${lastLocation.latitude},${lastLocation.longitude}`;
-        const destination = `${event.location_latitude},${event.location_longitude}`;
-        
-        const result = await calculateDistance(origin, destination);
-        
-        if (result && result.distance) {
-          setDistance(result.distance.text);
+        // Kullanıcının konumu varsa, gerçek mesafeyi hesapla
+        if (lastLocation) {
+          const origin = `${lastLocation.latitude},${lastLocation.longitude}`;
+          const destination = `${event.location_latitude},${event.location_longitude}`;
+          
+          // MapsStore'dan mesafe hesaplama fonksiyonunu kullan
+          const result = await calculateDistance(origin, destination);
+          
+          if (result && result.distance) {
+            setDistance(result.distance.text);
+            setDuration(result.duration.text);
+          } else {
+            // Mesafe hesaplanamazsa, distance_info objesine bakabiliriz
+            if (event.distance_info && event.distance_info.distance) {
+              const distanceKm = event.distance_info.distance / 1000; // metre -> km
+              setDistance(`${distanceKm.toFixed(1)} km`);
+              
+              // Süre bilgisi de varsa
+              if (event.distance_info.duration) {
+                const minutes = Math.floor(event.distance_info.duration / 60);
+                setDuration(`${minutes} dk`);
+              }
+            } else if (event.distance) {
+              // doğrudan event üzerinde distance değeri varsa
+              setDistance(`${event.distance.toFixed(1)} km`);
+            } else {
+              setDistance('Mesafe hesaplanamadı');
+            }
+          }
+        } else {
+          // Kullanıcının konumu yoksa, event üzerinde distance varsa onu kullan
+          if (event.distance_info && event.distance_info.distance) {
+            const distanceKm = event.distance_info.distance / 1000; // metre -> km
+            setDistance(`${distanceKm.toFixed(1)} km`);
+          } else if (event.distance) {
+            setDistance(`${event.distance.toFixed(1)} km`);
+          } else {
+            setDistance('Konum izni gerekli');
+          }
         }
       } catch (error) {
         console.error('Mesafe hesaplanırken hata:', error);
+        setDistance('Hesaplanırken hata oluştu');
       } finally {
         setIsLoadingDistance(false);
       }
     };
     
     fetchDistance();
-  }, [lastLocation, event]);
+  }, [lastLocation, event, calculateDistance]);
 
   // Tarih ve saat formatları
   const formatEventDate = (date: Date) => {
@@ -166,16 +203,26 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
           {/* Mesafe */}
           <View style={styles.infoRow}>
             <Ionicons name="navigate-outline" size={16} color={theme.colors.textSecondary} />
-            <Text 
-              style={[styles.infoText, { color: theme.colors.textSecondary }]}
-              numberOfLines={1}
-            >
-              {isLoadingDistance 
-                ? "Mesafe hesaplanıyor..." 
-                : distance 
-                  ? `${distance} uzaklıkta` 
-                  : "Mesafe bilgisi yok"}
-            </Text>
+            {isLoadingDistance ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginLeft: 5 }} />
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <Text 
+                  style={[styles.infoText, { color: theme.colors.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  {distance || "Mesafe bilgisi yok"}
+                </Text>
+                {duration && (
+                  <Text 
+                    style={[styles.infoText, { color: theme.colors.textSecondary, marginLeft: 4, opacity: 0.7 }]}
+                    numberOfLines={1}
+                  >
+                    ({duration})
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
 
           {/* Katılımcılar */}

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useThemeStore } from '../../../store/appStore/themeStore';
 import { Event } from '../../../types/eventTypes/event.types';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDistanceInfo, getDistanceColor } from '../../../utils/format.utils';
 
 interface EventCardSmallProps {
   event: Event;
@@ -11,6 +12,13 @@ interface EventCardSmallProps {
 
 const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
   const { theme } = useThemeStore();
+  
+  // Distance_info kontrolü ekle
+  const hasDistanceInfo = event && 
+    ((event as any).distance_info || typeof (event as any).distance === 'number');
+  
+  // Mesafe renklerini al
+  const distanceColor = hasDistanceInfo ? getDistanceColor(event) : '#CCCCCC';
   
   // Tarih formatla
   const formatDate = (dateString: string) => {
@@ -82,77 +90,61 @@ const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
       onPress={() => onPress(event)}
       activeOpacity={0.7}
     >
-      <View style={styles.cardContent}>
-        {/* Sol Taraf - Tarih kutusu */}
-        <View style={[styles.dateBox, { backgroundColor: theme.colors.primary + '10' }]}>
-          <Text style={[styles.dateDay, { color: theme.colors.primary }]}>
-            {formatDate(event.event_date).day}
+      {/* Mesafe göstergesi */}
+      {hasDistanceInfo && (
+        <View style={[styles.distanceBadge, { backgroundColor: distanceColor + 'E6' }]}>
+          <Ionicons name="location" size={10} color="white" style={{ marginRight: 2 }} />
+          <Text style={styles.distanceText}>
+            {formatDistanceInfo(event)}
           </Text>
-          <Text style={[styles.dateMonth, { color: theme.colors.primary }]}>
-            {formatDate(event.event_date).month}
+        </View>
+      )}
+      
+      {/* Etkinlik görseli */}
+      <View style={styles.imageContainer}>
+        {event.image_url ? (
+          <Image 
+            source={{ uri: event.image_url }} 
+            style={styles.image}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.accent + '20' }]}>
+            <Ionicons name="basketball-outline" size={24} color={theme.colors.accent} />
+          </View>
+        )}
+      </View>
+      
+      {/* Etkinlik bilgileri */}
+      <View style={styles.content}>
+        <Text 
+          style={[styles.title, { color: theme.colors.text }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {event.title}
+        </Text>
+        
+        <View style={styles.detailRow}>
+          <Ionicons name="calendar-outline" size={12} color={theme.colors.accent} />
+          <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+            {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+          </Text>
+          <Ionicons name="time-outline" size={12} color={theme.colors.accent} style={{ marginLeft: 8 }} />
+          <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+            {event.start_time}
           </Text>
         </View>
         
-        {/* Orta kısım - Etkinlik bilgileri */}
-        <View style={styles.infoContainer}>
-          <View style={styles.titleRow}>
-            <Text 
-              style={[styles.title, { color: theme.colors.text }]}
-              numberOfLines={1}
-            >
-              {event.title}
-            </Text>
-            
-            {event.is_private && (
-              <View style={styles.privateIconContainer}>
-                <Ionicons name="lock-closed" size={12} color={theme.colors.accent} />
-              </View>
-            )}
-          </View>
-          
-          <View style={styles.detailsRow}>
-            <View style={styles.infoItem}>
-              <Ionicons name="location-outline" size={12} color={theme.colors.textSecondary} />
-              <Text 
-                style={[styles.infoText, { color: theme.colors.textSecondary }]}
-                numberOfLines={1}
-              >
-                {event.location_name ? event.location_name : 'Konum yok'}
-              </Text>
-            </View>
-            
-            <View style={styles.infoItem}>
-              <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
-              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-                {event.start_time || '00:00'}
-              </Text>
-            </View>
-          </View>
-          
-          <View style={styles.footerRow}>
-            <View style={[styles.sportTag, { backgroundColor: theme.colors.accent + '15' }]}>
-              <Ionicons name={getSportIcon(event.sport_id)} size={12} color={theme.colors.accent} style={styles.sportIcon} />
-              <Text style={[styles.sportText, { color: theme.colors.accent }]}>
-                {event.sport_id}
-              </Text>
-            </View>
-            
-            <View style={[styles.statusBadge, { backgroundColor: statusInfo.bgColor }]}>
-              <Text style={[styles.statusText, { color: statusInfo.color }]}>
-                {statusInfo.text}
-              </Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Sağ taraf - Katılımcı bilgisi */}
-        <View style={styles.participantsContainer}>
-          <View style={[styles.participantsBadge, { backgroundColor: theme.colors.primary + '15' }]}>
-            <Ionicons name="people" size={12} color={theme.colors.primary} style={styles.participantsIcon} />
-            <Text style={[styles.participantsText, { color: theme.colors.primary }]}>
-              {event.current_participants || 0}/{event.max_participants || 10}
-            </Text>
-          </View>
+        <View style={styles.locationRow}>
+          <Ionicons name="location-outline" size={12} color={theme.colors.accent} />
+          <Text 
+            style={[styles.locationText, { color: theme.colors.textSecondary }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {event.location_name}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -161,109 +153,76 @@ const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  cardContent: {
     flexDirection: 'row',
-    padding: 12,
-  },
-  dateBox: {
-    width: 50,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
     padding: 8,
-    marginRight: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    overflow: 'hidden',
   },
-  dateDay: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  distanceBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 1,
   },
-  dateMonth: {
-    fontSize: 12,
-    textTransform: 'uppercase',
+  distanceText: {
+    color: 'white',
+    fontSize: 10,
     fontWeight: '600',
   },
-  infoContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
+  imageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  titleRow: {
-    flexDirection: 'row',
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+  },
+  content: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
   },
-  privateIconContainer: {
-    marginLeft: 6,
-  },
-  detailsRow: {
-    marginBottom: 8,
-  },
-  infoItem: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
   },
-  infoText: {
-    fontSize: 13,
+  detailText: {
+    fontSize: 12,
     marginLeft: 4,
   },
-  footerRow: {
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  sportTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  sportIcon: {
-    marginRight: 4,
-  },
-  sportText: {
+  locationText: {
     fontSize: 12,
-    fontWeight: '500',
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  participantsContainer: {
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  participantsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 6,
-    borderRadius: 16,
-  },
-  participantsIcon: {
-    marginRight: 3,
-  },
-  participantsText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    marginLeft: 4,
+    flex: 1,
   }
 });
 

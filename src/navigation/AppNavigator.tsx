@@ -11,8 +11,9 @@ import { useThemeStore } from '../store/appStore/themeStore';
 import { useNotificationStore } from '../store/appStore/notificationStore';
 import { useMessageStore } from '../store/messageStore/messageStore';
 import { useMapsStore } from '../store/appStore/mapsStore';
+import { useEventStore } from '../store/eventStore/eventStore';
 import FriendRequestsScreen from '../screens/profile/friends/FriendRequestsScreen';
-
+import LocationPermissionModal from '../components/Location/LocationPermissionModal';
 
 // Screens - Auth
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -288,22 +289,28 @@ export const AppNavigator = () => {
   const { isAuthenticated, checkAuth } = useAuthStore();
   const { resetState: resetFriendsState } = useFriendsStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const { theme } = useThemeStore();
-  const { initLocation } = useMapsStore();
+  const { locationPermissionStatus } = useMapsStore();
+  const { fetchAllEventsByDistance } = useEventStore();
 
   useEffect(() => {
     const loadApp = async () => {
-      // Konum bilgisini başlat (izinleri kontrol edecek)
-      try {
-        await initLocation();
-        console.log('Uygulama açılışında konum bilgisi başlatıldı');
-      } catch (locationError) {
-        console.error('Konum başlatılırken hata:', locationError);
-      }
-      
-      // Token kontrolü yap
+      // Önce token kontrolü yap
       await checkAuth();
       setIsLoading(false);
+      
+      // Kullanıcı girişi yapıldıysa, konum izni modalını göster
+      if (isAuthenticated) {
+        const hasShownLocationPermission = await AsyncStorage.getItem('hasShownLocationPermission');
+        if (!hasShownLocationPermission) {
+          // İlk kez gösteriliyor
+          setShowLocationModal(true);
+        } else {
+          // Daha önce gösterildiyse, etkinlikleri mesafeye göre sırala
+          fetchAllEventsByDistance();
+        }
+      }
     };
     loadApp();
   }, []);
@@ -314,6 +321,13 @@ export const AppNavigator = () => {
       resetFriendsState();
     }
   }, [isAuthenticated]);
+  
+  // Konum izni modalı tamamlandığında
+  const handleLocationModalComplete = async () => {
+    // Bir daha gösterilmemesi için işaretle
+    await AsyncStorage.setItem('hasShownLocationPermission', 'true');
+    setShowLocationModal(false);
+  };
 
   if (isLoading) {
     return (
@@ -326,113 +340,120 @@ export const AppNavigator = () => {
   return (
     <NavigationContainer>
       {isAuthenticated ? (
-        <AppStack.Navigator screenOptions={{ headerShown: false }}>
-          <AppStack.Screen name="MainTabs" component={TabNavigator} />
-          <AppStack.Screen 
-            name="EventDetail" 
-            component={EventDetailScreen} 
-            options={{ presentation: 'card' }}
-          />
-          <AppStack.Screen 
-            name="EventMapScreen" 
-            component={EventMapScreen} 
-            options={{ presentation: 'card' }}
-          />
-          <AppStack.Screen 
-            name="CreateEvent" 
-            component={CreateEventScreen}
-            options={{ 
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-              contentStyle: { backgroundColor: 'transparent' }
-            }}
-          />
-          <AppStack.Screen 
-            name="EditEvent" 
-            component={EditEventScreen} 
-            options={{ 
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-              contentStyle: { backgroundColor: 'transparent' }
-            }}
-          />
-          <AppStack.Screen 
-            name="NewsDetail" 
-            component={NewsDetailScreen} 
-            options={{ presentation: 'card' }}
-          />
-          <AppStack.Screen 
-            name="AnnouncementDetail" 
-            component={AnnouncementDetailScreen} 
-            options={{ presentation: 'card' }}
-          />
-          <AppStack.Screen 
-            name="FriendProfile" 
-            component={FriendProfileScreen} 
-            options={{ 
-              presentation: 'card',
-              animation: 'slide_from_right'
-            }}
-          />
-          <AppStack.Screen 
-            name="AllSportsFriends" 
-            component={AllSportsFriendsScreen} 
-            options={{ 
-              presentation: 'card',
-              animation: 'slide_from_right'
-            }}
-          />
-          <AppStack.Screen 
-            name="Messages" 
-            component={MessagesScreen} 
-            options={{ 
-              headerShown: true,
-              title: 'Mesajlar',
-              presentation: 'card',
-              animation: 'slide_from_right'
-            }}
-          />
-          <AppStack.Screen 
-            name="ConversationDetail" 
-            component={ConversationDetailScreen} 
-            options={{ 
-              headerShown: true,
-              presentation: 'card',
-              animation: 'slide_from_right'
-            }}
-          />
-          <AppStack.Screen 
-            name="NewConversation" 
-            component={NewConversationScreen} 
-            options={{ 
-              headerShown: true,
-              title: 'Yeni Mesaj',
-              presentation: 'card',
-              animation: 'slide_from_right'
-            }}
-          />
-          <AppStack.Screen 
-            name="AllNewsScreen" 
-            component={AllNewsScreen} 
-            options={{ 
-              presentation: 'card',
-              animation: 'slide_from_right'
-            }}
-          />
-          <AppStack.Screen 
-            name="FriendRequests" 
-            component={FriendRequestsScreen}
-            options={{
-              headerShown: true,
-              title: 'Arkadaşlık İstekleri',
-              headerTintColor: '#338626',
-              headerStyle: {
-                backgroundColor: '#fff',
-              },
-              headerShadowVisible: false,
-            }}
-          />
-        </AppStack.Navigator>
+        <>
+          <AppStack.Navigator screenOptions={{ headerShown: false }}>
+            <AppStack.Screen name="MainTabs" component={TabNavigator} />
+            <AppStack.Screen 
+              name="EventDetail" 
+              component={EventDetailScreen} 
+              options={{ presentation: 'card' }}
+            />
+            <AppStack.Screen 
+              name="EventMapScreen" 
+              component={EventMapScreen} 
+              options={{ presentation: 'card' }}
+            />
+            <AppStack.Screen 
+              name="CreateEvent" 
+              component={CreateEventScreen}
+              options={{ 
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                contentStyle: { backgroundColor: 'transparent' }
+              }}
+            />
+            <AppStack.Screen 
+              name="EditEvent" 
+              component={EditEventScreen} 
+              options={{ 
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                contentStyle: { backgroundColor: 'transparent' }
+              }}
+            />
+            <AppStack.Screen 
+              name="NewsDetail" 
+              component={NewsDetailScreen} 
+              options={{ presentation: 'card' }}
+            />
+            <AppStack.Screen 
+              name="AnnouncementDetail" 
+              component={AnnouncementDetailScreen} 
+              options={{ presentation: 'card' }}
+            />
+            <AppStack.Screen 
+              name="FriendProfile" 
+              component={FriendProfileScreen} 
+              options={{ 
+                presentation: 'card',
+                animation: 'slide_from_right'
+              }}
+            />
+            <AppStack.Screen 
+              name="AllSportsFriends" 
+              component={AllSportsFriendsScreen} 
+              options={{ 
+                presentation: 'card',
+                animation: 'slide_from_right'
+              }}
+            />
+            <AppStack.Screen 
+              name="Messages" 
+              component={MessagesScreen} 
+              options={{ 
+                headerShown: true,
+                title: 'Mesajlar',
+                presentation: 'card',
+                animation: 'slide_from_right'
+              }}
+            />
+            <AppStack.Screen 
+              name="ConversationDetail" 
+              component={ConversationDetailScreen} 
+              options={{ 
+                headerShown: true,
+                presentation: 'card',
+                animation: 'slide_from_right'
+              }}
+            />
+            <AppStack.Screen 
+              name="NewConversation" 
+              component={NewConversationScreen} 
+              options={{ 
+                headerShown: true,
+                title: 'Yeni Mesaj',
+                presentation: 'card',
+                animation: 'slide_from_right'
+              }}
+            />
+            <AppStack.Screen 
+              name="AllNewsScreen" 
+              component={AllNewsScreen} 
+              options={{ 
+                presentation: 'card',
+                animation: 'slide_from_right'
+              }}
+            />
+            <AppStack.Screen 
+              name="FriendRequests" 
+              component={FriendRequestsScreen}
+              options={{
+                headerShown: true,
+                title: 'Arkadaşlık İstekleri',
+                headerTintColor: '#338626',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+              }}
+            />
+          </AppStack.Navigator>
+          
+          {/* Konum izni modalı */}
+          {showLocationModal && (
+            <LocationPermissionModal onComplete={handleLocationModalComplete} />
+          )}
+        </>
       ) : (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="Welcome" component={WelcomeScreen} />

@@ -11,13 +11,15 @@ import {
   Image,
   StatusBar,
   Animated,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { useNavigation, NavigationProp, CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useHomeStore } from '../../store/appStore/homeStore';
+import { useEventStore } from '../../store/eventStore/eventStore';
 import { useAuthStore } from '../../store/userStore/authStore';
 import { Event } from '../../types/eventTypes/event.types';
 import { News, Sport, Announcement } from '../../types/apiTypes/api.types';
@@ -27,6 +29,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import { useFriendsStore } from '../../store/userStore/friendsStore';
 import { colors } from '../../constants/colors/colors';
+import { useMapsStore } from '../../store/appStore/mapsStore';
+import * as Location from 'expo-location';
+import NearbyEventsComponent from '../../components/Shared/NearbyEventsComponent';
 
 // Komponentler
 import SectionHeader from '../../components/Home/SectionHeader/SectionHeader';
@@ -77,11 +82,10 @@ export const HomeScreen: React.FC = () => {
   const { user } = useAuthStore();
   const { friendRequests, fetchFriendRequests } = useFriendsStore();
   
-  // Store verilerini al
+  // Store verilerini al - nearbyEvents için eventStore'u kullan
   const { 
     upcomingEvents,
     recommendedEvents, 
-    nearbyEvents,
     news,
     sports,
     announcements,
@@ -94,6 +98,12 @@ export const HomeScreen: React.FC = () => {
     refreshAll
   } = useHomeStore();
   
+  // eventStore'dan yakındaki etkinlikleri al
+  const { nearbyEvents, events, fetchAllEventsByDistance } = useEventStore();
+  
+  // MapsStore'dan konum bilgilerini al
+  const { lastLocation, initLocation } = useMapsStore();
+  
   const { fetchConversations, getUnreadMessagesCount, unreadMessagesCount } = useMessageStore();
   
   // State tanımları
@@ -103,6 +113,7 @@ export const HomeScreen: React.FC = () => {
   const scrollY = useState(new Animated.Value(0))[0];
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const footerOpacity = useState(new Animated.Value(0))[0];
+  const [showLocationModal, setShowLocationModal] = useState(false);
   
   // Lazy loading göstergesi için önceki durumu takip etmek için ref kullanıyoruz
   const wasNearEnd = React.useRef(false);
@@ -194,7 +205,54 @@ export const HomeScreen: React.FC = () => {
     refreshAll();
     fetchConversations();
     getUnreadMessagesCount();
+    
+    // Konum izinlerini alıp, etkinlikleri mesafeye göre sırala
+    const loadLocationAndEvents = async () => {
+      console.log("Konum ve etkinlikler yükleniyor...");
+      
+      // Konum izni kontrol et
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      // Konum izni verilmediyse modal göster
+      if (status !== Location.PermissionStatus.GRANTED) {
+        setShowLocationModal(true);
+        // Etkinlikleri tarih sırasına göre göster
+        await fetchAllEventsByDistance(false);
+      } else {
+        // Konum iznini iste ve konumu başlat
+        const location = await initLocation();
+        
+        // Konum izni verildiyse, tüm etkinlikleri mesafeye göre sırala
+        if (location) {
+          console.log("Konum izni verildi, etkinlikler mesafeye göre sıralanıyor...");
+          await fetchAllEventsByDistance(true);
+        } else {
+          console.log("Konum izni verilmedi, etkinlikler tarih sırasına göre gösteriliyor.");
+          // Konum izni verilmediyse, tarihe göre sırala
+          await fetchAllEventsByDistance(false);
+        }
+      }
+    };
+    
+    loadLocationAndEvents();
   }, []);
+  
+  // Konum izni modal kapat fonksiyonu
+  const handleLocationPermission = async () => {
+    setShowLocationModal(false);
+    // Konum iznini tekrar iste
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    
+    if (status === Location.PermissionStatus.GRANTED) {
+      // Konum iznini iste ve konumu başlat
+      const location = await initLocation();
+      
+      if (location) {
+        console.log("Konum izni verildi, etkinlikler mesafeye göre sıralanıyor...");
+        await fetchAllEventsByDistance(true);
+      }
+    }
+  };
   
   // Her ekrana girildiğinde emoji ve motivasyon mesajını değiştir
   const [currentEmoji, setCurrentEmoji] = useState(getSportEmoji());
@@ -768,167 +826,10 @@ export const HomeScreen: React.FC = () => {
         </View>
             
         {/* Yakındaki Etkinlikler - Yatay kaydırmalı */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="location-outline" size={20} color={colors.accentDark} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Yakındaki Etkinlikler</Text>
-            </View>
-            <TouchableOpacity onPress={handleViewAllEvents}>
-              <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                paddingRight: 5,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          
-          {isLoadingNearbyEvents ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="small" color={theme.colors.accent} />
-            </View>
-          ) : nearbyEvents.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScrollContent}
-            >
-              {nearbyEvents.slice(0, 5).map((event) => {
-                const extendedEvent = event as ExtendedEvent;
-                return (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={[styles.horizontalEventCard, { backgroundColor: theme.colors.card }]}
-                    onPress={() => handleEventPress(event)}
-                    activeOpacity={0.7}
-                  >
-                    {/* Mesafe göstergesi */}
-                    {extendedEvent.distance && (
-                      <View style={styles.distanceBadge}>
-                        <Ionicons name="location" size={12} color="white" style={{ marginRight: 4 }} />
-                        <Text style={styles.distanceText}>{extendedEvent.distance.toFixed(1)} km</Text>
-                      </View>
-                    )}
-                    
-                    {/* Etkinlik resmi veya spor ikonu */}
-                    <View style={styles.horizontalEventImageContainer}>
-                    
-                            {event.image_url ? (
-                      console.log("eventttt", event),
-                        <Image 
-                          source={{uri: event.image_url}}
-                          style={styles.horizontalEventImage}
-                          resizeMode="cover"
-                        />
-                      ) : event.sport_id.toLowerCase().includes('futbol') ? (
-                        <Image 
-                          source={{uri: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571'}}
-                          style={styles.horizontalEventImage}
-                          resizeMode="cover"
-                        />
-                      ) : event.sport_id.toLowerCase().includes('basket') ? (
-                        <Image 
-                          source={{uri: 'https://images.unsplash.com/photo-1546519638-68e109498ffc'}}
-                          style={styles.horizontalEventImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={[styles.horizontalEventImagePlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
-                          <Ionicons name="fitness-outline" size={32} color={colors.accentDark} />
-                        </View>
-                      )}
-                      
-                   
-                    </View>
-                    
-                    {/* Etkinlik bilgileri */}
-                    <View style={styles.horizontalEventInfo}>
-                      <Text style={[styles.horizontalEventTitle, { color: theme.colors.text }]} numberOfLines={1}>
-                        {event.title}
-                      </Text>
-                      
-                     
-                      
-                      <View style={styles.horizontalEventDetails}>
-                        <View style={styles.horizontalEventDetailRow}>
-                          <Ionicons name="location-outline" size={14} color={colors.accentDark} />
-                          <Text style={[styles.horizontalEventDetailText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                            {event.location_name || 'Konum bilgisi yok'}
-                          </Text>
-                        </View>
-                        
-                        <View style={styles.horizontalEventDetailRow}>
-                          <Ionicons name="calendar-outline" size={14} color={colors.accentDark} />
-                          <Text style={[styles.horizontalEventDetailText, { color: theme.colors.textSecondary }]}>
-                            {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
-                          </Text>
-                        </View>
-                        
-                        <View style={styles.horizontalEventDetailRow}>
-                          <Ionicons name="time-outline" size={14} color={colors.accentDark} />
-                          <Text style={[styles.horizontalEventDetailText, { color: theme.colors.textSecondary }]}>
-                            {event.start_time || '00:00'}
-                          </Text>
-                        </View>
-                      </View>
-                      
-                      <View style={styles.horizontalEventActionRow}>
-                        <View style={[styles.participantsBadge, { backgroundColor: theme.colors.primary + '15' }]}>
-                          <Ionicons name="people" size={12} color={colors.accentDark} />
-                          <Text style={[styles.participantsCount, { color: theme.colors.primary }]}>
-                            {event.current_participants || 0}/{event.max_participants || 'sınırsız'}
-                          </Text>
-                        </View>
-                        
-                        <TouchableOpacity style={[styles.joinButton, { backgroundColor: theme.colors.accent }]}>
-                          <Text style={styles.joinButtonText}>Katıl</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-              
-              {nearbyEvents.length > 5 && (
-                <TouchableOpacity
-                  style={[styles.viewAllCardHorizontal, { backgroundColor: theme.colors.card + '80' }]}
-                  onPress={handleViewAllEvents}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.viewAllContent}>
-                    <Ionicons name="grid-outline" size={24} color={colors.accentDark} style={{ marginBottom: 10 }} />
-                    <Text style={[styles.viewAllText, { color: theme.colors.primary, fontWeight: '600' }]}>
-                      Tümünü Gör
-                    </Text>
-                    <Ionicons name="chevron-forward-circle" size={24} color={colors.accentDark} style={{ marginTop: 10 }} />
-                  </View>
-                </TouchableOpacity>
-              )}
-            </ScrollView>
-          ) : (
-            <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="location-outline" size={24} color={colors.accentDark} />
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                Yakınında etkinlik bulunamadı
-              </Text>
-            </View>
-          )}
-        </View>
+        <NearbyEventsComponent 
+          onSeeAll={handleViewAllEvents}
+          maxItems={5}
+        />
 
         {/* Spor Haberleri - Yatay kaydırmalı */}
         <View style={styles.section}>
@@ -1127,6 +1028,93 @@ export const HomeScreen: React.FC = () => {
         >
           <Ionicons name="chevron-up" size={24} color="white" />
         </TouchableOpacity>
+      )}
+      
+      {/* Konum İzni Modalı */}
+      {showLocationModal && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showLocationModal}
+          onRequestClose={() => setShowLocationModal(false)}
+        >
+          <View style={{
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          }}>
+            <View style={{
+              backgroundColor: theme.colors.card,
+              padding: 20,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.3,
+              shadowRadius: 5,
+              elevation: 10,
+            }}>
+              <View style={{
+                alignItems: 'center',
+                marginBottom: 20,
+              }}>
+                <Ionicons name="location" size={50} color={colors.accentDark} />
+                <Text style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  color: theme.colors.text,
+                  marginTop: 15,
+                }}>
+                  Konum İzni Gerekli
+                </Text>
+                
+                <Text style={{
+                  fontSize: 16,
+                  color: theme.colors.textSecondary,
+                  textAlign: 'center',
+                  marginTop: 15,
+                  lineHeight: 22,
+                }}>
+                  Yakınınızdaki etkinlikleri görüntülemek ve size en uygun etkinlikleri önerebilmek için konum izni gereklidir.
+                </Text>
+              </View>
+              
+              <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginTop: 10,
+              }}>
+                <TouchableOpacity 
+                  style={{
+                    flex: 1,
+                    padding: 15,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
+                    marginRight: 10,
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setShowLocationModal(false)}
+                >
+                  <Text style={{ color: theme.colors.textSecondary, fontWeight: '600' }}>Daha Sonra</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={{
+                    flex: 1,
+                    padding: 15,
+                    borderRadius: 10,
+                    backgroundColor: colors.accentDark,
+                    alignItems: 'center',
+                  }}
+                  onPress={handleLocationPermission}
+                >
+                  <Text style={{ color: 'white', fontWeight: '600' }}>İzin Ver</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       )}
     </SafeAreaView>
   );
