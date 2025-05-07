@@ -27,7 +27,8 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     defaultLocation, 
     friendsSummary,
     isLoading,
-    fetchUserProfile
+    fetchUserProfile,
+    updateSportPreferences
   } = useProfileStore();
   
   // Güncel konum bilgisini al
@@ -85,8 +86,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
 
   // Spor tercihleri düzenleme
   const handleEditSports = () => {
-    // TODO: Spor tercihleri düzenleme sayfasına yönlendir
-    console.log('Spor tercihleri düzenleme sayfasına yönlendirme');
+    navigation.navigate('EditSportPreferences');
   };
 
   // Konum düzenleme
@@ -155,6 +155,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
             accent: theme.colors.accent
           }}
           onEditSports={handleEditSports}
+          onUpdatePreferences={updateSportPreferences}
         />
         
         {/* Varsayılan Konum Bilgisi */}
