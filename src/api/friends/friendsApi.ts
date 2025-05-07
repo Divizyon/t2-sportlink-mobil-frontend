@@ -72,6 +72,7 @@ export interface Friend {
 interface PaginatedResponse<T> {
   data?: T[];
   friends?: T[];
+  requests?: T[];
   pagination: {
     page: number;
     limit: number;

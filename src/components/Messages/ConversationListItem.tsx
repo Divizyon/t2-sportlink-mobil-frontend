@@ -39,7 +39,7 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
     // Grup değilse ve diğer katılımcı varsa, kullanıcı adını göster
     if (otherParticipants.length > 0) {
       const otherUser = otherParticipants[0].user;
-      return `${otherUser.first_name} ${otherUser.last_name}`;
+      return `${otherUser.first_name || ''} ${otherUser.last_name || ''}`.trim() || 'Sohbet';
     }
     
     return 'Sohbet';
@@ -71,7 +71,7 @@ export const ConversationListItem: React.FC<ConversationListItemProps> = ({
       return (
         <View style={[styles.defaultAvatar, { backgroundColor: theme.colors.accent }]}>
           <Text style={styles.avatarInitial}>
-            {otherUser.first_name.charAt(0).toUpperCase()}
+            {otherUser.first_name && otherUser.first_name.charAt(0).toUpperCase() || '?'}
           </Text>
         </View>
       );

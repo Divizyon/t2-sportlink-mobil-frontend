@@ -57,6 +57,7 @@ type StackParamList = {
   ConversationDetail: { conversationId: string };
   NewConversation: undefined;
   AllNewsScreen: undefined;
+  FriendRequests: undefined;
 };
 
 // Birleşik navigasyon tipi
@@ -74,7 +75,7 @@ export const HomeScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<NavigationType>();
   const { user } = useAuthStore();
-  const { friendRequests } = useFriendsStore();
+  const { friendRequests, fetchFriendRequests } = useFriendsStore();
   
   // Store verilerini al
   const { 
@@ -205,7 +206,9 @@ export const HomeScreen: React.FC = () => {
       setCurrentEmoji(getSportEmoji());
       setCurrentMotivation(getMotivationalMessage());
       getUnreadMessagesCount();
-    }, [getUnreadMessagesCount])
+      // Arkadaşlık isteklerini getir
+      fetchFriendRequests();
+    }, [getUnreadMessagesCount, fetchFriendRequests])
   );
   
   // Spor seçimine göre etkinlikleri filtrele
@@ -261,8 +264,8 @@ export const HomeScreen: React.FC = () => {
 
   // Arkadaşlık isteklerini görüntüle
   const handleFriendRequests = () => {
-    // Arkadaşlık istekleri sayfasına yönlendirme yapılabilir
-    console.log("Arkadaşlık istekleri görüntüleniyor");
+    console.log("Arkadaşlık istekleri sayfasına yönlendiriliyor, istek sayısı:", friendRequests.length);
+    navigation.navigate('FriendRequests');
   };
 
   // Spor seçimi - Sport tipinde parametre alacak şekilde düzeltildi
@@ -392,7 +395,7 @@ export const HomeScreen: React.FC = () => {
             <View>
               <Ionicons name="heart-outline" size={30} color={colors.accentDark} />
               {friendRequests.length > 0 && (
-                <View style={[styles.badgeContainer, { backgroundColor: theme.colors.error, top: -4, right: -4 }]}>
+                <View style={[styles.badgeContainer, { backgroundColor: theme.colors.accent, top: -3, right: -8 }]}>
                   <Text style={styles.badgeText}>
                     {friendRequests.length > 99 ? '99+' : friendRequests.length}
                   </Text>
@@ -660,9 +663,10 @@ export const HomeScreen: React.FC = () => {
                   >
                     {/* Etkinlik resmi veya spor ikonu */}
                     <View style={styles.eventImageContainer}>
-                      {event.img_url ? (
+                      {event.image_url ? (
+                        console.log("event.image_url", event.image_url),
                         <Image 
-                          source={{uri: event.img_url}}
+                          source={{uri: event.image_url}}
                           style={styles.eventImage}
                           resizeMode="cover"
                         />
@@ -829,9 +833,11 @@ export const HomeScreen: React.FC = () => {
                     
                     {/* Etkinlik resmi veya spor ikonu */}
                     <View style={styles.horizontalEventImageContainer}>
-                      {event.img_url ? (
+                    
+                            {event.image_url ? (
+                      console.log("eventttt", event),
                         <Image 
-                          source={{uri: event.img_url}}
+                          source={{uri: event.image_url}}
                           style={styles.horizontalEventImage}
                           resizeMode="cover"
                         />

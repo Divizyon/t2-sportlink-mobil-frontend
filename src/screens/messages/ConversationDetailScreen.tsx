@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView, 
   Platform,
   ActivityIndicator,
-  Image
+  Image,
+  Modal
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useAuthStore } from '../../store/userStore/authStore';
@@ -25,6 +26,7 @@ import * as ImagePicker from 'expo-image-picker';
 type RouteParams = {
   ConversationDetail: {
     conversationId: string;
+    userName?: string;
   };
 };
 
@@ -33,7 +35,7 @@ export const ConversationDetailScreen: React.FC = () => {
   const { user } = useAuthStore();
   const route = useRoute<RouteProp<RouteParams, 'ConversationDetail'>>();
   const navigation = useNavigation<any>();
-  const { conversationId } = route.params;
+  const { conversationId, userName } = route.params;
   const flatListRef = useRef<FlatList>(null);
   
   const { 
@@ -49,6 +51,7 @@ export const ConversationDetailScreen: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
   
   // Konuşma verisini yükle
   useEffect(() => {
@@ -81,6 +84,26 @@ export const ConversationDetailScreen: React.FC = () => {
   
   // Konuşma başlığını ayarla
   useEffect(() => {
+    // userName prop'u zaten varsa, başlığı doğrudan ayarla
+    if (userName) {
+      navigation.setOptions({
+        title: userName,
+        headerBackTitle: 'Geri',
+        headerRight: () => (
+          currentConversation?.is_group ? (
+            <TouchableOpacity 
+              onPress={() => setShowParticipants(true)}
+              style={{ marginRight: 8, padding: 8 }}
+            >
+              <Ionicons name="people" size={22} color={theme.colors.primary} />
+            </TouchableOpacity>
+          ) : null
+        )
+      });
+      return;
+    }
+    
+    // userName yoksa eski yöntemle belirle
     if (currentConversation) {
       // Başlık oluştur
       let title = currentConversation.name || '';
@@ -94,7 +117,7 @@ export const ConversationDetailScreen: React.FC = () => {
         
         if (otherParticipants.length > 0) {
           const otherUser = otherParticipants[0].user;
-          title = `${otherUser.first_name} ${otherUser.last_name}`;
+          title = `${otherUser.first_name || ''} ${otherUser.last_name || ''}`.trim() || 'Sohbet';
         } else {
           title = 'Sohbet';
         }
@@ -104,9 +127,19 @@ export const ConversationDetailScreen: React.FC = () => {
       navigation.setOptions({
         title,
         headerBackTitle: 'Geri',
+        headerRight: () => (
+          currentConversation?.is_group ? (
+            <TouchableOpacity 
+              onPress={() => setShowParticipants(true)}
+              style={{ marginRight: 8, padding: 8 }}
+            >
+              <Ionicons name="people" size={22} color={theme.colors.primary} />
+            </TouchableOpacity>
+          ) : null
+        )
       });
     }
-  }, [currentConversation, navigation, user]);
+  }, [currentConversation, navigation, user, userName]);
   
   // Mesaj gönderme işlemi
   const handleSendMessage = async () => {
@@ -246,6 +279,89 @@ export const ConversationDetailScreen: React.FC = () => {
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Katılımcılar Modalı */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showParticipants}
+        onRequestClose={() => setShowParticipants(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Katılımcılar
+              </Text>
+              <TouchableOpacity onPress={() => setShowParticipants(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={currentConversation?.participants || []}
+              keyExtractor={(item) => item.user_id}
+              renderItem={({ item }) => (
+                <View style={[styles.participantItem, { 
+                  borderBottomColor: theme.colors.border,
+                  backgroundColor: item.user_id === user?.id ? theme.colors.accent + '15' : undefined
+                }]}>
+                  <View style={styles.participantAvatar}>
+                    {item.user.profile_picture ? (
+                      <Image 
+                        source={{ uri: item.user.profile_picture }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <View style={[styles.defaultAvatar, { backgroundColor: theme.colors.accent }]}>
+                        <Text style={styles.avatarText}>
+                          {item.user.first_name?.charAt(0)?.toUpperCase() || '?'}
+                        </Text>
+                      </View>
+                    )}
+                    {item.is_admin && (
+                      <View style={[styles.adminBadge, { backgroundColor: theme.colors.accent }]}>
+                        <Ionicons name="star" size={10} color="white" />
+                      </View>
+                    )}
+                  </View>
+                  
+                  <View style={styles.participantInfo}>
+                    <Text style={[styles.participantName, { color: theme.colors.text }]}>
+                      {`${item.user.first_name || ''} ${item.user.last_name || ''}`.trim() || 'İsimsiz Kullanıcı'}
+                      {item.user_id === user?.id ? ' (Sen)' : ''}
+                    </Text>
+                    <Text style={[styles.participantUsername, { color: theme.colors.textSecondary }]}>
+                      @{item.user.username || 'kullanıcı'}
+                    </Text>
+                  </View>
+                  
+                  {item.is_admin && (
+                    <View style={[styles.roleBadge, { backgroundColor: theme.colors.accent + '20' }]}>
+                      <Text style={[styles.roleText, { color: theme.colors.accent }]}>Yönetici</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              ListEmptyComponent={
+                <View style={styles.emptyParticipants}>
+                  <Ionicons name="people" size={48} color={theme.colors.textSecondary} />
+                  <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                    Katılımcı bulunamadı
+                  </Text>
+                </View>
+              }
+            />
+            
+            <TouchableOpacity 
+              style={[styles.closeButton, { backgroundColor: theme.colors.accent }]}
+              onPress={() => setShowParticipants(false)}
+            >
+              <Text style={styles.closeButtonText}>Kapat</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -450,6 +566,110 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    maxHeight: '70%',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  participantItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+  },
+  participantAvatar: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  defaultAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  adminBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  participantInfo: {
+    flex: 1,
+  },
+  participantName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  participantUsername: {
+    fontSize: 12,
+  },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  closeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  emptyParticipants: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

@@ -180,10 +180,14 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     try {
       set({ isLoadingRequests: true, error: null });
       
+      console.log(`Arkadaşlık istekleri için API isteği yapılıyor: sayfa=${page}, limit=${limit}, durum=${status}`);
       const response = await friendsApi.getFriendRequests(status, page, limit);
+      console.log('Arkadaşlık istekleri API yanıtı:', JSON.stringify(response, null, 2));
       
       if (response.success && response.data) {
-        const requestsData = response.data.data || [];
+        // Backend'den gelen data format değişebilir, her iki formatı da kontrol edelim
+        const requestsData = response.data.requests || response.data.data || [];
+        console.log('İşlenmiş arkadaşlık istekleri verisi:', JSON.stringify(requestsData, null, 2));
         
         set({
           friendRequests: page === 1 
@@ -193,7 +197,10 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
           currentRequestsPage: page,
           isLoadingRequests: false,
         });
+        
+        console.log('Store güncellendi, yeni arkadaşlık istekleri sayısı:', requestsData.length);
       } else {
+        console.log('API başarısız yanıt verdi:', response.message);
         set({
           error: response.message || 'Arkadaşlık istekleri yüklenemedi',
           isLoadingRequests: false,
@@ -201,6 +208,7 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Arkadaşlık istekleri yüklenirken bir hata oluştu';
+      console.error('Arkadaşlık istekleri getirme hatası:', errorMessage);
       set({
         error: errorMessage,
         isLoadingRequests: false,

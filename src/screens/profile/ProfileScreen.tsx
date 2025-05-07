@@ -101,8 +101,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
 
   // Arkadaşlık isteklerini görüntüle
   const handleViewRequests = () => {
-    // TODO: Arkadaşlık istekleri sayfasına yönlendir
-    console.log('Arkadaşlık istekleri sayfasına yönlendirme');
+    navigation.navigate('FriendRequests');
   };
 
   if (isLoading && !refreshing && !userInfo) {

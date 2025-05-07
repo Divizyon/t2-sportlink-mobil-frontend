@@ -168,10 +168,31 @@ export const NewConversationScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Grup Modu Seçeneği */}
-      <View style={[styles.groupModeContainer, { borderBottomColor: theme.colors.border }]}>
-        <Text style={[styles.groupModeLabel, { color: theme.colors.text }]}>
-          Grup Sohbeti Oluştur
-        </Text>
+      <View style={[styles.groupModeContainer, { 
+        borderBottomColor: theme.colors.border,
+        backgroundColor: isCreatingGroup ? theme.colors.accent + '15' : 'transparent' 
+      }]}>
+        <View style={styles.groupModeInfo}>
+          <Ionicons 
+            name={isCreatingGroup ? "people" : "people-outline"} 
+            size={24} 
+            color={isCreatingGroup ? theme.colors.accent : theme.colors.text} 
+            style={{ marginRight: 10 }}
+          />
+          <View>
+            <Text style={[styles.groupModeLabel, { 
+              color: isCreatingGroup ? theme.colors.accent : theme.colors.text,
+              fontWeight: isCreatingGroup ? 'bold' : 'normal'
+            }]}>
+              Grup Sohbeti Oluştur
+            </Text>
+            {isCreatingGroup && (
+              <Text style={[styles.groupModeTip, { color: theme.colors.textSecondary }]}>
+                Birden fazla arkadaş seçerek grup oluşturabilirsiniz
+              </Text>
+            )}
+          </View>
+        </View>
         <Switch
           value={isCreatingGroup}
           onValueChange={toggleGroupMode}
@@ -182,7 +203,11 @@ export const NewConversationScreen: React.FC = () => {
       
       {/* Grup İsmi (Grup modunda) */}
       {isCreatingGroup && (
-        <View style={[styles.groupNameContainer, { borderBottomColor: theme.colors.border }]}>
+        <View style={[styles.groupNameContainer, { 
+          borderBottomColor: theme.colors.border,
+          backgroundColor: theme.colors.cardBackground + '50'
+        }]}>
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.colors.accent} style={{ marginRight: 10 }} />
           <TextInput
             style={[styles.groupNameInput, { color: theme.colors.text }]}
             placeholder="Grup adı girin..."
@@ -281,17 +306,25 @@ export const NewConversationScreen: React.FC = () => {
       {/* Mesaj Başlat Butonu */}
       {selectedUsers.length > 0 && (
         <TouchableOpacity
-          style={[styles.startButton, { backgroundColor: theme.colors.accent }]}
+          style={[
+            styles.startButton,
+            { backgroundColor: selectedUsers.length > 0 ? theme.colors.accent : theme.colors.border },
+          ]}
           onPress={handleStartConversation}
-          disabled={isCreating}
+          disabled={selectedUsers.length === 0 || isCreating}
         >
           {isCreating ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
-              <Ionicons name="chatbubble" size={20} color="white" style={styles.startButtonIcon} />
+              <Ionicons 
+                name={isCreatingGroup ? "people" : "chatbubble"} 
+                size={18} 
+                color="white" 
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.startButtonText}>
-                {isCreatingGroup ? 'Grup Sohbeti Başlat' : 'Mesaj Gönder'}
+                {isCreatingGroup ? "Grup Sohbeti Başlat" : "Sohbet Başlat"}
               </Text>
             </>
           )}
@@ -323,9 +356,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
+  groupModeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   groupModeLabel: {
     fontSize: 16,
-    fontWeight: '500',
+  },
+  groupModeTip: {
+    fontSize: 12,
+    marginTop: 2,
   },
   groupNameContainer: {
     paddingHorizontal: 16,
@@ -410,9 +450,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  startButtonIcon: {
-    marginRight: 8,
   },
   startButtonText: {
     color: 'white',
