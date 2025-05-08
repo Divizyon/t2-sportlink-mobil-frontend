@@ -300,8 +300,8 @@ export const EditEventScreen: React.FC = () => {
   };
 
   // Tarih formatını düzenler: 2023-04-15 -> 15 Nisan 2023
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
     return date.toLocaleDateString('tr-TR', options);
   };

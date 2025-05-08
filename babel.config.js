@@ -13,6 +13,14 @@ module.exports = function (api) {
           extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
       ],
+      ["module:react-native-dotenv", {
+        envName: "APP_ENV",
+        moduleName: "@env",
+        path: ".env",
+        safe: true,
+        allowUndefined: false,
+        verbose: false
+      }]
     ],
   };
 }; 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { 
-  View, 
-  StyleSheet, 
+import {
+  View,
+  StyleSheet,
   SafeAreaView,
   TouchableOpacity,
   Text,
@@ -28,13 +28,13 @@ const { width } = Dimensions.get('window');
 export const EventsScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<any>();
-  
+
   // Event store'dan etkinlik durumunu ve metotları al
-  const { 
-    events, 
+  const {
+    events,
     totalEvents,
     currentPage,
-    isLoading, 
+    isLoading,
     error,
     message,
     fetchEvents,
@@ -45,29 +45,29 @@ export const EventsScreen: React.FC = () => {
     searchEvents,
     searchResults
   } = useEventStore();
-  
+
   // Filtre durumu
   const [activeSportId, setActiveSportId] = useState<string | null>(null);
-  
+
   // Arama durumu
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
-  
+
   // Tarih filtreleme durumu
   const [dateModalVisible, setDateModalVisible] = useState<boolean>(false);
   const [isDateFilterActive, setIsDateFilterActive] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2025); // Varsayılan olarak 2025 seçili
-  
+
   // Her yıl için ayrı ay seçim durumu
   const [selectedMonths2025, setSelectedMonths2025] = useState<number[]>([]);
   const [selectedMonths2026, setSelectedMonths2026] = useState<number[]>([]);
-  
+
   // Aktif yıla göre seçili ayları belirleme
   const selectedMonths = useMemo(() => {
     return selectedYear === 2025 ? selectedMonths2025 : selectedMonths2026;
   }, [selectedYear, selectedMonths2025, selectedMonths2026]);
-  
+
   // Kullanılabilir yıllar ve aylar
   const availableYears = [2025, 2026];
   const months = [
@@ -84,15 +84,15 @@ export const EventsScreen: React.FC = () => {
     { id: 10, name: 'Kasım' },
     { id: 11, name: 'Aralık' }
   ];
-  
+
   // Animasyon değerleri
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
   const scaleFabAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Harita görünümü durumu
   const [mapModalVisible, setMapModalVisible] = useState<boolean>(false);
-  
+
   // Konya'nın koordinatları (varsayılan harita merkezi)
   const konyaRegion = {
     latitude: 37.8719,
@@ -100,12 +100,12 @@ export const EventsScreen: React.FC = () => {
     latitudeDelta: 0.5,
     longitudeDelta: 0.5,
   };
-  
+
   // Sıralanmış etkinlikler - En yeni oluşturulanlar önce gösterilir
   const sortedEvents = useMemo(() => {
     // İlk olarak filtrelenecek etkinlikleri belirle
     let filteredEvents = [];
-    
+
     // Arama aktifse arama sonuçlarını kullan
     if (isSearchActive && searchResults.length > 0) {
       filteredEvents = [...searchResults];
@@ -114,7 +114,7 @@ export const EventsScreen: React.FC = () => {
     } else {
       filteredEvents = [...events];
     }
-    
+
     // Tarih filtresi aktifse etkinlikleri yıl ve ay filtresine göre filtrele
     if (isDateFilterActive) {
       // Hem 2025 hem de 2026 için seçilen ayları dikkate al
@@ -122,22 +122,22 @@ export const EventsScreen: React.FC = () => {
         const eventDate = new Date(event.event_date);
         const eventYear = eventDate.getFullYear();
         const eventMonth = eventDate.getMonth();
-        
+
         return eventYear === 2025 && selectedMonths2025.includes(eventMonth);
       }) : [];
-      
+
       const filteredByYear2026 = selectedMonths2026.length > 0 ? filteredEvents.filter(event => {
         const eventDate = new Date(event.event_date);
         const eventYear = eventDate.getFullYear();
         const eventMonth = eventDate.getMonth();
-        
+
         return eventYear === 2026 && selectedMonths2026.includes(eventMonth);
       }) : [];
-      
+
       // İki yılın filtrelenmiş sonuçlarını birleştir
       filteredEvents = [...filteredByYear2025, ...filteredByYear2026];
     }
-    
+
     // Tarihe göre sırala (en yeni oluşturulanlar önce)
     return filteredEvents.sort((a, b) => {
       const dateA = new Date(a.created_at);
@@ -145,14 +145,14 @@ export const EventsScreen: React.FC = () => {
       return dateB.getTime() - dateA.getTime();
     });
   }, [events, searchResults, isSearchActive, isDateFilterActive, selectedMonths2025, selectedMonths2026]);
-  
+
   // Component mount edildiğinde etkinlikleri ve spor kategorilerini getir
   useEffect(() => {
     loadEvents();
     if (!sports || sports.length === 0) {
       fetchSports();
     }
-    
+
     // Giriş animasyonları
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -173,7 +173,7 @@ export const EventsScreen: React.FC = () => {
       })
     ]).start();
   }, []);
-  
+
   // Filtre değiştiğinde etkinlikleri yeniden getir
   useEffect(() => {
     // Arama aktifse ve filtre değişirse, aramayı temizle
@@ -183,13 +183,13 @@ export const EventsScreen: React.FC = () => {
     }
     loadEvents();
   }, [activeSportId]);
-  
+
   // Arama sorgusunun değişimine bağlı olarak arama yap
   useEffect(() => {
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-    
+
     if (searchQuery.trim().length > 0) {
       const timeout = setTimeout(() => {
         handleSearch();
@@ -199,34 +199,34 @@ export const EventsScreen: React.FC = () => {
       setIsSearchActive(false);
       loadEvents(); // Arama temizlendiğinde normal etkinlikleri göster
     }
-    
+
     return () => {
       if (searchTimeout) clearTimeout(searchTimeout);
     };
   }, [searchQuery]);
-  
+
   // Hata veya mesaj durumunda uyarı göster
   useEffect(() => {
     if (error) {
       Alert.alert('Hata', error);
       clearError();
     }
-    
+
     if (message) {
       Alert.alert('Bilgi', message);
       clearMessage();
     }
   }, [error, message]);
-  
+
   // Etkinlikleri yükle
   const loadEvents = async () => {
     let params: any = { page: 1, limit: 20 };
-    
+
     // Spor ID'ye göre filtreleme
     if (activeSportId) {
       params.sportId = activeSportId;
     }
-    
+
     // Eğer events dizisi boşsa veya refresh yapılıyorsa API'den getir
     // Aksi takdirde mevcut state'i filtrele
     if (events.length === 0 || refreshing) {
@@ -234,10 +234,10 @@ export const EventsScreen: React.FC = () => {
     } else if (activeSportId) {
       // Mevcut events içinden aktiveSportId'ye göre filtrele
       const allEvents = useEventStore.getState().events;
-      const filteredEvents = allEvents.filter(event => 
+      const filteredEvents = allEvents.filter(event =>
         event.sport_id === activeSportId
       );
-      
+
       // Zustand store'u güncelle (lokal filtreleme)
       useEventStore.setState({
         events: filteredEvents,
@@ -253,20 +253,20 @@ export const EventsScreen: React.FC = () => {
       });
     }
   };
-  
+
   // Arama işlevi
   const handleSearch = async () => {
     if (searchQuery.trim().length === 0) {
       setIsSearchActive(false);
       return;
     }
-    
+
     setIsSearchActive(true);
-    
+
     // API isteği atmak yerine mevcut events üzerinde yerel arama yap
     const allEvents = useEventStore.getState().events;
     const query = searchQuery.toLowerCase().trim();
-    
+
     // Etkinlik içinde arama yap (başlık, açıklama, konum vb.)
     const filteredEvents = allEvents.filter(event => {
       return (
@@ -275,29 +275,29 @@ export const EventsScreen: React.FC = () => {
         (event.location_name && event.location_name.toLowerCase().includes(query))
       );
     });
-    
+
     // Spor kategorisi filtrelemesi varsa uygula
-    const results = activeSportId 
+    const results = activeSportId
       ? filteredEvents.filter(event => event.sport_id === activeSportId)
       : filteredEvents;
-    
+
     // Sonuçları store'a kaydet (API çağrısı yapmadan)
     useEventStore.setState({
       searchResults: results,
       isLoading: false
     });
   };
-  
+
   // Arama çubuğunu temizle
   const clearSearch = () => {
     setSearchQuery('');
     setIsSearchActive(false);
     loadEvents(); // Normal etkinlikleri yükle
   };
-  
+
   // Yeniden yükleme durumu
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Yeniden yükleme
   const handleRefresh = () => {
     setRefreshing(true);
@@ -308,12 +308,12 @@ export const EventsScreen: React.FC = () => {
       loadEvents().then(() => setRefreshing(false));
     }
   };
-  
+
   // Etkinliğe tıklama - detay sayfasına git
   const handleEventPress = (event: Event) => {
     navigation.navigate('EventDetail', { eventId: event.id });
   };
-  
+
   // Yeni etkinlik oluşturmaya git
   const handleCreateEvent = () => {
     // Prevent current fetches from continuing when navigating away
@@ -335,7 +335,7 @@ export const EventsScreen: React.FC = () => {
     if (lowerName.includes('masa tenisi')) return 'tennisball-outline';
     return 'fitness-outline'; // Varsayılan
   };
-  
+
   // Tarih filtresini temizle
   const clearDateFilter = () => {
     setSelectedMonths2025([]);
@@ -349,7 +349,7 @@ export const EventsScreen: React.FC = () => {
     setSelectedMonths2025([]);
     setSelectedMonths2026([]);
   };
-  
+
   // Ay seçme işlevi
   const toggleMonthSelection = (monthId: number) => {
     if (selectedMonths.includes(monthId)) {
@@ -368,11 +368,11 @@ export const EventsScreen: React.FC = () => {
       }
     }
   };
-  
+
   // Tarih filtresi uygula
   const applyDateFilter = () => {
     const hasSelectedMonths = selectedMonths2025.length > 0 || selectedMonths2026.length > 0;
-    
+
     if (hasSelectedMonths) {
       setIsDateFilterActive(true);
       setDateModalVisible(false);
@@ -380,37 +380,37 @@ export const EventsScreen: React.FC = () => {
       Alert.alert("Uyarı", "Lütfen en az bir ay seçin.");
     }
   };
-  
+
   // Seçili ayları formatlı göster
   const getSelectedMonthsText = (): string => {
     let result = '';
-    
+
     // 2025 yılı için seçili ayları formatla
     if (selectedMonths2025.length > 0) {
       const selectedMonthNames2025 = selectedMonths2025
         .map(monthId => months.find(m => m.id === monthId)?.name)
         .filter(Boolean) // null veya undefined değerleri filtrele
         .join(', ');
-      
+
       result += `2025: ${selectedMonthNames2025}`;
     }
-    
+
     // 2026 yılı için seçili ayları formatla
     if (selectedMonths2026.length > 0) {
       // Eğer önceki yıldan da seçim varsa bir ayraç ekle
       if (result) result += ' | ';
-      
+
       const selectedMonthNames2026 = selectedMonths2026
         .map(monthId => months.find(m => m.id === monthId)?.name)
         .filter(Boolean)
         .join(', ');
-      
+
       result += `2026: ${selectedMonthNames2026}`;
     }
-    
+
     return result;
   };
-  
+
   // Tarih filtresi modalı
   const renderDatePickerModal = () => {
     return (
@@ -432,7 +432,7 @@ export const EventsScreen: React.FC = () => {
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
+
             {/* Yıl Seçimi */}
             <View style={styles.filterSection}>
               <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Yıl Seçin</Text>
@@ -442,17 +442,17 @@ export const EventsScreen: React.FC = () => {
                     key={year}
                     style={[
                       styles.yearButton,
-                      { 
-                        backgroundColor: selectedYear === year 
-                          ? theme.colors.accent 
-                          : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
+                      {
+                        backgroundColor: selectedYear === year
+                          ? theme.colors.accent
+                          : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
                       }
                     ]}
                     onPress={() => setSelectedYear(year)}
                   >
-                    <Text 
+                    <Text
                       style={[
-                        styles.yearButtonText, 
+                        styles.yearButtonText,
                         { color: selectedYear === year ? 'white' : theme.colors.text }
                       ]}
                     >
@@ -462,7 +462,7 @@ export const EventsScreen: React.FC = () => {
                 ))}
               </View>
             </View>
-            
+
             {/* Ay Seçimi - Seçilen yıla bağlı olarak gösterilir */}
             <View style={styles.filterSection}>
               <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>
@@ -474,17 +474,17 @@ export const EventsScreen: React.FC = () => {
                     key={month.id}
                     style={[
                       styles.monthButton,
-                      { 
-                        backgroundColor: selectedMonths.includes(month.id) 
-                          ? theme.colors.accent 
-                          : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
+                      {
+                        backgroundColor: selectedMonths.includes(month.id)
+                          ? theme.colors.accent
+                          : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
                       }
                     ]}
                     onPress={() => toggleMonthSelection(month.id)}
                   >
-                    <Text 
+                    <Text
                       style={[
-                        styles.monthButtonText, 
+                        styles.monthButtonText,
                         { color: selectedMonths.includes(month.id) ? 'white' : theme.colors.text }
                       ]}
                     >
@@ -494,7 +494,7 @@ export const EventsScreen: React.FC = () => {
                 ))}
               </View>
             </View>
-            
+
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel, { borderColor: theme.colors.accent }]}
@@ -502,7 +502,7 @@ export const EventsScreen: React.FC = () => {
               >
                 <Text style={[styles.modalButtonText, { color: theme.colors.accent }]}>Filtreyi Temizle</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm, { backgroundColor: theme.colors.accent }]}
                 onPress={applyDateFilter}
@@ -512,10 +512,11 @@ export const EventsScreen: React.FC = () => {
             </View>
           </View>
         </TouchableOpacity>
+
       </Modal>
     );
   };
-  
+
   // Arama çubuğunu render et
   const renderSearchBar = () => {
     return (
@@ -535,32 +536,12 @@ export const EventsScreen: React.FC = () => {
             <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         )}
-        
-        <TouchableOpacity 
-          onPress={() => setDateModalVisible(true)} 
-          style={styles.filterButton}
-        >
-          <Ionicons 
-            name="calendar-outline" 
-            size={20} 
-            color={isDateFilterActive ? theme.colors.accent : theme.colors.textSecondary} 
-          />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          onPress={() => setMapModalVisible(true)} 
-          style={styles.filterButton}
-        >
-          <Ionicons 
-            name="map-outline" 
-            size={20} 
-            color={theme.colors.textSecondary} 
-          />
-        </TouchableOpacity>
+
+
       </View>
     );
   };
-  
+
   // Harita modalı
   const renderMapModal = () => {
     const [mapError, setMapError] = useState<boolean>(false);
@@ -628,7 +609,7 @@ export const EventsScreen: React.FC = () => {
             </TouchableOpacity>
             <Text style={[styles.mapTitle, { color: theme.colors.text }]}>Etkinlik Konumları</Text>
           </View>
-          
+
           {mapError ? (
             <View style={styles.mapErrorContainer}>
               <Ionicons name="map" size={50} color={theme.colors.textSecondary} style={styles.mapErrorIcon} />
@@ -650,7 +631,7 @@ export const EventsScreen: React.FC = () => {
       </Modal>
     );
   };
-  
+
   // Spor kategorilerini render et
   const renderSportFilters = () => {
     // API'den gelen spor kategorileri veya varsayılan kategorileri kullan
@@ -666,10 +647,10 @@ export const EventsScreen: React.FC = () => {
       { id: 'tabletennis', name: 'Masa Tenisi', icon: 'tennisball-outline' },
       { id: 'esports', name: 'E-Spor', icon: 'game-controller-outline' },
     ];
-    
+
     // API'den gelen sporları doğru ikonlarla birlikte kullan
     let displaySports = [];
-    
+
     if (sports && sports.length > 0) {
       // API'den gelen sporları doğru ikonlarla eşleştir
       displaySports = sports.map(sport => {
@@ -679,38 +660,38 @@ export const EventsScreen: React.FC = () => {
           icon: getSportIcon(sport.name)
         };
       });
-      
+
       // Tümü filtresini başa ekle
       displaySports = [{ id: 'all', name: 'Tümü', icon: 'grid-outline' }, ...displaySports];
     } else {
       displaySports = defaultSports;
     }
-    
+
     return (
       <View style={styles.sportFiltersContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sportFiltersScroll}
         >
           {displaySports.map((sport) => {
             const isActive = sport.id === activeSportId || (sport.id === 'all' && activeSportId === null);
             const iconName = sport.icon || 'fitness-outline'; // Varsayılan ikon
-            
+
             return (
               <TouchableOpacity
                 key={sport.id}
                 style={[
                   styles.sportFilterButton,
-                  { 
-                    backgroundColor: isActive 
-                      ? theme.colors.accent 
-                      : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
+                  {
+                    backgroundColor: isActive
+                      ? theme.colors.accent
+                      : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
                   }
                 ]}
                 onPress={() => setActiveSportId(sport.id === 'all' ? null : sport.id)}
               >
-                <Ionicons 
+                <Ionicons
                   name={iconName as any}
                   size={22}
                   color={isActive ? 'white' : theme.colors.text}
@@ -730,13 +711,13 @@ export const EventsScreen: React.FC = () => {
       </View>
     );
   };
-  
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
-      
+
       {/* Header */}
-      <Animated.View 
+      <Animated.View
         style={[
           styles.header,
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
@@ -746,14 +727,36 @@ export const EventsScreen: React.FC = () => {
           <Text style={[styles.title, { color: theme.colors.text }]}>
             Etkinlikler
           </Text>
-          
+          <View style={styles.headerIconsContainer}>
+            <TouchableOpacity
+              onPress={() => setDateModalVisible(true)}
+              style={styles.filterButton}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={25}
+                color={isDateFilterActive ? theme.colors.accent : theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setMapModalVisible(true)}
+              style={styles.filterButton}
+            >
+              <Ionicons
+                name="map-outline"
+                size={25}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </Animated.View>
-      
+
       {/* Search Bar */}
-      <Animated.View 
-        style={{ 
-          opacity: fadeAnim, 
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
           marginBottom: 8,
           paddingHorizontal: 16
@@ -761,24 +764,24 @@ export const EventsScreen: React.FC = () => {
       >
         {renderSearchBar()}
       </Animated.View>
-      
+
       {/* Sport filters */}
-      <Animated.View 
-        style={{ 
-          opacity: fadeAnim, 
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
           marginBottom: 8
         }}
       >
         {renderSportFilters()}
       </Animated.View>
-      
+
       {/* Date Filter */}
       {renderDatePickerModal()}
-      
+
       {/* Map Modal */}
       {renderMapModal()}
-      
+
       {/* Event List */}
       <EventList
         events={sortedEvents}
@@ -787,7 +790,7 @@ export const EventsScreen: React.FC = () => {
         onEventPress={handleEventPress}
         emptyText={isDateFilterActive && (selectedMonths2025.length > 0 || selectedMonths2026.length > 0)
           ? `${getSelectedMonthsText()} için etkinlik bulunamadı.`
-          : isSearchActive 
+          : isSearchActive
             ? `"${searchQuery}" için sonuç bulunamadı.`
             : `Burada gösterilecek etkinlik bulunamadı.\nYeni bir etkinlik oluşturmak için butona dokunun.`
         }
@@ -800,18 +803,20 @@ export const EventsScreen: React.FC = () => {
           />
         }
       />
-      
+
       {/* Floating Action Button */}
-      <Animated.View 
+      <Animated.View
         style={[
           styles.fabContainer,
           {
             transform: [
               { scale: scaleFabAnim },
-              { translateY: fadeAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0]
-              })}
+              {
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0]
+                })
+              }
             ]
           }
         ]}
@@ -847,13 +852,21 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerIconsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     letterSpacing: -0.5,
   },
- 
+
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',

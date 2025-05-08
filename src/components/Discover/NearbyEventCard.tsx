@@ -1,9 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image, ImageSourcePropType, ImageErrorEventData, NativeSyntheticEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useMapsStore } from '../../store/appStore/mapsStore';
 import { ConfirmationModal } from '../common/ConfirmationModal';
+
+
+// Spor kategorilerine göre internet URL'lerinden resim tanımları
+const sportImageURLs: Record<string, string> = {
+  futbol: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+  basketbol: 'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+  tenis: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+  voleybol: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+  default: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+};
+
+// Spor kategorisini alarak görsel kaynağını döndüren yardımcı fonksiyon
+export const getSportImageSource = (sportName: string): ImageSourcePropType => {
+  if (!sportName) return { uri: sportImageURLs.default };
+  
+  const sport = sportName.toLowerCase();
+  
+  if (sport.includes('futbol')) return { uri: sportImageURLs.futbol };
+  if (sport.includes('basket')) return { uri: sportImageURLs.basketbol };
+  if (sport.includes('tenis')) return { uri: sportImageURLs.tenis };
+  if (sport.includes('voleybol')) return { uri: sportImageURLs.voleybol };
+  
+  return { uri: sportImageURLs.default };
+};
+
+// Spor kategorisine göre tag rengini döndüren yardımcı fonksiyon
+export const getSportTagColor = (sportName: string): string => {
+  if (!sportName) return '#2196F3';
+  
+  const sport = sportName.toLowerCase();
+  if (sport.includes('futbol')) return '#4CAF50';
+  if (sport.includes('basket')) return '#F44336';
+  if (sport.includes('tenis')) return '#FF9800';
+  if (sport.includes('voleybol')) return '#9C27B0';
+  return '#2196F3';
+};
+
+// Spor kategorisine göre icon adını döndüren yardımcı fonksiyon
+// Ionicons'un kabul ettiği 'type' tiplerinden birini dönmeli
+export const getSportIcon = (
+  sportName: string
+): "football-outline" | "basketball-outline" | "tennisball-outline" | "baseball-outline" | "fitness-outline" => {
+  if (!sportName) return 'fitness-outline';
+  
+  const sport = sportName.toLowerCase();
+  if (sport.includes('futbol')) return 'football-outline';
+  if (sport.includes('basket')) return 'basketball-outline';
+  if (sport.includes('tenis')) return 'tennisball-outline';
+  if (sport.includes('voleybol')) return 'baseball-outline';
+  return 'fitness-outline';
+};
 
 interface NearbyEventCardProps {
   event: any;
@@ -17,16 +68,21 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const [distance, setDistance] = useState<string | null>(null);
   const [duration, setDuration] = useState<string | null>(null);
   const [isLoadingDistance, setIsLoadingDistance] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   
   const { lastLocation, calculateDistance } = useMapsStore();
 
-  const getSportIcon = (sportName: string) => {
-    const sport = sportName.toLowerCase();
-    if (sport.includes('futbol')) return 'football-outline';
-    if (sport.includes('basket')) return 'basketball-outline';
-    if (sport.includes('tenis')) return 'tennisball-outline';
-    if (sport.includes('voleybol')) return 'baseball-outline';
-    return 'fitness-outline';
+  // Görsel yüklenemediğinde hata yakalama
+  const handleImageError = (error: NativeSyntheticEvent<ImageErrorEventData>) => {
+    console.warn('Görsel yüklenemedi:', error.nativeEvent.error);
+    setImageError(true);
+    setImageLoading(false);
+  };
+
+  // Görsel yüklendiğinde
+  const handleImageLoad = () => {
+    setImageLoading(false);
   };
 
   // Etkinliğin mesafesini hesapla
@@ -44,6 +100,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
       try {
         // Kullanıcının konumu varsa, gerçek mesafeyi hesapla
         if (lastLocation) {
+          console.log('Konum bilgisi bulundu. Mesafe hesaplanıyor...');
           const origin = `${lastLocation.latitude},${lastLocation.longitude}`;
           const destination = `${event.location_latitude},${event.location_longitude}`;
           
@@ -51,12 +108,15 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
           const result = await calculateDistance(origin, destination);
           
           if (result && result.distance) {
+            console.log('Mesafe başarıyla hesaplandı:', result.distance.text);
             setDistance(result.distance.text);
             setDuration(result.duration.text);
           } else {
+            console.warn('Mesafe hesaplanamadı, yedek yöntemlere geçiliyor...');
             // Mesafe hesaplanamazsa, distance_info objesine bakabiliriz
             if (event.distance_info && event.distance_info.distance) {
               const distanceKm = event.distance_info.distance / 1000; // metre -> km
+              console.log('distance_info kullanılarak mesafe hesaplandı:', distanceKm.toFixed(1));
               setDistance(`${distanceKm.toFixed(1)} km`);
               
               // Süre bilgisi de varsa
@@ -66,17 +126,22 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
               }
             } else if (event.distance) {
               // doğrudan event üzerinde distance değeri varsa
+              console.log('event.distance kullanılarak mesafe hesaplandı:', event.distance.toFixed(1));
               setDistance(`${event.distance.toFixed(1)} km`);
             } else {
+              console.error('Hiçbir mesafe verisi bulunamadı');
               setDistance('Mesafe hesaplanamadı');
             }
           }
         } else {
+          console.warn('Kullanıcı konumu bulunamadı, alternatif mesafe verilerine bakılıyor...');
           // Kullanıcının konumu yoksa, event üzerinde distance varsa onu kullan
           if (event.distance_info && event.distance_info.distance) {
             const distanceKm = event.distance_info.distance / 1000; // metre -> km
+            console.log('distance_info kullanılarak mesafe hesaplandı:', distanceKm.toFixed(1));
             setDistance(`${distanceKm.toFixed(1)} km`);
           } else if (event.distance) {
+            console.log('event.distance kullanılarak mesafe hesaplandı:', event.distance.toFixed(1));
             setDistance(`${event.distance.toFixed(1)} km`);
           } else {
             setDistance('Konum izni gerekli');
@@ -114,16 +179,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  // Tag rengini belirle
-  const getTagColor = (sportName: string) => {
-    const sport = sportName.toLowerCase();
-    if (sport.includes('futbol')) return '#4CAF50';
-    if (sport.includes('basket')) return '#F44336';
-    if (sport.includes('tenis')) return '#FF9800';
-    if (sport.includes('voleybol')) return '#9C27B0';
-    return '#2196F3';
-  };
-
   const handleJoinEvent = () => {
     setIsJoined(true);
     // Burada API'ye istek gönderme işlemi yapılacak
@@ -141,6 +196,11 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
     setIsModalVisible(false);
   };
 
+  // Kategori görselini ve tag rengini belirleme
+  const sportImage = imageError ? { uri: sportImageURLs.default } : getSportImageSource(event.sport.name);
+  const tagColor = getSportTagColor(event.sport.name);
+  const sportIconName = getSportIcon(event.sport.name);
+
   return (
     <>
       <TouchableOpacity
@@ -148,17 +208,45 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
         onPress={onPress}
         activeOpacity={0.7}
       >
-        <View style={styles.contentContainer}>
+        {/* Spor Kategori Resmi */}
+        <View style={styles.imageContainer}>
+          {imageLoading && (
+            <View style={styles.imageLoadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.accent} />
+            </View>
+          )}
+          
+          <Image 
+            source={sportImage}
+            style={styles.sportImage}
+            resizeMode="cover"
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+          />
+          
+          {/* Spor İkonu (Resim yüklenemediğinde veya hata durumunda görünür) */}
+          {imageError && (
+            <View style={styles.iconFallbackContainer}>
+              <Ionicons
+                name={sportIconName} 
+                size={48} 
+                color="white" 
+              />
+            </View>
+          )}
+          
           {/* Spor Etiketi */}
           <View 
             style={[
               styles.tag, 
-              { backgroundColor: getTagColor(event.sport.name) }
+              { backgroundColor: tagColor }
             ]}
           >
             <Text style={styles.tagText}>{event.sport.name}</Text>
           </View>
-          
+        </View>
+        
+        <View style={styles.contentContainer}>
           {/* Etkinlik Başlığı */}
           <Text 
             style={[styles.title, { color: theme.colors.text }]} 
@@ -286,16 +374,45 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'space-between',
   },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+  },
+  imageLoadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  sportImage: {
+    width: '100%',
+    height: '100%',
+  },
+  iconFallbackContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
   contentContainer: {
     padding: 16,
     paddingBottom: 8,
   },
   tag: {
-    alignSelf: 'flex-start',
+    position: 'absolute',
+    top: 12,
+    left: 12,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-    marginBottom: 8,
   },
   tagText: {
     color: 'white',
@@ -344,4 +461,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-}); 
+});

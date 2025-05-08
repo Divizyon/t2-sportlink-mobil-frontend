@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useMapsStore } from '../../store/appStore/mapsStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
 import { useHomeStore } from '../../store/appStore/homeStore';
+import { useFacilitiesStore } from '../../store/appStore/facilitiesStore';
 
 // Doğrudan her bir bileşeni import ediyoruz
 import { DiscoverHeader } from '../../components/Discover/DiscoverHeader';
@@ -41,9 +42,11 @@ export const DiscoverScreen: React.FC = () => {
   // HomeStore'dan yükleme durumunu al - tutarlılık için
   const { isLoadingNearbyEvents } = useHomeStore();
   
+  // Facilities store'u kullan
+  const { fetchNearbyFacilities } = useFacilitiesStore();
+  
   // Diğer yükleme durumları
   const [loadingFriends, setLoadingFriends] = useState(true);
-  const [loadingFacilities, setLoadingFacilities] = useState(true);
   
   // Kullanıcının konumunu al ve store'a kaydet
   useEffect(() => {
@@ -53,6 +56,12 @@ export const DiscoverScreen: React.FC = () => {
         if (defaultLocation) {
           // defaultLocation'dan sadece latitude ve longitude kullan
           setLastLocation(
+            defaultLocation.latitude,
+            defaultLocation.longitude
+          );
+          
+          // Yakındaki tesisleri getir
+          fetchNearbyFacilities(
             defaultLocation.latitude,
             defaultLocation.longitude
           );
@@ -78,6 +87,12 @@ export const DiscoverScreen: React.FC = () => {
         
         // Konum bilgisini mapsStore'a kaydet
         setLastLocation(
+          location.coords.latitude,
+          location.coords.longitude
+        );
+        
+        // Yakındaki tesisleri getir
+        fetchNearbyFacilities(
           location.coords.latitude,
           location.coords.longitude
         );
@@ -123,25 +138,25 @@ export const DiscoverScreen: React.FC = () => {
     if (lastLocation) {
       // Etkinlikleri mesafeye göre sırala
       fetchAllEventsByDistance(true);
+      // Yakındaki tesisleri getir
+      fetchNearbyFacilities(
+        lastLocation.latitude,
+        lastLocation.longitude
+      );
     } else {
       // Konum yoksa tarih sırasına göre sırala
       fetchAllEventsByDistance(false);
     }
   }, [useMapsStore.getState().lastLocation]);
   
-  // Mock veri yükleme fonksiyonu (şimdilik sadece arkadaşlar ve tesisler)
+  // Mock veri yükleme fonksiyonu (şimdilik sadece arkadaşlar)
   const loadData = async () => {
     setLoadingFriends(true);
-    setLoadingFacilities(true);
     
     // API çağrılarını simüle et (bu kısımlar daha sonra gerçek API ile değiştirilecek)
     setTimeout(() => {
       setLoadingFriends(false);
     }, 1500);
-    
-    setTimeout(() => {
-      setLoadingFacilities(false);
-    }, 2000);
   };
   
   // İlk yükleme
@@ -158,6 +173,11 @@ export const DiscoverScreen: React.FC = () => {
       if (lastLocation) {
         // Etkinlikleri mesafeye göre sırala
         await fetchAllEventsByDistance(true);
+        // Yakındaki tesisleri yeniden getir
+        await fetchNearbyFacilities(
+          lastLocation.latitude,
+          lastLocation.longitude
+        );
       } else {
         // Konum yoksa tarih sırasına göre sırala
         await fetchAllEventsByDistance(false);
@@ -189,7 +209,8 @@ export const DiscoverScreen: React.FC = () => {
   };
   
   const handleSeeAllFacilities = () => {
-    console.log('Tüm tesisler görüntüleniyor');
+    // Tüm tesisler ekranına yönlendir
+    navigation.navigate('AllFacilities');
   };
   
   return (
@@ -228,11 +249,7 @@ export const DiscoverScreen: React.FC = () => {
         />
         
         {/* Yakınımdaki Tesisler */}
-        <NearbyFacilities 
-          isLoading={loadingFacilities} 
-          facilities={[]} 
-          onSeeAll={handleSeeAllFacilities}
-        />
+        <NearbyFacilities onSeeAll={handleSeeAllFacilities} />
       </ScrollView>
     </SafeAreaView>
   );

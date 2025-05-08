@@ -9,6 +9,9 @@
 - [x] Kod dublikliklerin temizlenmesi
 - [x] Token yönetim sistemi iyileştirmesi
 - [x] DateTimePicker paketi react-native-date-picker ile değiştirildi
+- [x] DateTimePicker (@react-native-community/datetimepicker ile bubblingEventTypes hatası çözümü)
+- [x] DateTimePicker (react-native-modal-datetime-picker ile Android ve iOS için sorunsuz çalışacak şekilde yeniden düzenlendi)
+- [x] DateTimePicker (react-native-modern-datepicker ile cross-platform özel DatePicker uygulaması)
 
 ### Tema & Stil
 - [x] Renk paleti
@@ -29,6 +32,7 @@
 - [x] Avatar
 - [x] Modal
 - [x] DatePicker (react-native-date-picker entegrasyonu)
+- [x] DateTimePicker (@react-native-community/datetimepicker ile bubblingEventTypes hatası çözümü)
 
 ### State Yönetimi
 - [x] Store yapısı
@@ -66,6 +70,9 @@
 - [x] API istek güvenlik kontrolleri
 - [x] Hassas veri maskeleme
 - [x] API endpoint'leri '/api/users/profile' formundan '/users/profile' formuna güncellendi
+- [x] Etkinlik API entegrasyonları için format düzeltmeleri
+  - [x] Açıklama alanı minimum 10 karakter doğrulaması
+  - [x] Davet kodu gerekliliğine uygun çözüm (minimum 4 karakter)
 
 ### Güvenlik İyileştirmeleri
 - [x] Token güvenli depolama (SecureStore)
@@ -161,12 +168,6 @@
 - [ ] Çeviri dosyaları
 - [ ] Dil değiştirme
 
-### Testler
-- [ ] Unit testler
-- [ ] Integration testler
-- [ ] E2E testler 
-- [ ] Güvenlik testleri
-
 ### Kod İyileştirmeleri
 - [x] Token yönetimi tekrarı giderildi
 - [x] API katmanı modüler yapıya dönüştürüldü
@@ -179,6 +180,8 @@
 - [x] DateTimePicker paketi daha modern ve stabil bir alternatifle değiştirildi
 - [x] Tutarlı tip kontrolü
 - [x] Asenkron işlemlerde performans optimizasyonu
+- [x] MapsStore'da eksik tip tanımlamaları tamamlandı
+- [x] react-native-dotenv tip tanımlamaları eklendi
 
 ## Frontend Geliştirme
 
@@ -187,6 +190,9 @@
 - [x] Ana sayfa akışı
 - [x] Profil sayfası
 - [x] Etkinlik oluşturma
+  - [x] DatePicker hatası çözümü
+  - [x] API istek format uyumsuzluğu çözümü
+  - [x] Davet kodu doğrulama hatası çözümü
 - [x] Etkinlik arama/filtreleme
 - [x] Google Maps entegrasyonu
   - [x] Haritada etkinlik görüntüleme
@@ -203,4 +209,16 @@
   - [x] Mesafe ve süre formatlarının tüm ekranlarda standartlaştırılması
   - [x] MapsStore'da initLocation fonksiyonu ile konum izinleri yönetimi
   - [x] MapsStore'da calculateDistance fonksiyonu ile Google Distance Matrix API kullanımı
-  - [x] API yanıt vermediğinde kuş uçuşu mesafe hesaplama (Haversine formülü) ile yedek hesaplama 
+  - [x] API yanıt vermediğinde kuş uçuşu mesafe hesaplama (Haversine formülü) ile yedek hesaplama
+  - [x] Google Maps API anahtarı entegrasyonu ve % karakter hatası çözümü
+  - [x] LocationPicker bileşeninde API anahtarının .env dosyasından alınması
+  - [x] MapsStore'da API anahtarının Constants üzerinden alınması
+  - [x] FacilitiesStore'da API anahtarının Constants üzerinden alınması ve hata yönetiminin iyileştirilmesi
+
+### Yeni Özellikler
+- [ ] Yeni özellik eklendi
+- [ ] Yeni özellik için gerekli backend entegrasyonları tamamlandı
+- [ ] Yeni özellik için gerekli frontend geliştirmeleri tamamlandı
+- [ ] Yeni özellik için gerekli testler tamamlandı
+- [ ] Yeni özellik için gerekli kod iyileştirmeleri tamamlandı
+- [ ] Yeni özellik için gerekli belge ve dokümantasyonlar tamamlandı 

@@ -6,10 +6,12 @@ import { themed } from '../../utils/themed';
 import { Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
+type TransportMode = 'driving' | 'walking' | 'bicycling' | 'transit';
+
 interface DistanceInfoProps {
   origin: string;
   destination: string;
-  transportMode?: 'driving' | 'walking' | 'bicycling' | 'transit';
+  transportMode?: TransportMode;
   showDetails?: boolean;
   onCalculated?: (result: DistanceResult) => void;
   style?: object;
@@ -25,33 +27,74 @@ export const DistanceInfo: React.FC<DistanceInfoProps> = ({
 }) => {
   // State hooks
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const [isManualRetry, setIsManualRetry] = useState<boolean>(false);
   
   // Store hooks
   const { 
     calculateDistance,
     isCalculatingDistance,
     distanceError,
-    lastCalculatedDistance
+    lastCalculatedDistance,
+    googleApiKey
   } = useMapsStore();
   
   // Effect hook to calculate distance
   useEffect(() => {
     if (origin && destination) {
+      console.log('DistanceInfo - origin ve destination değerleri bulundu, hesaplama başlatılıyor');
       handleCalculateDistance();
+    } else {
+      console.warn('DistanceInfo - origin veya destination değerleri eksik');
     }
   }, [origin, destination, transportMode]);
   
   // Effect to call onCalculated callback
   useEffect(() => {
     if (lastCalculatedDistance && onCalculated) {
+      console.log('DistanceInfo - hesaplama tamamlandı, callback çağrılıyor');
       onCalculated(lastCalculatedDistance);
     }
   }, [lastCalculatedDistance, onCalculated]);
+
+  // Effect for auto-retry on error
+  useEffect(() => {
+    // API anahtarı yoksa retry yapma
+    if (!googleApiKey) {
+      console.error('DistanceInfo - Google API anahtarı bulunamadı');
+      return;
+    }
+
+    // Hata varsa ve otomatik retry limiti aşılmadıysa
+    if (distanceError && retryCount < 2 && !isManualRetry) {
+      console.log(`DistanceInfo - Otomatik yeniden deneme (${retryCount+1}/2)`);
+      const retryTimer = setTimeout(() => {
+        handleCalculateDistance();
+        setRetryCount(prev => prev + 1);
+      }, 2000); // 2 saniye sonra tekrar dene
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [distanceError, retryCount, isManualRetry]);
   
   // Handler for manual distance calculation
   const handleCalculateDistance = async () => {
+    console.log('DistanceInfo - Mesafe hesaplanıyor:', { origin, destination, transportMode });
+    console.log('API Anahtarı var mı:', !!googleApiKey);
+    
+    if (isManualRetry) {
+      setRetryCount(0);
+      setIsManualRetry(false);
+    }
+    
     await calculateDistance(origin, destination, transportMode);
     // Callback will be handled by the useEffect above
+  };
+
+  // Manual retry handler
+  const handleRetry = () => {
+    setIsManualRetry(true);
+    handleCalculateDistance();
   };
   
   // Render loading state
@@ -69,10 +112,10 @@ export const DistanceInfo: React.FC<DistanceInfoProps> = ({
     return (
       <View style={[styles.errorContainer, style]}>
         <Ionicons name="alert-circle-outline" size={20} color={themed.colors.error} />
-        <Text style={styles.errorText}>Mesafe hesaplanamadı</Text>
+        <Text style={styles.errorText}>{distanceError}</Text>
         <Button 
           mode="text" 
-          onPress={handleCalculateDistance}
+          onPress={handleRetry}
           style={styles.retryButton}
         >
           Tekrar Dene

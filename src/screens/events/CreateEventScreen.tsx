@@ -12,50 +12,219 @@ import {
   StatusBar,
   SafeAreaView,
   Modal,
+  Dimensions,
+  FlatList,
 } from 'react-native';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Ionicons } from '@expo/vector-icons';
-import DatePicker from 'react-native-date-picker';
+import DatePicker from 'react-native-modern-datepicker';
 import { useNavigation } from '@react-navigation/native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
 import { InputField } from '../../components/InputField/InputField';
+import { LocationPicker } from '../../components/LocationPicker/LocationPicker';
 import { EventCreateRequest, EventStatus, Sport } from '../../types/eventTypes/event.types';
+import { eventService } from '../../api/events/eventApi';
+
+// Tarih ve saat işlemleri için yardımcı fonksiyonlar
+const dateTimeHelpers = {
+  // Tarihi YYYY-MM-DD formatına dönüştürür
+  formatDateToYYYYMMDD: (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  },
+  
+  // Tarih ve saati birleştirerek ISO formatında döndürür
+  combineDateTime: (date: Date, time: Date): string => {
+    const newDate = new Date(date);
+    newDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
+    return newDate.toISOString();
+  },
+  
+  // Saati HH:MM formatında gösterir
+  formatTimeDisplay: (time: Date): string => {
+    const hours = time.getHours().toString().padStart(2, '0');
+    const minutes = time.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  },
+  
+  // Tarihi yerel formatta gösterir (15 Nisan 2023)
+  formatLocalDate: (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('tr-TR', options);
+  },
+  
+  // Zamanı 15 dakikalık dilimlere yuvarlar
+  roundTimeToNearest15Min: (date: Date): Date => {
+    const minutes = date.getMinutes();
+    const roundedMinutes = Math.ceil(minutes / 15) * 15;
+    const newDate = new Date(date);
+    
+    if (roundedMinutes === 60) {
+      newDate.setHours(date.getHours() + 1, 0, 0, 0);
+    } else {
+      newDate.setMinutes(roundedMinutes, 0, 0);
+    }
+    
+    return newDate;
+  },
+  
+  // "2023/05/20" formatındaki stringi Date objesine çevirir
+  parseModernDateString: (dateString: string): Date => {
+    if (!dateString) return new Date();
+    const [year, month, day] = dateString.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  },
+  
+  // "HH:mm" formatındaki stringi zaman olarak kullanılacak Date objesine çevirir
+  parseTimeString: (timeString: string): Date => {
+    if (!timeString) return new Date();
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  },
+  
+  // Date objesini modern-datepicker formatına çevirir (YYYY/MM/DD)
+  formatToModernDateString: (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  }
+};
+
+// İkon-isim eşleştirmesi fonksiyonu
+const getSportIcon = (sportName: string = '') => {
+  const lowerName = sportName.toLowerCase();
+  if (lowerName.includes('futbol')) return 'football-outline';
+  if (lowerName.includes('basketbol')) return 'basketball-outline';
+  if (lowerName.includes('voleybol')) return 'baseball-outline';
+  if (lowerName.includes('tenis')) return 'tennisball-outline';
+  if (lowerName.includes('yüzme')) return 'water-outline';
+  if (lowerName.includes('koşu') || lowerName.includes('kosu')) return 'walk-outline';
+  if (lowerName.includes('bisiklet')) return 'bicycle-outline';
+  if (lowerName.includes('e-spor') || lowerName.includes('espor')) return 'game-controller-outline';
+  if (lowerName.includes('masa tenisi')) return 'tennisball-outline';
+  return 'fitness-outline'; // Varsayılan
+};
+
+// SportCategories bileşenini düzenle
+interface SportCategoriesRowProps {
+  sports: Sport[];
+  selectedSport: string | null;
+  onSelectSport: (sportId: string) => void;
+  theme: {
+    colors: {
+      accent: string;
+      text: string;
+      textSecondary: string;
+      border: string;
+      error: string;
+      background: string;
+      cardBackground: string;
+    };
+    mode: 'light' | 'dark';
+  };
+}
+
+const SportCategoriesRow: React.FC<SportCategoriesRowProps> = ({ 
+  sports, 
+  selectedSport, 
+  onSelectSport, 
+  theme 
+}) => {
+  const renderSportItem = ({ item }: { item: Sport }) => {
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={[
+          styles.sportCategoryButton,
+          { 
+            backgroundColor: selectedSport === item.id 
+              ? theme.colors.accent 
+              : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
+          }
+        ]}
+        onPress={() => onSelectSport(item.id)}
+      >
+        <Ionicons 
+          name={getSportIcon(item.name)} 
+          size={24} 
+          color={selectedSport === item.id ? 'white' : theme.colors.text} 
+        />
+        <Text 
+          style={[
+            styles.sportCategoryText, 
+            { color: selectedSport === item.id ? 'white' : theme.colors.text }
+          ]}
+        >
+          {item.name}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={styles.sportCategoriesContainer}>
+      <FlatList
+        data={sports}
+        renderItem={renderSportItem}
+        keyExtractor={(item) => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.sportCategoriesFlatListContent}
+      />
+    </View>
+  );
+};
 
 export const CreateEventScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<any>();
   const { createEvent, isLoading, error, message, clearError, clearMessage, fetchSports, sports } = useEventStore();
 
+  // Tarih ve saat için başlangıç değerleri
+  const now = new Date();
+  const roundedNow = dateTimeHelpers.roundTimeToNearest15Min(now);
+  const roundedEndTime = new Date(roundedNow);
+  roundedEndTime.setHours(roundedNow.getHours() + 2);
+  
+  // Tarih ve saat görüntüleme için state'ler
+  const [selectedDate, setSelectedDate] = useState<Date>(now);
+  const [selectedStartTime, setSelectedStartTime] = useState<Date>(roundedNow);
+  const [selectedEndTime, setSelectedEndTime] = useState<Date>(roundedEndTime);
+  
+  // Ekranda gösterilecek zaman formatları
+  const [startTimeDisplay, setStartTimeDisplay] = useState<string>(
+    dateTimeHelpers.formatTimeDisplay(roundedNow)
+  );
+  const [endTimeDisplay, setEndTimeDisplay] = useState<string>(
+    dateTimeHelpers.formatTimeDisplay(roundedEndTime)
+  );
+
   // Form durumu
-  const [formData, setFormData] = useState<EventCreateRequest>({
-    sport_id: '',
-    title: '',
-    description: '',
-    event_date: new Date().toISOString().split('T')[0],
-    start_time: new Date().toISOString(),
-    end_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-    location_name: '',
-    location_latitude: 37.8716,  // Konya koordinatları
-    location_longitude: 32.4846,
-    max_participants: 10,
-    status: 'active' as EventStatus,
-    is_private: false,
-    invitation_code: ''
+  const [formData, setFormData] = useState<EventCreateRequest>(() => {
+    return {
+      sport_id: '',
+      title: '',
+      description: '',
+      event_date: dateTimeHelpers.formatDateToYYYYMMDD(now),
+      start_time: roundedNow.toISOString(),
+      end_time: roundedEndTime.toISOString(),
+      location_name: '',
+      location_latitude: 39.9334,  // Türkiye orta koordinatları
+      location_longitude: 32.8597,
+      max_participants: 10,
+      status: 'active' as EventStatus,
+      is_private: false,
+      invitation_code: ''
+    };
   });
 
   // UI için ekstra state'ler
   const [isPrivate, setIsPrivate] = useState(false);
   const [invitationCode, setInvitationCode] = useState<string>('');
-  const [startTimeDisplay, setStartTimeDisplay] = useState('18:00');
-  const [endTimeDisplay, setEndTimeDisplay] = useState('20:00');
-
-  // Tarih ve saat seçicileri için durum
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedStartTime, setSelectedStartTime] = useState(new Date());
-  const [selectedEndTime, setSelectedEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000)); // 2 saat sonrası
   
   // Modal görünürlük durumları
   const [dateModalVisible, setDateModalVisible] = useState(false);
@@ -110,78 +279,86 @@ export const CreateEventScreen: React.FC = () => {
     }
   }, [error, message]);
 
-  // İkon-isim eşleştirmesi fonksiyonu
-  const getSportIcon = (sportName: string = '') => {
-    const lowerName = sportName.toLowerCase();
-    if (lowerName.includes('futbol')) return 'football-outline';
-    if (lowerName.includes('basketbol')) return 'basketball-outline';
-    if (lowerName.includes('voleybol')) return 'baseball-outline';
-    if (lowerName.includes('tenis')) return 'tennisball-outline';
-    if (lowerName.includes('yüzme')) return 'water-outline';
-    if (lowerName.includes('koşu') || lowerName.includes('kosu')) return 'walk-outline';
-    if (lowerName.includes('bisiklet')) return 'bicycle-outline';
-    if (lowerName.includes('e-spor') || lowerName.includes('espor')) return 'game-controller-outline';
-    if (lowerName.includes('masa tenisi')) return 'tennisball-outline';
-    return 'fitness-outline'; // Varsayılan
-  };
-
   // Tarih seçimi yapıldığında
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setDateModalVisible(false);
-    if (selectedDate) {
-      setSelectedDate(selectedDate);
+  const handleDateChange = (dateStr: string) => {
+    // Modern date picker formatı: YYYY/MM/DD
+    const date = dateTimeHelpers.parseModernDateString(dateStr);
+    setSelectedDate(date);
+    
+    // Format tarihi YYYY-MM-DD şeklinde form için
+    const formattedDate = dateTimeHelpers.formatDateToYYYYMMDD(date);
+    console.log('Selected date:', formattedDate);
+    
+    // Form verisini güncelle
+    setFormData(prev => {
+      // Tarih güncellendikten sonra başlangıç ve bitiş zamanlarını da güncelle
+      const newStartTime = dateTimeHelpers.combineDateTime(date, selectedStartTime);
+      const newEndTime = dateTimeHelpers.combineDateTime(date, selectedEndTime);
       
-      // Format tarihi YYYY-MM-DD şeklinde
-      const formattedDate = selectedDate.toISOString().split('T')[0];
-      setFormData({ ...formData, event_date: formattedDate });
-      setFormErrors({ ...formErrors, event_date: '' });
-    }
+      return {
+        ...prev,
+        event_date: formattedDate,
+        start_time: newStartTime,
+        end_time: newEndTime
+      };
+    });
+    
+    setFormErrors(prev => ({ ...prev, event_date: '' }));
+    
+    // Modal'ı kapat
+    setTimeout(() => {
+      setDateModalVisible(false);
+    }, 500);
   };
 
   // Başlangıç saati seçimi yapıldığında
-  const onStartTimeChange = (event: any, selectedTime?: Date) => {
-    setStartTimeModalVisible(false);
-    if (selectedTime) {
-      setSelectedStartTime(selectedTime);
-      
-      // Combine the selected date with the selected time
-      const combinedDateTime = new Date(formData.event_date);
-      combinedDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0);
-      
-      // Format the start time as ISO string
-      const isoStartTime = combinedDateTime.toISOString();
-      
-      // For display we'll use HH:MM format
-      const hours = selectedTime.getHours().toString().padStart(2, '0');
-      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
-      
-      setFormData({ ...formData, start_time: isoStartTime });
-      setStartTimeDisplay(`${hours}:${minutes}`);
-      setFormErrors({ ...formErrors, start_time: '' });
-    }
+  const handleStartTimeChange = (timeStr: string) => {
+    // Parse time: HH:mm
+    const time = dateTimeHelpers.parseTimeString(timeStr);
+    setSelectedStartTime(time);
+    
+    // Birleştirilmiş tarih-saat için ISO string
+    const isoStartTime = dateTimeHelpers.combineDateTime(selectedDate, time);
+    
+    // Ekranda gösterilecek saat formatı
+    const timeDisplayString = dateTimeHelpers.formatTimeDisplay(time);
+    
+    console.log('Selected start time:', timeDisplayString);
+    console.log('ISO start time:', isoStartTime);
+    
+    setFormData(prev => ({ ...prev, start_time: isoStartTime }));
+    setStartTimeDisplay(timeDisplayString);
+    setFormErrors(prev => ({ ...prev, start_time: '' }));
+    
+    // Modal'ı kapat
+    setTimeout(() => {
+      setStartTimeModalVisible(false);
+    }, 500);
   };
 
   // Bitiş saati seçimi yapıldığında
-  const onEndTimeChange = (event: any, selectedTime?: Date) => {
-    setEndTimeModalVisible(false);
-    if (selectedTime) {
-      setSelectedEndTime(selectedTime);
-      
-      // Combine the selected date with the selected time
-      const combinedDateTime = new Date(formData.event_date);
-      combinedDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0);
-      
-      // Format the end time as ISO string
-      const isoEndTime = combinedDateTime.toISOString();
-      
-      // For display we'll use HH:MM format
-      const hours = selectedTime.getHours().toString().padStart(2, '0');
-      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
-      
-      setFormData({ ...formData, end_time: isoEndTime });
-      setEndTimeDisplay(`${hours}:${minutes}`);
-      setFormErrors({ ...formErrors, end_time: '' });
-    }
+  const handleEndTimeChange = (timeStr: string) => {
+    // Parse time: HH:mm
+    const time = dateTimeHelpers.parseTimeString(timeStr);
+    setSelectedEndTime(time);
+    
+    // Birleştirilmiş tarih-saat için ISO string
+    const isoEndTime = dateTimeHelpers.combineDateTime(selectedDate, time);
+    
+    // Ekranda gösterilecek saat formatı
+    const timeDisplayString = dateTimeHelpers.formatTimeDisplay(time);
+    
+    console.log('Selected end time:', timeDisplayString);
+    console.log('ISO end time:', isoEndTime);
+    
+    setFormData(prev => ({ ...prev, end_time: isoEndTime }));
+    setEndTimeDisplay(timeDisplayString);
+    setFormErrors(prev => ({ ...prev, end_time: '' }));
+    
+    // Modal'ı kapat
+    setTimeout(() => {
+      setEndTimeModalVisible(false);
+    }, 500);
   };
 
   // Form alanlarını güncelleme
@@ -195,12 +372,12 @@ export const CreateEventScreen: React.FC = () => {
     const newIsPrivate = !isPrivate;
     setIsPrivate(newIsPrivate);
     
-    // Eğer özel etkinlik kapatılırsa invitation_code'u temizle
+    // Eğer özel etkinlik kapatılırsa invitation_code'u varsayılan değere ayarla
     if (!newIsPrivate) {
-      setInvitationCode('');
-      setFormData(prev => ({ ...prev, is_private: false, invitation_code: '' }));
+      setInvitationCode('0000');
+      setFormData(prev => ({ ...prev, is_private: false, invitation_code: '0000' }));
     } else {
-      setFormData(prev => ({ ...prev, is_private: true }));
+      setFormData(prev => ({ ...prev, is_private: true, invitation_code: '' }));
     }
   };
 
@@ -224,14 +401,25 @@ export const CreateEventScreen: React.FC = () => {
 
     if (!formData.sport_id) errors.sport_id = 'Spor türü seçmelisiniz';
     if (!formData.title.trim()) errors.title = 'Başlık girmelisiniz';
-    if (!formData.description.trim()) errors.description = 'Açıklama girmelisiniz';
+    
+    // Açıklama için minimum 10 karakter kontrolü
+    if (!formData.description.trim()) {
+      errors.description = 'Açıklama girmelisiniz';
+    } else if (formData.description.trim().length < 10) {
+      errors.description = 'Açıklama en az 10 karakter olmalıdır';
+    }
+    
     if (!formData.event_date) errors.event_date = 'Tarih seçmelisiniz';
     if (!formData.location_name.trim()) errors.location_name = 'Konum adı girmelisiniz';
     if (formData.max_participants <= 0) errors.max_participants = 'Geçerli bir katılımcı sayısı girmelisiniz';
 
     // Özel etkinlik için davet kodu kontrolü
-    if (formData.is_private && !formData.invitation_code.trim()  ) {
-      errors.invitation_code = 'Özel etkinlik için davet kodu girmelisiniz';
+    if (formData.is_private) {
+      if (!formData.invitation_code?.trim()) {
+        errors.invitation_code = 'Özel etkinlik için davet kodu girmelisiniz';
+      } else if (formData.invitation_code.trim().length < 4) {
+        errors.invitation_code = 'Davet kodu en az 4 karakter olmalıdır';
+      }
     }
 
     // Parse time from ISO format for comparison
@@ -252,23 +440,53 @@ export const CreateEventScreen: React.FC = () => {
     
     if (validateForm()) {
       try {
-        // Create a copy of formData without UI-specific fields
-        const apiRequestData = { ...formData };
+        // API için formu hazırla - doğru formatta veri oluştur
+        const apiRequestData: EventCreateRequest = { ...formData };
         
-        // Remove any UI-specific properties before sending to API
-        delete (apiRequestData as any)._startTimeDisplay;
-        delete (apiRequestData as any)._endTimeDisplay;
+        // Özel etkinlik değilse invitation_code'a varsayılan değer ata
+        // API minimum 4 karakter bekliyor
+        if (!apiRequestData.is_private) {
+          apiRequestData.invitation_code = "0000"; // Varsayılan kod
+        }
         
-        const success = await createEvent(apiRequestData);
+        // Log the request data for debugging
+        console.log('Sending event data to API:', JSON.stringify(apiRequestData, null, 2));
         
-        if (success) {
-          // Success is handled by the useEffect monitoring message
+        // API'den gelen yanıtı daha detaylı görmek için try-catch içinde manuel olarak çağırma yap
+        try {
+          const apiResponse = await eventService.createEvent(apiRequestData);
+          console.log('API response:', JSON.stringify(apiResponse, null, 2));
+          
+          if (apiResponse.success) {
+            Alert.alert('Başarılı', 'Etkinlik başarıyla oluşturuldu.', [
+              { text: 'Tamam', onPress: () => navigation.goBack() }
+            ]);
+          } else {
+            Alert.alert('Hata', apiResponse.message || 'Etkinlik oluşturulurken bir hata oluştu');
+          }
+          return true;
+        } catch (apiError: any) {
+          // API hata yanıtını detaylı inceleme
+          console.error('API Error Details:', JSON.stringify(apiError.response?.data, null, 2));
+          console.error('API Error Status:', apiError.response?.status);
+          
+          // Eğer API özel bir hata mesajı döndürdüyse onu göster
+          const errorMessage = apiError.response?.data?.message || 
+                              'Etkinlik oluşturulurken bir hata oluştu. Lütfen tüm alanları kontrol edip tekrar deneyin.';
+          
+          Alert.alert('Hata', errorMessage);
+          return false;
         }
       } catch (error) {
-        Alert.alert('Hata', 'Etkinlik oluşturulurken bir hata oluştu.');
+        console.error('Etkinlik oluşturulurken hata:', error);
+        Alert.alert('Hata', 'Etkinlik oluşturulurken bir hata oluştu. Lütfen tüm alanları kontrol edip tekrar deneyin.');
+        return false;
       }
     } else {
-      Alert.alert('Hata', 'Lütfen form alanlarını doğru şekilde doldurun');
+      // Hata olan alanlar hakkında kullanıcıyı bilgilendir
+      const errorMessages = Object.values(formErrors).join('\n');
+      Alert.alert('Form Hataları', `Lütfen aşağıdaki hataları düzeltin:\n${errorMessages}`);
+      return false;
     }
   };
 
@@ -279,215 +497,7 @@ export const CreateEventScreen: React.FC = () => {
 
   // Tarih formatını düzenler: 2023-04-15 -> 15 Nisan 2023
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    return date.toLocaleDateString('tr-TR', options);
-  };
-
-  // Tarih seçici modal
-  const renderDatePickerModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={dateModalVisible}
-        onRequestClose={() => setDateModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setDateModalVisible(false)}
-        >
-          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Tarih Seçin</Text>
-              <TouchableOpacity onPress={() => setDateModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <DatePicker
-              date={selectedDate}
-              onDateChange={(date) => {
-                setSelectedDate(date);
-                onDateChange(null, date);
-              }}
-              mode="date"
-              minimumDate={new Date()}
-              locale="tr"
-              style={{ backgroundColor: theme.colors.background }}
-            />
-            
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: theme.colors.accent }]}
-              onPress={() => {
-                onDateChange(null, selectedDate);
-                setDateModalVisible(false);
-              }}
-            >
-              <Text style={styles.modalButtonText}>Onayla</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    );
-  };
-
-  // Başlangıç saati seçici modal
-  const renderStartTimePickerModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={startTimeModalVisible}
-        onRequestClose={() => setStartTimeModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setStartTimeModalVisible(false)}
-        >
-          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Başlangıç Saati Seçin</Text>
-              <TouchableOpacity onPress={() => setStartTimeModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <DatePicker
-              date={selectedStartTime}
-              onDateChange={(date) => {
-                setSelectedStartTime(date);
-                onStartTimeChange(null, date);
-              }}
-              mode="time"
-              locale="tr"
-              style={{ backgroundColor: theme.colors.background }}
-            />
-            
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: theme.colors.accent }]}
-              onPress={() => {
-                onStartTimeChange(null, selectedStartTime);
-                setStartTimeModalVisible(false);
-              }}
-            >
-              <Text style={styles.modalButtonText}>Onayla</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    );
-  };
-
-  // Bitiş saati seçici modal
-  const renderEndTimePickerModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={endTimeModalVisible}
-        onRequestClose={() => setEndTimeModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setEndTimeModalVisible(false)}
-        >
-          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Bitiş Saati Seçin</Text>
-              <TouchableOpacity onPress={() => setEndTimeModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <DatePicker
-              date={selectedEndTime}
-              onDateChange={(date) => {
-                setSelectedEndTime(date);
-                onEndTimeChange(null, date);
-              }}
-              mode="time"
-              locale="tr"
-              style={{ backgroundColor: theme.colors.background }}
-            />
-            
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: theme.colors.accent }]}
-              onPress={() => {
-                onEndTimeChange(null, selectedEndTime);
-                setEndTimeModalVisible(false);
-              }}
-            >
-              <Text style={styles.modalButtonText}>Onayla</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    );
-  };
-
-  // Spor kategorilerini render et
-  const renderSportCategories = () => {
-    // API'den gelen spor dallarını kullan, yoksa varsayılan spor dallarını göster
-    const defaultSports = [
-      { id: 'football', name: 'Futbol' },
-      { id: 'basketball', name: 'Basketbol' },
-      { id: 'tennis', name: 'Tenis' },
-      { id: 'running', name: 'Koşu' },
-      { id: 'cycling', name: 'Bisiklet' },
-      { id: 'swimming', name: 'Yüzme' },
-      { id: 'tabletennis', name: 'Masa Tenisi' },
-      { id: 'esports', name: 'E-Spor' },
-      { id: 'other', name: 'Diğer' },
-    ];
-    
-    // Null-check ile sports'un var olduğundan emin oluyoruz
-    const sportsToDisplay = sports && sports.length > 0 
-      ? sports 
-      : defaultSports;
-
-    return (
-      <View style={styles.sportCategoriesContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sportCategoriesScroll}>
-          {sportsToDisplay.map((sport) => (
-            <TouchableOpacity
-              key={sport.id}
-              style={[
-                styles.sportCategoryButton,
-                { 
-                  backgroundColor: selectedSport === sport.id 
-                    ? theme.colors.accent 
-                    : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' 
-                }
-              ]}
-              onPress={() => handleSelectSport(sport.id)}
-            >
-              <Ionicons 
-                name={getSportIcon(sport.name)} 
-                size={24} 
-                color={selectedSport === sport.id ? 'white' : theme.colors.text} 
-              />
-              <Text 
-                style={[
-                  styles.sportCategoryText, 
-                  { color: selectedSport === sport.id ? 'white' : theme.colors.text }
-                ]}
-              >
-                {sport.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        {formErrors.sport_id && (
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            {formErrors.sport_id}
-          </Text>
-        )}
-      </View>
-    );
+    return dateTimeHelpers.formatLocalDate(dateString);
   };
 
   // Render time picker buttons
@@ -574,11 +584,261 @@ export const CreateEventScreen: React.FC = () => {
     );
   };
 
+  const renderFormItem = () => {
+    return (
+      <View style={styles.formContainer}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+          Spor Türü
+        </Text>
+        <SportCategoriesRow 
+          sports={sports} 
+          selectedSport={selectedSport}
+          onSelectSport={handleSelectSport}
+          theme={theme}
+        />
+        
+        <InputField
+          label="Etkinlik Başlığı"
+          placeholder="Örn: Haftalık Basketbol Maçı"
+          value={formData.title}
+          onChangeText={(text) => handleChange('title', text)}
+          error={formErrors.title}
+        />
+        
+        <InputField
+          label="Açıklama"
+          placeholder="Etkinlik hakkında detaylı bilgi verin"
+          value={formData.description}
+          onChangeText={(text) => handleChange('description', text)}
+          multiline
+          numberOfLines={4}
+          style={styles.textArea}
+          error={formErrors.description}
+        />
+        
+        <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
+          Etkinlik Tarihi
+        </Text>
+        <TouchableOpacity 
+          style={[
+            styles.datePickerButton,
+            { 
+              borderColor: formErrors.event_date ? theme.colors.error : theme.colors.border,
+              backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white',
+            }
+          ]}
+          onPress={() => setDateModalVisible(true)}
+        >
+          <Ionicons name="calendar-outline" size={20} color={theme.colors.textSecondary} />
+          <Text style={[styles.datePickerText, { color: theme.colors.text }]}>
+            {formatDate(formData.event_date)}
+          </Text>
+        </TouchableOpacity>
+        
+        <View style={styles.timePickersContainer}>
+          {renderTimePickerButton(
+            'Başlangıç Saati', 
+            startTimeDisplay, 
+            () => setStartTimeModalVisible(true),
+            formErrors.start_time
+          )}
+          
+          {renderTimePickerButton(
+            'Bitiş Saati', 
+            endTimeDisplay, 
+            () => setEndTimeModalVisible(true),
+            formErrors.end_time
+          )}
+        </View>
+        
+        <LocationPicker
+          onLocationSelect={(location) => {
+            setFormData({
+              ...formData,
+              location_name: location.name,
+              location_latitude: location.latitude,
+              location_longitude: location.longitude
+            });
+            setFormErrors({ ...formErrors, location_name: '' });
+          }}
+          theme={theme}
+          error={formErrors.location_name}
+          initialLocation={
+            formData.location_name ? {
+              name: formData.location_name,
+              latitude: formData.location_latitude,
+              longitude: formData.location_longitude
+            } : null
+          }
+        />
+        
+        <InputField
+          label="Maksimum Katılımcı Sayısı"
+          placeholder="Örn: 10"
+          value={formData.max_participants.toString()}
+          onChangeText={(text) => handleChange('max_participants', parseInt(text) || 0)}
+          keyboardType="numeric"
+          error={formErrors.max_participants}
+        />
+        
+        {renderPrivateEventToggle()}
+        
+        <TouchableOpacity
+          style={[
+            styles.createButton,
+            { backgroundColor: theme.colors.accent },
+            isLoading && styles.disabledButton
+          ]}
+          onPress={handleCreateEvent}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <>
+              <Ionicons name="add-circle-outline" size={20} color="white" />
+              <Text style={styles.createButtonText}>Etkinlik Oluştur</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // Tarih seçici modal
+  const renderDatePickerModal = () => {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={dateModalVisible}
+        onRequestClose={() => setDateModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setDateModalVisible(false)}
+        >
+          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Tarih Seçin</Text>
+              <TouchableOpacity onPress={() => setDateModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <DatePicker
+              mode="calendar"
+              minimumDate={dateTimeHelpers.formatToModernDateString(new Date())}
+              selected={dateTimeHelpers.formatToModernDateString(selectedDate)}
+              onDateChange={handleDateChange}
+              options={{
+                backgroundColor: theme.colors.cardBackground,
+                textHeaderColor: theme.colors.accent,
+                textDefaultColor: theme.colors.text,
+                selectedTextColor: '#fff',
+                mainColor: theme.colors.accent,
+                textSecondaryColor: theme.colors.textSecondary,
+                borderColor: 'rgba(122, 146, 165, 0.1)',
+              }}
+              style={{ borderRadius: 10 }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+
+  // Başlangıç saati seçici modal
+  const renderStartTimePickerModal = () => {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={startTimeModalVisible}
+        onRequestClose={() => setStartTimeModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setStartTimeModalVisible(false)}
+        >
+          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Başlangıç Saati Seçin</Text>
+              <TouchableOpacity onPress={() => setStartTimeModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <DatePicker
+              mode="time"
+              minuteInterval={15}
+              onTimeChange={handleStartTimeChange}
+              options={{
+                backgroundColor: theme.colors.cardBackground,
+                textHeaderColor: theme.colors.accent,
+                textDefaultColor: theme.colors.text,
+                selectedTextColor: '#fff',
+                mainColor: theme.colors.accent,
+                textSecondaryColor: theme.colors.textSecondary,
+                borderColor: 'rgba(122, 146, 165, 0.1)',
+              }}
+              style={{ borderRadius: 10 }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+
+  // Bitiş saati seçici modal
+  const renderEndTimePickerModal = () => {
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={endTimeModalVisible}
+        onRequestClose={() => setEndTimeModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setEndTimeModalVisible(false)}
+        >
+          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Bitiş Saati Seçin</Text>
+              <TouchableOpacity onPress={() => setEndTimeModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <DatePicker
+              mode="time"
+              minuteInterval={15}
+              onTimeChange={handleEndTimeChange}
+              options={{
+                backgroundColor: theme.colors.cardBackground,
+                textHeaderColor: theme.colors.accent,
+                textDefaultColor: theme.colors.text,
+                selectedTextColor: '#fff',
+                mainColor: theme.colors.accent,
+                textSecondaryColor: theme.colors.textSecondary,
+                borderColor: 'rgba(122, 146, 165, 0.1)',
+              }}
+              style={{ borderRadius: 10 }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
       
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -593,129 +853,15 @@ export const CreateEventScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
-        <ScrollView 
-          style={styles.scrollView}
+        <FlatList
+          data={[{ key: 'form' }]}
+          renderItem={renderFormItem}
+          keyExtractor={item => item.key}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
-        >
-          {/* Spor Kategorileri */}
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            Spor Türü
-          </Text>
-          {renderSportCategories()}
-          
-          {/* Etkinlik Başlığı */}
-          <InputField
-            label="Etkinlik Başlığı"
-            placeholder="Örn: Haftalık Basketbol Maçı"
-            value={formData.title}
-            onChangeText={(text) => handleChange('title', text)}
-            error={formErrors.title}
-          />
-          
-          {/* Etkinlik Açıklaması */}
-          <InputField
-            label="Açıklama"
-            placeholder="Etkinlik hakkında detaylı bilgi verin"
-            value={formData.description}
-            onChangeText={(text) => handleChange('description', text)}
-            multiline
-            numberOfLines={4}
-            style={styles.textArea}
-            error={formErrors.description}
-          />
-          
-          {/* Etkinlik Tarihi */}
-          <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
-            Etkinlik Tarihi
-          </Text>
-          <TouchableOpacity 
-            style={[
-              styles.datePickerButton,
-              { 
-                borderColor: formErrors.event_date 
-                  ? theme.colors.error 
-                  : theme.colors.border,
-                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white',
-              }
-            ]}
-            onPress={() => setDateModalVisible(true)}
-          >
-            <Ionicons name="calendar-outline" size={20} color={theme.colors.textSecondary} />
-            <Text style={[styles.datePickerText, { color: theme.colors.text }]}>
-              {formatDate(formData.event_date)}
-            </Text>
-          </TouchableOpacity>
-          {formErrors.event_date && (
-            <Text style={[styles.errorText, { color: theme.colors.error }]}>
-              {formErrors.event_date}
-            </Text>
-          )}
-          
-          {/* Saat Seçiciler */}
-          <View style={styles.timePickersContainer}>
-            {/* Başlangıç Saati */}
-            {renderTimePickerButton(
-              'Başlangıç Saati', 
-              startTimeDisplay, 
-              () => setStartTimeModalVisible(true),
-              formErrors.start_time
-            )}
-            
-            {/* Bitiş Saati */}
-            {renderTimePickerButton(
-              'Bitiş Saati', 
-              endTimeDisplay, 
-              () => setEndTimeModalVisible(true),
-              formErrors.end_time
-            )}
-          </View>
-          
-          {/* Konum */}
-          <InputField
-            label="Konum"
-            placeholder="Etkinliğin yapılacağı yer"
-            value={formData.location_name}
-            onChangeText={(text) => handleChange('location_name', text)}
-            error={formErrors.location_name}
-          />
-          
-          {/* Katılımcı Sayısı */}
-          <InputField
-            label="Maksimum Katılımcı Sayısı"
-            placeholder="Örn: 10"
-            value={formData.max_participants.toString()}
-            onChangeText={(text) => handleChange('max_participants', parseInt(text) || 0)}
-            keyboardType="numeric"
-            error={formErrors.max_participants}
-          />
-          
-          {/* Özel Etkinlik Toggle */}
-          {renderPrivateEventToggle()}
-          
-          {/* Oluştur Butonu */}
-          <TouchableOpacity
-            style={[
-              styles.createButton,
-              { backgroundColor: theme.colors.accent },
-              isLoading && styles.disabledButton
-            ]}
-            onPress={handleCreateEvent}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <>
-                <Ionicons name="add-circle-outline" size={20} color="white" />
-                <Text style={styles.createButtonText}>Etkinlik Oluştur</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
+        />
       </KeyboardAvoidingView>
       
-      {/* DatePickers Modals */}
       {renderDatePickerModal()}
       {renderStartTimePickerModal()}
       {renderEndTimePickerModal()}
@@ -734,8 +880,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
@@ -763,11 +908,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sportCategoriesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
     marginBottom: 20,
-  },
-  sportCategoriesScroll: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
   },
   sportCategoryButton: {
     flexDirection: 'row',
@@ -922,5 +1066,51 @@ const styles = StyleSheet.create({
   toggleDescription: {
     fontSize: 14,
     marginBottom: 16,
+  },
+  locationPickerContainer: {
+    marginBottom: 16,
+    zIndex: 2, // Önerilerin diğer elementlerin üzerinde görünmesi için
+  },
+  locationInputWrapper: {
+    position: 'relative',
+  },
+  suggestionsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    borderRadius: 8,
+    marginTop: 4,
+    maxHeight: 200,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  suggestionText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  locationIcon: {
+    marginRight: 8,
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+  },
+  formContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  sportCategoriesFlatListContent: {
+    padding: 10,
   },
 });

@@ -199,12 +199,12 @@ export const EventCard: React.FC<EventCardProps> = ({
         <View style={[
           styles.statusBadge, 
           { 
-            backgroundColor: getStatusColor(safeEvent.status, theme.colors) + '20',
-            borderColor: getStatusColor(safeEvent.status, theme.colors), 
+            backgroundColor: theme.colors.accent + '20',
+            borderColor: safeEvent.status === 'active' ? theme.colors.accent : theme.colors.error, 
           }
         ]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(safeEvent.status, theme.colors) }]} />
-          <Text style={[styles.statusText, { color: getStatusColor(safeEvent.status, theme.colors) }]}>
+          <View style={[styles.statusDot, { backgroundColor: safeEvent.status === 'active' ? theme.colors.accent : theme.colors.error }]} />
+          <Text style={[styles.statusText, { color: safeEvent.status === 'active' ? theme.colors.accent : theme.colors.error }]}>
             {getStatusText(safeEvent.status)}
           </Text>
         </View>

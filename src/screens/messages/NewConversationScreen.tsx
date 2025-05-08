@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -25,6 +26,38 @@ type RouteParams = {
   }
 }
 
+// Basit bir arama bileşeni
+const SearchInput = ({ 
+  value, 
+  onChangeText, 
+  theme, 
+  placeholder 
+}: { 
+  value: string; 
+  onChangeText: (text: string) => void; 
+  theme: any;
+  placeholder: string;
+}) => {
+  return (
+    <View style={[styles.searchContainer, { backgroundColor: theme.colors.background }]}>
+      <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={theme.colors.textSecondary}
+        style={[
+          styles.searchInput,
+          { 
+            color: theme.colors.text,
+            backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+          }
+        ]}
+      />
+    </View>
+  );
+};
+
 export const NewConversationScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const navigation = useNavigation<any>();
@@ -41,6 +74,8 @@ export const NewConversationScreen: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Arkadaşları yükle, debounce ile tekrar deneme eklenmiş
   const loadFriends = useCallback(async () => {
@@ -165,6 +200,20 @@ export const NewConversationScreen: React.FC = () => {
     }
   };
   
+  // Kullanıcı araması
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    // Burada API'den kullanıcı araması yapılacak
+    // Şimdilik boş bir array döndürüyoruz
+    setSearchResults([]);
+  };
+
+  // Kullanıcı seçildiğinde
+  const handleSelectUser = (user: any) => {
+    createConversation(user.id);
+    navigation.goBack();
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Grup Modu Seçeneği */}
@@ -219,21 +268,12 @@ export const NewConversationScreen: React.FC = () => {
       )}
       
       {/* Arama */}
-      <View style={[styles.searchContainer, { backgroundColor: theme.colors.cardBackground }]}>
-        <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
-        <TextInput
-          style={[styles.searchInput, { color: theme.colors.text }]}
-          placeholder="Arkadaş ara..."
-          placeholderTextColor={theme.colors.textSecondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery ? (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <SearchInput
+        value={searchQuery}
+        onChangeText={handleSearch}
+        theme={theme}
+        placeholder="Kullanıcı ara..."
+      />
       
       {/* Seçilen Kullanıcı Sayısı */}
       {selectedUsers.length > 0 && (
@@ -347,6 +387,7 @@ export const NewConversationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
   },
   groupModeContainer: {
     flexDirection: 'row',
@@ -379,15 +420,21 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    padding: 8,
+  },
+  searchIcon: {
+    marginLeft: 12,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 16,
+    borderRadius: 12,
   },
   selectedCountContainer: {
     marginHorizontal: 16,

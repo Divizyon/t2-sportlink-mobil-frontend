@@ -22,8 +22,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../../store/appStore/themeStore';
 import { useEventStore } from '../../../store/eventStore/eventStore';
 import { useAuthStore } from '../../../store/userStore/authStore';
+import { useMapsStore } from '../../../store/appStore/mapsStore';
 import { formatDate, formatTimeRange, formatDateTime } from '../../../utils/dateUtils';
 import { colors } from '../../../constants/colors/colors';
+import { DistanceInfo } from '../../../components/maps/DistanceInfo';
 
 // Route param tipini tanımla
 type EventDetailRouteParams = {
@@ -42,6 +44,9 @@ export const EventDetailScreen: React.FC = () => {
   
   // Kullanıcı bilgilerini al
   const { user } = useAuthStore();
+  
+  // Maps store'dan konum bilgisini al
+  const { lastLocation } = useMapsStore();
   
   // Event store'dan etkinlik durumunu ve metotları al
   const { 
@@ -67,6 +72,9 @@ export const EventDetailScreen: React.FC = () => {
   const [invitationCodeModalVisible, setInvitationCodeModalVisible] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
   const [invitationCodeError, setInvitationCodeError] = useState('');
+  
+  // Transport mode için state
+  const [selectedTransportMode, setSelectedTransportMode] = useState<'driving' | 'walking' | 'transit'>('driving');
   
   // Component mount edildiğinde etkinlik detayını getir
   useEffect(() => {
@@ -274,6 +282,98 @@ export const EventDetailScreen: React.FC = () => {
     navigation.navigate('EventMapScreen', { eventId: currentEvent.id });
   };
   
+  // Konum ve mesafe bilgilerini render et
+  const renderLocationAndDistance = () => {
+    if (!currentEvent) return null;
+    
+    const hasLocationCoords = currentEvent.location_latitude && currentEvent.location_longitude;
+    
+    // Transport mode icon ve renkleri
+    const transportModes = [
+      { id: 'driving', icon: 'car-outline', label: 'Araba' },
+      { id: 'walking', icon: 'walk-outline', label: 'Yürüyüş' },
+      { id: 'transit', icon: 'bus-outline', label: 'Toplu Taşıma' }
+    ];
+    
+    return (
+      <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="location-outline" size={22} color={theme.colors.accent} />
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            Konum
+          </Text>
+        </View>
+        
+        <Text style={[styles.locationName, { color: theme.colors.text }]}>
+          {currentEvent.location_name}
+        </Text>
+        
+        {hasLocationCoords && lastLocation && (
+          <>
+            {/* Ulaşım modu seçimi */}
+            <View style={styles.transportModesContainer}>
+              {transportModes.map((mode) => (
+                <TouchableOpacity 
+                  key={mode.id}
+                  style={[
+                    styles.transportModeButton,
+                    selectedTransportMode === mode.id && {
+                      backgroundColor: theme.colors.accent + '20',
+                      borderColor: theme.colors.accent
+                    }
+                  ]}
+                  onPress={() => setSelectedTransportMode(mode.id as 'driving' | 'walking' | 'transit')}
+                >
+                  <Ionicons 
+                    name={mode.icon as any} 
+                    size={18} 
+                    color={selectedTransportMode === mode.id ? theme.colors.accent : theme.colors.textSecondary}
+                  />
+                  <Text 
+                    style={[
+                      styles.transportModeLabel,
+                      { color: selectedTransportMode === mode.id ? theme.colors.accent : theme.colors.textSecondary }
+                    ]}
+                  >
+                    {mode.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+            {/* Mesafe bilgisi */}
+            <View style={styles.distanceInfoContainer}>
+              <DistanceInfo
+                origin={`${lastLocation.latitude},${lastLocation.longitude}`}
+                destination={`${currentEvent.location_latitude},${currentEvent.location_longitude}`}
+                transportMode={selectedTransportMode}
+                showDetails={false}
+              />
+            </View>
+          </>
+        )}
+        
+        <View style={styles.mapBtnContainer}>
+          <TouchableOpacity 
+            style={[styles.mapBtn, { backgroundColor: theme.colors.primary }]}
+            onPress={handleViewMap}
+          >
+            <Ionicons name="map-outline" size={18} color="white" />
+            <Text style={styles.mapBtnText}>Haritada Gör</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.mapBtn, { backgroundColor: theme.colors.accent }]}
+            onPress={handleOpenMap}
+          >
+            <Ionicons name="navigate-outline" size={18} color="white" />
+            <Text style={styles.mapBtnText}>Yol Tarifi</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+  
   // Davet kodu modalını render et
   const renderInvitationCodeModal = () => {
     return (
@@ -430,35 +530,31 @@ export const EventDetailScreen: React.FC = () => {
       >
         {/* Etkinlik Başlığı ve Status Badge */}
         <View style={styles.titleContainer}>
+          {/* Özel etkinlik rozeti */}
+          {currentEvent.is_private && (
+            <View style={[styles.privateBadge, { backgroundColor: theme.colors.primary + '20', alignSelf: 'flex-start', marginBottom: 8 }]}>
+              <Ionicons name="lock-closed" size={12} color={theme.colors.primary} style={styles.privateIcon} />
+              <Text style={[styles.privateText, { color: theme.colors.primary }]}>
+                Özel Etkinlik
+              </Text>
+            </View>
+          )}
+          
           <View style={styles.badgeRow}>
+            <Text style={[styles.title, { color: theme.colors.text }]}>
+              {currentEvent.title}
+            </Text>
+          
             <View style={[styles.statusBadge, { 
-              backgroundColor: getStatusColor(currentEvent.status, theme.colors)
+              backgroundColor: currentEvent.status === 'active' ? theme.colors.accent + '20' : getStatusColor(currentEvent.status, theme.colors)
             }]}>
-              <Text style={styles.statusText}>
+              <Text style={[styles.statusText, {
+                color: currentEvent.status === 'active' ? theme.colors.accent : 'white'
+              }]}>
                 {getStatusText(currentEvent.status)}
               </Text>
             </View>
-            
-            <View style={[styles.sportBadge, { backgroundColor: theme.colors.accent + '20' }]}>
-              <Text style={[styles.sportText, { color: theme.colors.accent }]}>
-                {currentEvent.sport_id || 'Spor'}
-              </Text>
-            </View>
-            
-            {/* Özel etkinlik rozeti */}
-            {currentEvent.is_private && (
-              <View style={[styles.privateBadge, { backgroundColor: theme.colors.primary + '20' }]}>
-                <Ionicons name="lock-closed" size={12} color={theme.colors.primary} style={styles.privateIcon} />
-                <Text style={[styles.privateText, { color: theme.colors.primary }]}>
-                  Özel Etkinlik
-                </Text>
-              </View>
-            )}
           </View>
-          
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            {currentEvent.title}
-          </Text>
           
           {/* Tarih ve Saat Bilgisi */}
           <View style={styles.infoRow}>
@@ -536,37 +632,8 @@ export const EventDetailScreen: React.FC = () => {
           </Text>
         </View>
         
-        {/* Konum Bilgisi */}
-        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="location-outline" size={22} color={theme.colors.accent} />
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Konum
-            </Text>
-          </View>
-          
-          <Text style={[styles.locationName, { color: theme.colors.text }]}>
-            {currentEvent.location_name}
-          </Text>
-          
-          <View style={styles.mapBtnContainer}>
-            <TouchableOpacity 
-              style={[styles.mapBtn, { backgroundColor: theme.colors.primary }]}
-              onPress={handleViewMap}
-            >
-              <Ionicons name="map-outline" size={18} color="white" />
-              <Text style={styles.mapBtnText}>Haritada Gör</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.mapBtn, { backgroundColor: theme.colors.accent }]}
-              onPress={handleOpenMap}
-            >
-              <Ionicons name="navigate-outline" size={18} color="white" />
-              <Text style={styles.mapBtnText}>Yol Tarifi</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Konum ve Mesafe Bilgisi */}
+        {renderLocationAndDistance()}
         
         {/* Organizatör Bilgisi */}
         {currentEvent.creator_name && (
@@ -814,6 +881,8 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   statusBadge: {
@@ -1120,5 +1189,32 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+  },
+  distanceInfoContainer: {
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  transportModesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    marginTop: 16,
+  },
+  transportModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  transportModeLabel: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
