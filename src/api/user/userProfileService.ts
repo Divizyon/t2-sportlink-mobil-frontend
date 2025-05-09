@@ -9,6 +9,7 @@ import {
   UserInfo,
   Friend
 } from '../../store/userStore/profileStore';
+import { Event } from '../../types/eventTypes/event.types';
 
 interface ProfileResponse {
   userInfo: UserInfo;
@@ -18,6 +19,8 @@ interface ProfileResponse {
   friendsSummary?: FriendSummary;
   settings?: ProfileSettings;
   friends?: Friend[];
+  upcomingEvents?: Event[];
+  pastEvents?: Event[];
 }
 
 interface UpdateProfileInfoRequest {
@@ -71,7 +74,9 @@ export const userProfileService = {
             longitude: userData.default_location_longitude,
             locationName: 'Kullanıcı Konumu'
           } : undefined,
-          friends: Array.isArray(userData.friends) ? userData.friends : []
+          friends: Array.isArray(userData.friends) ? userData.friends : [],
+          upcomingEvents: Array.isArray(userData.upcomingEvents) ? userData.upcomingEvents : [],
+          pastEvents: Array.isArray(userData.pastEvents) ? userData.pastEvents : []
         };
         
         console.log('Spor tercihleri dönüştürüldü:', transformedData.sportPreferences);

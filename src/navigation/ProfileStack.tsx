@@ -8,6 +8,7 @@ import { SecuritySettingsScreen } from '../screens/profile/settings/SecuritySett
 import { SessionSettings } from '../screens/profile/settings/SessionSettings';
 import { NotificationSettingsScreen } from '../screens/profile/settings/NotificationSettingsScreen';
 import { FriendsListScreen } from '../screens/profile/FriendsListScreen';
+import { UserEventsScreen } from '../screens/profile/UserEventsScreen';
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -18,6 +19,11 @@ export type ProfileStackParamList = {
   SessionHistory: undefined;
   NotificationSettings: undefined;
   FriendsList: undefined;
+  UserEvents: {
+    filter: 'created' | 'participated';
+    userId: string | undefined;
+    title: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -110,6 +116,20 @@ export const ProfileStack = () => {
           headerShadowVisible: false,
           animation: 'slide_from_right'
         }}
+      />
+      <Stack.Screen 
+        name="UserEvents" 
+        component={UserEventsScreen}
+        options={({ route }) => ({
+          headerShown: true,
+          title: route.params?.title || 'Etkinliklerim',
+          headerTintColor: '#338626',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerShadowVisible: false,
+          animation: 'slide_from_right'
+        })}
       />
     </Stack.Navigator>
   );

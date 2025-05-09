@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Sport } from '../../types/eventTypes/event.types';
+import { Sport, Event } from '../../types/eventTypes/event.types';
 import { useApiStore } from '../appStore/apiStore';
 import { userProfileService } from '../../api/user/userProfileService';
 
@@ -74,6 +74,8 @@ interface ProfileState {
   friendsSummary: FriendSummary | null;
   profileSettings: ProfileSettings;
   friends: Friend[]; // Arkadaş listesi
+  upcomingEvents: Event[]; // Yaklaşan etkinlikler
+  pastEvents: Event[]; // Geçmiş etkinlikler
   
   // Yükleme ve hata durumları
   isLoading: boolean;
@@ -104,6 +106,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   defaultLocation: null,
   friendsSummary: null,
   friends: [], // Boş arkadaş listesi
+  upcomingEvents: [], // Boş yaklaşan etkinlikler listesi
+  pastEvents: [], // Boş geçmiş etkinlikler listesi
   profileSettings: {
     notificationsEnabled: true,
     eventNotificationsEnabled: true,
@@ -157,6 +161,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           defaultLocation: response.data.defaultLocation,
           friendsSummary: response.data.friendsSummary,
           friends: response.data.friends || [], // Arkadaş listesini kaydet
+          upcomingEvents: response.data.upcomingEvents || [], // Yaklaşan etkinlikleri kaydet
+          pastEvents: response.data.pastEvents || [], // Geçmiş etkinlikleri kaydet
           profileSettings,
           isLoading: false
         });

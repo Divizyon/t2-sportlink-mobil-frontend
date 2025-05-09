@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,16 +10,18 @@ import { ProfileStackParamList } from '../../navigation/ProfileStack';
 type ProfileNavigationProp = NativeStackNavigationProp<ProfileStackParamList>;
 
 interface ProfileHeaderProps {
-  firstName: string;
-  lastName: string;
-  username: string;
+  // Dışarıdan gelen özellikler
+  firstName?: string;
+  lastName?: string;
+  username?: string;
   profilePicture?: string | null;
-  stats: {
-    createdEvents: number;
-    joinedEvents: number;
-    rating: number;
-    friends: number;
+  stats?: {
+    createdEvents?: number;
+    joinedEvents?: number;
+    rating?: number;
+    friends?: number;
   };
+  isDarkMode?: boolean;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -27,10 +29,39 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   lastName,
   username,
   profilePicture,
-  stats
+  stats: externalStats,
+  isDarkMode
 }) => {
   const navigation = useNavigation<ProfileNavigationProp>();
-  const { updateProfilePicture } = useProfileStore();
+  
+  // ProfileStore'dan gerekli state ve fonksiyonları çekelim
+  const { 
+    userInfo, 
+    stats: storeStats, 
+    fetchUserProfile, 
+    updateProfilePicture,
+    isLoading,
+    isUpdating
+  } = useProfileStore();
+
+  // Dışarıdan props geldi mi yoksa store'dan mı alacağız?
+  const useExternalProps = firstName !== undefined && lastName !== undefined;
+  
+  // Kullanılacak değerleri belirle
+  const displayName = useExternalProps ? firstName : userInfo?.firstName;
+  const displayLastName = useExternalProps ? lastName : userInfo?.lastName;
+  const displayUsername = useExternalProps ? username : userInfo?.username;
+  const displayPicture = useExternalProps ? profilePicture : userInfo?.profilePicture;
+  
+  // İstatistikler için değerleri belirle
+  const displayStats = useExternalProps ? externalStats : storeStats;
+
+  // Bileşen yüklendiğinde ve dışarıdan veri gelmiyorsa profil verilerini çekelim
+  useEffect(() => {
+    if (!useExternalProps) {
+      fetchUserProfile();
+    }
+  }, [useExternalProps]);
 
   const handleImagePick = async () => {
     try {
@@ -88,20 +119,49 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     navigation.navigate('FriendsList');
   };
 
+  // Kullanıcının oluşturduğu etkinliklere gitme
+  const handleCreatedEventsPress = () => {
+    // Kullanıcının oluşturduğu etkinlikleri görüntüle
+    navigation.navigate('UserEvents', { 
+      filter: 'created',
+      userId: userInfo?.id,
+      title: 'Oluşturduğum Etkinlikler'
+    });
+  };
+
+  // Kullanıcının katıldığı etkinliklere gitme
+  const handleParticipatedEventsPress = () => {
+    // Kullanıcının katıldığı etkinlikleri görüntüle
+    navigation.navigate('UserEvents', { 
+      filter: 'participated',
+      userId: userInfo?.id,
+      title: 'Katıldığım Etkinlikler'
+    });
+  };
+
+  // Kullanıcı bilgileri henüz yüklenmemişse basit bir yükleniyor göstergesi
+  if (!useExternalProps && (isLoading || !userInfo)) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Profil yükleniyor...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <View style={styles.profileImageContainer}>
-          {profilePicture ? (
+          {displayPicture ? (
             <Image 
-              source={{ uri: profilePicture }} 
+              source={{ uri: displayPicture }} 
               style={styles.profileImage} 
               resizeMode="cover"
             />
           ) : (
             <View style={styles.defaultAvatar}>
               <Text style={styles.avatarText}>
-                {firstName.charAt(0)}{lastName.charAt(0)}
+                {displayName?.charAt(0) || ''}{displayLastName?.charAt(0) || ''}
               </Text>
             </View>
           )}
@@ -114,8 +174,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </View>
 
         <View style={styles.userInfoContainer}>
-          <Text style={styles.fullName}>{firstName} {lastName}</Text>
-          <Text style={styles.username}>@{username}</Text>
+          <Text style={styles.fullName}>{displayName} {displayLastName}</Text>
+          <Text style={styles.username}>@{displayUsername}</Text>
         </View>
 
         <TouchableOpacity 
@@ -128,16 +188,28 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       </View>
 
       <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{stats.createdEvents}</Text>
+        <TouchableOpacity style={styles.statItem} onPress={handleCreatedEventsPress}>
+          <Text style={styles.statNumber}>
+            {useExternalProps 
+              ? (externalStats?.createdEvents || 0) 
+              : (storeStats?.createdEventsCount || 0)}
+          </Text>
           <Text style={styles.statLabel}>Oluşturduğum{'\n'}Etkinlik</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{stats.joinedEvents}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.statItem} onPress={handleParticipatedEventsPress}>
+          <Text style={styles.statNumber}>
+            {useExternalProps 
+              ? (externalStats?.joinedEvents || 0) 
+              : (storeStats?.participatedEventsCount || 0)}
+          </Text>
           <Text style={styles.statLabel}>Katıldığım{'\n'}Etkinlik</Text>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.statItem} onPress={handleFriendsPress}>
-          <Text style={styles.statNumber}>{stats.friends}</Text>
+          <Text style={styles.statNumber}>
+            {useExternalProps 
+              ? (externalStats?.friends || 0) 
+              : (storeStats?.friendsCount || 0)}
+          </Text>
           <Text style={styles.statLabel}>Arkadaş</Text>
         </TouchableOpacity>
       </View>
@@ -158,6 +230,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
+  },
+  loadingText: {
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 16,
+    color: '#666',
   },
   headerContainer: {
     flexDirection: 'row',

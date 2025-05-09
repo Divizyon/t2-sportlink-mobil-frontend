@@ -14,6 +14,17 @@ export interface Sport {
 }
 
 /**
+ * Kullanıcı tipi (minimal)
+ */
+export interface EventCreator {
+  id: string;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  profile_picture?: string | null;
+}
+
+/**
  * Etkinlik tipi
  */
 export interface Event {
@@ -34,6 +45,7 @@ export interface Event {
   creator_id: string;
   creator_name?: string;
   creator_avatar?: string;
+  creator?: EventCreator; // Etkinlik oluşturucu bilgisi
   image_url?: string;  // Etkinlik görseli
   created_at: string;
   updated_at: string;
@@ -42,7 +54,8 @@ export interface Event {
   is_creator?: boolean;
   is_private?: boolean; // Özel etkinlik mi?
   invitation_code?: string; // Davet kodu (özel etkinlikler için)
-  
+  sport?: Sport;
+  participant_count?: number;
 }
 
 /**
