@@ -14,7 +14,8 @@ interface SportPreferencesCardProps {
     accent: string;
   };
   onEditSports?: () => void;
-  onUpdatePreferences?: (newPreferences: UserSportPreference[]) => Promise<boolean>;
+  updateSportPreference?: (preference: UserSportPreference) => Promise<boolean>;
+  removeSportPreference?: (sportId: string) => Promise<boolean>;
 }
 
 // Beceri seviyesi için yıldız sayısını belirle
@@ -40,7 +41,7 @@ const getSkillLevelText = (level: string): string => {
 };
 
 // Spor ikonu belirle
-const getSportIcon = (sportName: string): string => {
+const getSportIcon = (sportName: string): any => {
   const sportLower = sportName.toLowerCase();
   
   if (sportLower.includes('futbol')) return 'football-outline';
@@ -87,7 +88,7 @@ const SportIcon: React.FC<{
   color: string;
 }> = ({ sportName, size, color }) => {
   // Spor adına göre ikonu belirle
-  const getIconName = (sportName: string): string => {
+  const getIconName = (sportName: string): any => {
     const sportLower = sportName.toLowerCase();
     
     if (sportLower.includes('futbol')) return 'football-outline';
@@ -139,10 +140,13 @@ const SportIcon: React.FC<{
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      <Ionicons name={iconName} size={size * 0.6} color={color} />
+      <Ionicons name={iconName as any} size={size * 0.6} color={color} />
     </View>
   );
 };
+
+// Maksimum izin verilen spor tercihi sayısı
+const MAX_SPORT_PREFERENCES = 5;
 
 // Spor Kategorisi Seçim Modalı
 interface SportSelectionModalProps {
@@ -150,8 +154,6 @@ interface SportSelectionModalProps {
   onClose: () => void;
   sports: Sport[];
   onSelectSport: (sport: Sport) => void;
-  onSave: () => void;
-  hasChanges: boolean;
   tempPreferences: UserSportPreference[];
   onRemoveSport: (sportId: string) => void;
   themeColors: {
@@ -167,15 +169,13 @@ const SportSelectionModal: React.FC<SportSelectionModalProps> = ({
   onClose,
   sports,
   onSelectSport,
-  onSave,
-  hasChanges,
   tempPreferences,
   onRemoveSport,
   themeColors
 }) => {
-  // Sporları filtrele - küçük harfle başlayan "futbol"u kaldır
-  const filteredSports = sports.filter(sport => sport.name !== "futbol");
-  
+  // Limit durumunu kontrol et
+  const isLimitReached = tempPreferences.length >= MAX_SPORT_PREFERENCES;
+
   return (
     <Modal
       visible={visible}
@@ -193,14 +193,7 @@ const SportSelectionModal: React.FC<SportSelectionModalProps> = ({
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
-              Spor Kategorileri
-            </Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={themeColors.text} />
-            </TouchableOpacity>
-          </View>
+         
           
           <View style={styles.modalDragIndicator} />
           
@@ -209,7 +202,7 @@ const SportSelectionModal: React.FC<SportSelectionModalProps> = ({
               {tempPreferences.length > 0 && (
                 <>
                   <Text style={[styles.selectedSportsTitle, { color: themeColors.text }]}>
-                    Seçilen Sporlar:
+                    Seçilen Sporlar: {tempPreferences.length}/{MAX_SPORT_PREFERENCES}
                   </Text>
                   {tempPreferences.map((pref) => (
                     <View key={pref.sportId} style={styles.selectedSportItem}>
@@ -246,43 +239,98 @@ const SportSelectionModal: React.FC<SportSelectionModalProps> = ({
               )}
             </View>
             
+            {isLimitReached && (
+              <View style={[styles.limitWarning, { backgroundColor: themeColors.accent + '15', borderColor: themeColors.accent + '30' }]}>
+                <Ionicons name="information-circle" size={20} color={themeColors.accent} style={{marginRight: 6}} />
+                <Text style={{ color: themeColors.text, fontSize: 14 }}>
+                  Maksimum {MAX_SPORT_PREFERENCES} spor seçebilirsiniz. Yeni bir spor eklemek için önce bir sporu kaldırın.
+                </Text>
+              </View>
+            )}
+            
             <Text style={[styles.categoriesTitle, { color: themeColors.text }]}>
               Tüm Kategoriler:
             </Text>
             
-            {filteredSports.map((sport) => (
-              <TouchableOpacity
-                key={sport.id}
-                style={[styles.sportListItem, { borderBottomColor: themeColors.textSecondary + '30' }]}
-                onPress={() => onSelectSport(sport)}
-              >
-                <View style={[styles.sportIconContainer, { backgroundColor: themeColors.accent + '20' }]}>
-                  <SportIcon 
-                    sportName={sport.name}
-                    size={28} 
-                    color={themeColors.accent}
-                  />
-                </View>
-                <Text style={[styles.sportListItemText, { color: themeColors.text }]}>
-                  {sport.name}
-                </Text>
-                <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
-              </TouchableOpacity>
-            ))}
+            {sports.map((sport) => {
+              const isSelected = tempPreferences.some(p => p.sportId === sport.id);
+              const selectedLevel = isSelected 
+                ? tempPreferences.find(p => p.sportId === sport.id)?.skillLevel 
+                : null;
+              
+              // Bu spor zaten seçilmişse veya limit dolmuşsa özelliklerini ayarla
+              const isDisabled = isLimitReached && !isSelected;
+              
+              return (
+                <TouchableOpacity
+                  key={sport.id}
+                  style={[
+                    styles.sportListItem, 
+                    { 
+                      borderBottomColor: themeColors.textSecondary + '30',
+                      backgroundColor: isSelected 
+                        ? themeColors.accent + '15' 
+                        : isDisabled 
+                          ? themeColors.textSecondary + '10' 
+                          : 'transparent',
+                      opacity: isDisabled ? 0.6 : 1
+                    }
+                  ]}
+                  onPress={() => {
+                    if (!isDisabled || isSelected) {
+                      onSelectSport(sport);
+                    }
+                  }}
+                  activeOpacity={isDisabled && !isSelected ? 0.9 : 0.7}
+                  disabled={isDisabled && !isSelected}
+                >
+                  <View style={[styles.sportIconContainer, { backgroundColor: themeColors.accent + '20' }]}>
+                    <SportIcon 
+                      sportName={sport.name}
+                      size={28} 
+                      color={isDisabled && !isSelected ? themeColors.textSecondary : themeColors.accent}
+                    />
+                  </View>
+                  <Text style={[
+                    styles.sportListItemText, 
+                    { 
+                      color: isDisabled && !isSelected ? themeColors.textSecondary : themeColors.text 
+                    }
+                  ]}>
+                    {sport.name}
+                  </Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    {isSelected && selectedLevel && (
+                      <View style={[styles.selectedItemBadge, { backgroundColor: themeColors.accent + '30' }]}>
+                        <Text style={[styles.selectedItemText, { color: themeColors.accent }]}>
+                          {getSkillLevelText(selectedLevel)}
+                        </Text>
+                        {renderStars(getSkillStars(selectedLevel), 10, themeColors.accent, themeColors.accent + '40')}
+                      </View>
+                    )}
+                    <Ionicons 
+                      name={isSelected ? "checkmark-circle" : isDisabled ? "lock-closed" : "chevron-forward"} 
+                      size={22} 
+                      color={isSelected 
+                        ? themeColors.accent 
+                        : isDisabled 
+                          ? themeColors.textSecondary 
+                          : themeColors.textSecondary} 
+                    />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
           
           <TouchableOpacity
             style={[
               styles.saveButton, 
-              { 
-                backgroundColor: hasChanges ? themeColors.accent : themeColors.accent + '60',
-                opacity: hasChanges ? 1 : 0.7
-              }
+              { backgroundColor: themeColors.accent }
             ]}
-            onPress={onSave}
-            disabled={!hasChanges}
+            onPress={onClose}
           >
-            <Text style={styles.saveButtonText}>Kaydet</Text>
+            <Text style={styles.saveButtonText}>Kapat</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -313,35 +361,41 @@ const SkillLevelSelectionModal: React.FC<SkillLevelSelectionModalProps> = ({
   sportName,
   themeColors
 }) => {
+  console.log(`SkillLevelSelectionModal: visible=${visible}, sportName=${sportName}, initialLevel=${initialLevel}`);
+  
   const [selectedLevel, setSelectedLevel] = useState<string>(initialLevel);
   const [selectedStars, setSelectedStars] = useState<number>(getSkillStars(initialLevel));
 
   useEffect(() => {
-    // İlk açılışta seviyeyi 'beginner' (1 yıldız) olarak ayarla
-    setSelectedLevel('beginner');
-    setSelectedStars(1);
-  }, [visible]);
+    if (visible) {
+      // Modal açıldığında seviyeyi başlangıç değerine ayarla
+      console.log(`Beceri seviyesi modalı açıldı, seviye: ${initialLevel}`);
+      setSelectedLevel(initialLevel);
+      setSelectedStars(getSkillStars(initialLevel));
+    }
+  }, [visible, initialLevel]);
 
   // Yıldız sayısına göre beceri seviyesini belirle
   const getLevelFromStars = (stars: number): string => {
-    switch (stars) {
-      case 1: return 'beginner';
-      case 2: return 'intermediate';
-      case 3: return 'advanced';
-      case 4: return 'professional';
-      default: return 'beginner';
-    }
+    if (stars <= 1) return 'beginner';
+    if (stars <= 2) return 'intermediate';
+    if (stars <= 3) return 'advanced';
+    return 'professional';
   };
 
   // Yıldız seçildiğinde
   const handleStarPress = (starCount: number) => {
+    console.log(`Yıldız seçildi: ${starCount}`);
     setSelectedStars(starCount);
     setSelectedLevel(getLevelFromStars(starCount));
   };
 
   const handleSave = () => {
+    console.log(`Beceri seviyesi kaydediliyor: ${selectedLevel}`);
     onSelectSkill(selectedLevel);
   };
+
+  if (!visible) return null;
 
   return (
     <Modal
@@ -394,10 +448,10 @@ const SkillLevelSelectionModal: React.FC<SkillLevelSelectionModalProps> = ({
             </View>
             
             <Text style={[styles.skillDescription, { color: themeColors.textSecondary }]}>
-              {selectedStars === 1 && "Yeni başladım, temel becerileri öğreniyorum."}
-              {selectedStars === 2 && "Temel becerilere sahibim, gelişmeye devam ediyorum."}
-              {selectedStars === 3 && "İyi seviyedeyim, taktiksel becerilerim var."}
-              {selectedStars === 4 && "Bu sporda uzmanım, yüksek seviyede tecrübem var."}
+              {selectedLevel === 'beginner' && "Yeni başladım, temel becerileri öğreniyorum."}
+              {selectedLevel === 'intermediate' && "Temel becerilere sahibim, gelişmeye devam ediyorum."}
+              {selectedLevel === 'advanced' && "İyi seviyedeyim, taktiksel becerilerim var."}
+              {selectedLevel === 'professional' && "Bu sporda uzmanım, yüksek seviyede tecrübem var."}
             </Text>
           </View>
           
@@ -443,7 +497,8 @@ const renderStars = (rating: number, size: number, activeColor: string, inactive
 export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   sportPreferences,
   themeColors,
-  onUpdatePreferences
+  updateSportPreference,
+  removeSportPreference
 }) => {
   const { sports, fetchSports } = useEventStore();
   
@@ -451,81 +506,56 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   const [sportModalVisible, setSportModalVisible] = useState(false);
   const [skillModalVisible, setSkillModalVisible] = useState(false);
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [showDebug, setShowDebug] = useState(true); // Debug modunu göster
   
   // Doğrudan state'e atanacak tercihler
   const [preferences, setPreferences] = useState<UserSportPreference[]>([]);
   const [tempPreferences, setTempPreferences] = useState<UserSportPreference[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   
-  // Direkt olarak futbol ID'si tespit etmek için değişken
-  const [futbolId, setFutbolId] = useState<string | null>(null);
-  
-  // Spor tercihini kaldır
-  const handleRemoveSport = (sportId: string) => {
-    console.log(`handleRemoveSport fonksiyonu çağrıldı: ${sportId}`);
-    const updatedPreferences = preferences.filter(pref => pref.sportId !== sportId);
-    setPreferences(updatedPreferences);
-    
-    // API'ye güncelleme gönder
-    if (onUpdatePreferences) {
-      onUpdatePreferences(updatedPreferences).then(success => {
-        if (success) {
-          console.log("Spor tercihi başarıyla kaldırıldı!");
-          // Debug modunu kapat
-          setShowDebug(false);
-        }
-      });
-    }
-  };
-  
-  // Başlangıçta verileri yükle ve filtrelemeyi uygula
+  // Her render işleminde modal durumunu loglayalım
+  console.log(`Render - Sport Modal: ${sportModalVisible}, Skill Modal: ${skillModalVisible}, Selected Sport: ${selectedSport?.name || 'none'}`);
+
+  // Başlangıçta verileri yükle
   useEffect(() => {
     if (!sports || sports.length === 0) {
       fetchSports();
     }
     
     if (sportPreferences && sportPreferences.length > 0) {
-      // Önce tüm tercihleri state'e ata
+      // Gelen tercihleri logla
+      console.log("Gelen spor tercihleri:", JSON.stringify(sportPreferences, null, 2));
+      
+      // Tercihleri state'e ata
       setPreferences([...sportPreferences]);
       setTempPreferences([...sportPreferences]);
-      
-      console.log("Mevcut spor tercihleri:");
-      
-      // Küçük harfli "futbol" tercihi varsa tespit et
-      const futbolPref = sportPreferences.find(pref => pref.sportName === "futbol");
-      if (futbolPref) {
-        console.log(`Küçük harfli futbol tespit edildi! ID: ${futbolPref.sportId}`);
-        setFutbolId(futbolPref.sportId);
-      } else {
-        console.log("Küçük harfli futbol bulunamadı.");
-        setFutbolId(null);
-      }
-      
-      // Tüm tercihleri logla
-      sportPreferences.forEach((pref, index) => {
-        console.log(`[${index}] ID: "${pref.sportId}", Spor: "${pref.sportName}"`);
-      });
     } else {
+      console.log("Spor tercihi bulunamadı");
       setPreferences([]);
       setTempPreferences([]);
     }
   }, [sportPreferences]);
   
-  // İlk yükleme algılaması için
-  useEffect(() => {
-    if (!isInitialized && preferences.length > 0) {
-      setIsInitialized(true);
-      
-      // Spor tercihlerini kontrol et ve küçük harfli futbol'u kaldır
-      const futbolPref = preferences.find(pref => pref.sportName === "futbol");
-      if (futbolPref) {
-        console.log("İlk yüklemede küçük harfli futbol kaldırılıyor...");
-        setTimeout(() => handleRemoveSport(futbolPref.sportId), 500);
-      }
+  // Spor tercihini kaldır
+  const handleRemoveSport = (sportId: string) => {
+    console.log(`Spor tercihi kaldırılıyor: ${sportId}`);
+    
+    // Önce UI'dan kaldır
+    const updatedPreferences = preferences.filter(pref => pref.sportId !== sportId);
+    setPreferences(updatedPreferences);
+    
+    // API'ye silme isteği gönder
+    if (removeSportPreference) {
+      removeSportPreference(sportId).then(success => {
+        if (success) {
+          console.log("Spor tercihi başarıyla kaldırıldı!");
+        } else {
+          console.error("Spor tercihi kaldırılırken bir hata oluştu");
+          // Hata durumunda eski tercihleri geri yükle
+          setPreferences(preferences);
+        }
+      });
     }
-  }, [preferences, isInitialized]);
+  };
   
   // Spor modalını aç
   const handleOpenSportModal = () => {
@@ -536,99 +566,118 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   
   // Spor seçildiğinde
   const handleSelectSport = (sport: Sport) => {
-    setSelectedSport(sport);
-    setSkillModalVisible(true);
+    console.log(`Seçilen spor: ${sport.name}, ID: ${sport.id}`);
+    
+    // Maksimum sayıyı kontrol et
+    if (tempPreferences.length >= MAX_SPORT_PREFERENCES && !tempPreferences.some(p => p.sportId === sport.id)) {
+      // Bu kısım aslında UI tarafında engellendiği için buraya gelmemeli
+      console.log(`Maksimum spor sayısına ulaşıldı: ${MAX_SPORT_PREFERENCES}`);
+      return;
+    }
+    
+    // Önce modali kapat, sonra sporu seç ve beceri modalini aç
+    // Bu, iki modal arasındaki geçişte oluşabilecek problemleri önler
+    setSportModalVisible(false);
+    
+    // Kısa bir süre sonra beceri modalini açalım
+    setTimeout(() => {
+      setSelectedSport(sport);
+      console.log(`Beceri seviyesi modalı açılacak: Sport=${sport.name}`);
+      setSkillModalVisible(true);
+    }, 300);
   };
-  
+
   // Beceri seviyesi seçildiğinde
   const handleSelectSkill = (level: string) => {
     if (selectedSport) {
+      console.log(`Beceri seviyesi seçildi: ${level} - ${getSkillLevelText(level)} (Spor: ${selectedSport.name})`);
+      
+      // Seçilen spor ve seviyeden tercih objesi oluştur
+      const sportPreference: UserSportPreference = {
+        sportId: selectedSport.id,
+        sportName: selectedSport.name,
+        skillLevel: level as UserSportPreference['skillLevel'],
+        icon: selectedSport.icon || getSportIcon(selectedSport.name)
+      };
+      
       // Bu spor zaten eklenmiş mi kontrol et
       const exists = tempPreferences.some(pref => pref.sportId === selectedSport.id);
+      let updatedPreferences = [...tempPreferences];
       
       if (exists) {
         // Mevcut sporu güncelle
-        const updatedPreferences = tempPreferences.map(pref => 
-          pref.sportId === selectedSport.id 
-            ? { ...pref, skillLevel: level as UserSportPreference['skillLevel'] } 
-            : pref
+        updatedPreferences = tempPreferences.map(pref => 
+          pref.sportId === selectedSport.id ? sportPreference : pref
         );
-        
-        setTempPreferences(updatedPreferences);
       } else {
         // Yeni spor ekle
-        const newSport: UserSportPreference = {
-          sportId: selectedSport.id,
-          sportName: selectedSport.name,
-          skillLevel: level as UserSportPreference['skillLevel'],
-          icon: selectedSport.icon || getSportIcon(selectedSport.name)
-        };
-        
-        setTempPreferences([...tempPreferences, newSport]);
+        updatedPreferences = [...tempPreferences, sportPreference];
       }
       
+      // Ekle veya güncelle
+      if (updateSportPreference) {
+        updateSportPreference(sportPreference).then(success => {
+          if (success) {
+            console.log("Spor tercihi başarıyla eklendi/güncellendi");
+          } else {
+            console.error("Spor tercihi eklenirken/güncellenirken bir hata oluştu");
+          }
+        });
+      }
+      
+      // UI'ı güncelle
+      setTempPreferences(updatedPreferences);
+      setPreferences(updatedPreferences);
       setHasChanges(true);
     }
     
-    // Sadece beceri modalını kapat
+    // Beceri modalını kapat, spor modalını aç
     setSkillModalVisible(false);
+    
+    // Kısa bir gecikme ile spor modalını açalım
+    setTimeout(() => {
+      // Spor modalını tekrar aç
+      setSportModalVisible(true);
+    }, 300);
+  };
+
+  // Skill modal kapatıldığında
+  const handleCloseSkillModal = () => {
+    setSkillModalVisible(false);
+    
+    // Tekrar spor modalını aç
+    setTimeout(() => {
+      setSportModalVisible(true);
+    }, 300);
   };
   
   // Modal değişiklikleri kaydet
   const handleSaveChanges = () => {
     setPreferences([...tempPreferences]);
     
+    // API'ye göndermek için doğru formatta veri hazırla - backend sadece sportId ve skillLevel bekliyor
+    const backendPreferences = tempPreferences.map(pref => ({
+      sportId: pref.sportId,
+      skillLevel: pref.skillLevel,
+      // Arayüz için ihtiyaç duyulan diğer alanlar frontend'de eklenecek
+      sportName: pref.sportName,
+      icon: pref.icon
+    }));
+    
+    console.log("Backend'e gönderilecek spor tercihleri:", JSON.stringify(backendPreferences, null, 2));
+    
     // API'ye güncelleme gönder
-    if (onUpdatePreferences) {
-      onUpdatePreferences(tempPreferences);
+    if (updateSportPreference) {
+      backendPreferences.forEach(pref => updateSportPreference(pref));
     }
     
     setSportModalVisible(false);
     setHasChanges(false);
   };
 
-  // Küçük harfli futbolu kaldıran debug bileşeni
-  const renderDebugComponent = () => {
-    if (!showDebug) return null;
-    
-    return (
-      <View style={[styles.debugContainer, { backgroundColor: '#f8d7da', borderColor: '#f5c6cb' }]}>
-        <Text style={{ color: '#721c24', fontWeight: 'bold', marginBottom: 8 }}>
-          Tespit: Küçük harfli "futbol" tercihi
-        </Text>
-        
-        {futbolId ? (
-          <>
-            <Text style={{ color: '#721c24', marginBottom: 8 }}>
-              ID: {futbolId}
-            </Text>
-            <TouchableOpacity 
-              style={styles.debugButton}
-              onPress={() => handleRemoveSport(futbolId)}
-            >
-              <Text style={styles.debugButtonText}>Küçük harfli "futbol"u kaldır</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Text style={{ color: '#721c24' }}>
-            Küçük harfli "futbol" artık listede yok.
-          </Text>
-        )}
-        
-        <TouchableOpacity 
-          style={[styles.debugCloseButton, { backgroundColor: '#e2e3e5' }]}
-          onPress={() => setShowDebug(false)}
-        >
-          <Text style={{ color: '#383d41' }}>Kapat</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
   if (!preferences || preferences.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: themeColors.cardBackground }]}>
-        {renderDebugComponent()}
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: themeColors.text }]}>Spor Tercihlerim</Text>
           <TouchableOpacity onPress={handleOpenSportModal}>
@@ -645,8 +694,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
           onClose={() => setSportModalVisible(false)}
           sports={sports || []}
           onSelectSport={handleSelectSport}
-          onSave={handleSaveChanges}
-          hasChanges={hasChanges}
           tempPreferences={tempPreferences}
           onRemoveSport={(sportId) => {
             const updatedPrefs = tempPreferences.filter(p => p.sportId !== sportId);
@@ -660,9 +707,9 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
         {selectedSport && (
           <SkillLevelSelectionModal
             visible={skillModalVisible}
-            onClose={() => setSkillModalVisible(false)}
+            onClose={handleCloseSkillModal}
             onSelectSkill={handleSelectSkill}
-            initialLevel="beginner"
+            initialLevel={tempPreferences.find(pref => pref.sportId === selectedSport.id)?.skillLevel || "beginner"}
             sportName={selectedSport.name}
             themeColors={themeColors}
           />
@@ -673,7 +720,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.cardBackground }]}>
-      {renderDebugComponent()}
       <View style={styles.headerRow}>
         <Text style={[styles.title, { color: themeColors.text }]}>Spor Tercihlerim</Text>
         <TouchableOpacity onPress={handleOpenSportModal}>
@@ -685,21 +731,19 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
         data={preferences}
         keyExtractor={(item) => item.sportId}
         renderItem={({ item }) => {
+          console.log(`Spor tercihi render ediliyor: ${item.sportId} - ${item.sportName || 'İsim yok'} - ${item.skillLevel}`);
           return (
             <View style={styles.sportItem}>
-              <TouchableOpacity onPress={() => handleRemoveSport(item.sportId)} style={styles.removeButton}>
-                <Ionicons name="close-circle" size={22} color={themeColors.textSecondary} />
-              </TouchableOpacity>
               <View style={styles.sportIconContainer}>
                 <SportIcon 
-                  sportName={item.sportName}
+                  sportName={item.sportName || "Bilinmeyen Spor"}
                   size={26} 
                   color={themeColors.accent}
                 />
               </View>
               <View style={styles.sportInfo}>
                 <Text style={[styles.sportName, { color: themeColors.text }]}>
-                  {item.sportName}
+                  {item.sportName || "Bilinmeyen Spor"}
                 </Text>
                 <View style={styles.skillContainer}>
                   <Text style={[styles.skillLevel, { color: themeColors.textSecondary }]}>
@@ -722,8 +766,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
         onClose={() => setSportModalVisible(false)}
         sports={sports || []}
         onSelectSport={handleSelectSport}
-        onSave={handleSaveChanges}
-        hasChanges={hasChanges}
         tempPreferences={tempPreferences}
         onRemoveSport={(sportId) => {
           const updatedPrefs = tempPreferences.filter(p => p.sportId !== sportId);
@@ -737,7 +779,7 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
       {selectedSport && (
         <SkillLevelSelectionModal
           visible={skillModalVisible}
-          onClose={() => setSkillModalVisible(false)}
+          onClose={handleCloseSkillModal}
           onSelectSkill={handleSelectSkill}
           initialLevel={tempPreferences.find(pref => pref.sportId === selectedSport.id)?.skillLevel || "beginner"}
           sportName={selectedSport.name}
@@ -782,7 +824,6 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
-    paddingRight: 28,
     position: 'relative',
   },
   sportIconContainer: {
@@ -840,6 +881,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   modalDragIndicator: {
+    margin: 10,
     width: 40,
     height: 5,
     backgroundColor: '#CCCCCC',
@@ -865,7 +907,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
+    borderRadius: 8,
+    marginBottom: 4,
   },
   sportListItemText: {
     fontSize: 16,
@@ -951,29 +996,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
-  debugContainer: {
-    padding: 12,
+  selectedItemBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginRight: 6,
+    flexDirection: 'row', 
+    alignItems: 'center'
+  },
+  selectedItemText: {
+    fontSize: 12,
+    fontWeight: '500'
+  },
+  limitWarning: {
+    padding: 10,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-  },
-  debugButton: {
-    backgroundColor: '#dc3545',
-    padding: 8,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  debugButtonText: {
-    color: 'white',
-    fontWeight: 'bold'
-  },
-  debugCloseButton: {
-    padding: 6,
-    borderRadius: 4,
-    alignItems: 'center',
-    position: 'absolute',
-    right: 8,
-    top: 8
+    flexDirection: 'row',
+    alignItems: 'center'
   },
 }); 

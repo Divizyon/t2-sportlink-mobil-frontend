@@ -28,15 +28,14 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     friendsSummary,
     isLoading,
     fetchUserProfile,
-    updateSportPreferences
+    updateSportPreference,
+    removeSportPreference
   } = useProfileStore();
   
   // Güncel konum bilgisini al
   const { 
     lastLocation, 
-    locationStatus, 
-    refreshLocation,
-    getLastLocation
+    initLocation 
   } = useMapsStore();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -59,7 +58,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     try {
       await fetchUserProfile();
       // Konum bilgisini de yenile
-      await refreshLocation();
+      await initLocation();
     } catch (error) {
       console.error('Profil yenilenirken hata:', error);
     } finally {
@@ -71,7 +70,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
   const handleRefreshLocation = async () => {
     setIsRefreshingLocation(true);
     try {
-      await refreshLocation();
+      await initLocation();
     } catch (error) {
       console.error('Konum güncellenirken hata:', error);
     } finally {
@@ -155,7 +154,8 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
             accent: theme.colors.accent
           }}
           onEditSports={handleEditSports}
-          onUpdatePreferences={updateSportPreferences}
+          updateSportPreference={updateSportPreference}
+          removeSportPreference={removeSportPreference}
         />
         
         {/* Varsayılan Konum Bilgisi */}
@@ -208,7 +208,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
                   {lastLocation.latitude.toFixed(6)}, {lastLocation.longitude.toFixed(6)}
                 </Text>
                 <Text style={[styles.timestampText, { color: theme.colors.textSecondary }]}>
-                  Son güncelleme: {new Date(lastLocation.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                  Son güncelleme: {new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
             </View>

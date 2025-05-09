@@ -85,7 +85,8 @@ interface ProfileState {
   fetchUserProfile: () => Promise<void>;
   updateUserInfo: (info: Partial<ProfileState['userInfo']>) => Promise<boolean>;
   updateProfilePicture: (imageUri: string) => Promise<boolean>;
-  updateSportPreferences: (preferences: UserSportPreference[]) => Promise<boolean>;
+  updateSportPreference: (preference: UserSportPreference) => Promise<boolean>;
+  removeSportPreference: (sportId: string) => Promise<boolean>;
   updateDefaultLocation: (location: UserLocation) => Promise<boolean>;
   updateProfileSettings: (settings: Partial<ProfileSettings>) => Promise<boolean>;
   updateUserLocation: (location: UserLocation) => Promise<boolean>;
@@ -275,37 +276,92 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  // Spor tercihlerini güncelle
-  updateSportPreferences: async (preferences) => {
+  // Spor tercihlerini güncelle - tek spor ekleme/güncelleme
+  updateSportPreference: async (preference) => {
     try {
       set({ isUpdating: true, error: null, successMessage: null });
       
+      console.log("Eklenecek/güncellenecek spor tercihi:", JSON.stringify(preference, null, 2));
+      
       // API isteği kimliği oluştur
       const apiRequestId = useApiStore.getState().addRequest({
-        url: '/users/profile/sports',
+        url: '/users/profile/sport',
         method: 'PUT'
       });
       
       // API servisini çağır
-      const response = await userProfileService.updateSportPreferences(preferences);
+      const response = await userProfileService.updateSportPreferences(preference);
       
       // API isteği tamamlandı
       useApiStore.getState().completeRequest(apiRequestId, 200);
       
       if (response.success && response.data) {
-        // State'i güncelle
+        console.log("Backend'den dönen spor tercihleri:", JSON.stringify(response.data.sportPreferences, null, 2));
+        
+        // Eksik alan kontrolü yap
+        const validatedPreferences = response.data.sportPreferences.map(pref => ({
+          ...pref,
+          // Eğer sportName yoksa, sports listesinden bul veya "Bilinmeyen Spor" kullan
+          sportName: pref.sportName || "Bilinmeyen Spor"
+        }));
+        
+        // State'i güncelle - backend'den dönen tüm tercihleri kullan
         set({
-          sportPreferences: response.data.sportPreferences,
+          sportPreferences: validatedPreferences,
           isUpdating: false,
-          successMessage: response.message || 'Spor tercihleri başarıyla güncellendi.'
+          successMessage: response.message || 'Spor tercihi başarıyla güncellendi.'
         });
         
         return true;
       } else {
-        throw new Error(response.error || 'Spor tercihleri güncellenemedi');
+        throw new Error(response.error || 'Spor tercihi güncellenemedi');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Spor tercihleri güncellenemedi';
+      const errorMessage = error instanceof Error ? error.message : 'Spor tercihi güncellenemedi';
+      
+      // API isteği başarısız
+      useApiStore.getState().setGlobalError(errorMessage);
+      
+      set({
+        error: errorMessage,
+        isUpdating: false
+      });
+      
+      return false;
+    }
+  },
+
+  // Spor tercihini kaldır
+  removeSportPreference: async (sportId) => {
+    try {
+      set({ isUpdating: true, error: null, successMessage: null });
+      
+      // API isteği kimliği oluştur
+      const apiRequestId = useApiStore.getState().addRequest({
+        url: `/users/profile/sport/${sportId}`,
+        method: 'DELETE'
+      });
+      
+      // API servisini çağır
+      const response = await userProfileService.removeSportPreference(sportId);
+      
+      // API isteği tamamlandı
+      useApiStore.getState().completeRequest(apiRequestId, 200);
+      
+      if (response.success && response.data) {
+        // State'i güncelle - backend'den dönen tüm tercihleri kullan
+        set({
+          sportPreferences: response.data.sportPreferences,
+          isUpdating: false,
+          successMessage: response.message || 'Spor tercihi başarıyla kaldırıldı.'
+        });
+        
+        return true;
+      } else {
+        throw new Error(response.error || 'Spor tercihi kaldırılamadı');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Spor tercihi kaldırılamadı';
       
       // API isteği başarısız
       useApiStore.getState().setGlobalError(errorMessage);

@@ -36,7 +36,7 @@ export const notificationService = {
    */
   async markAsRead(notificationId: string): Promise<ApiResponse<Notification>> {
     return safeApiCall<Notification>(
-      apiClient.put(`/notifications/${notificationId}/read`),
+      apiClient.patch(`/notifications/${notificationId}/read`),
       'Bildirim okundu olarak işaretlenirken bir hata oluştu'
     );
   },
@@ -46,7 +46,7 @@ export const notificationService = {
    */
   async markAllAsRead(): Promise<ApiResponse<{ success: boolean; message: string }>> {
     return safeApiCall<{ success: boolean; message: string }>(
-      apiClient.put('/notifications/read-all'),
+      apiClient.patch('/notifications/read-all'),
       'Tüm bildirimler okundu olarak işaretlenirken bir hata oluştu'
     );
   },

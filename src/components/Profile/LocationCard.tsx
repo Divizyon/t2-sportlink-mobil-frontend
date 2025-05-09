@@ -81,58 +81,11 @@ export const LocationCard: React.FC<LocationCardProps> = ({
             <Ionicons name="add-circle-outline" size={24} color={themeColors.accent} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.emptyText, { color: themeColors.textSecondary }]}>
-          Henüz konum bilgisi eklenmemiş. Varsayılan konumunuzu belirlemek için "+" simgesine tıklayın.
-        </Text>
+       
       </View>
     );
   }
 
-  return (
-    <View style={[styles.container, { backgroundColor: themeColors.cardBackground }]}>
-      <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: themeColors.text }]}>Konum Bilgim</Text>
-        <TouchableOpacity onPress={onEditLocation}>
-          <Ionicons name="create-outline" size={24} color={themeColors.accent} />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.locationContainer}>
-        <View style={[styles.locationIcon, { backgroundColor: themeColors.accent }]}>
-          <Ionicons name="location" size={24} color="white" />
-        </View>
-        <View style={styles.locationInfo}>
-          {isLoadingAddress ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={themeColors.accent} />
-              <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>
-                Adres bilgisi alınıyor...
-              </Text>
-            </View>
-          ) : (
-            <>
-              <Text style={[styles.locationName, { color: themeColors.text }]}>
-                {displayAddress || location.locationName || 'Belirtilmemiş Konum'}
-              </Text>
-              <Text style={[styles.coordinates, { color: themeColors.textSecondary }]}>
-                {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
-              </Text>
-            </>
-          )}
-        </View>
-      </View>
-      
-      <TouchableOpacity 
-        style={[styles.mapButton, { borderColor: themeColors.accent }]} 
-        onPress={onEditLocation}
-      >
-        <Ionicons name="map-outline" size={16} color={themeColors.accent} />
-        <Text style={[styles.mapButtonText, { color: themeColors.accent }]}>
-          Konumu Düzenle
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
 };
 
 const styles = StyleSheet.create({

@@ -59,11 +59,11 @@ export const userProfileService = {
             friendsCount: userData.stats.friendsCount
           },
           sportPreferences: Array.isArray(userData.user_sports) 
-            ? userData.user_sports.map((sport: any) => ({
-                sportId: sport.sport_id || sport.id || '',
-                sportName: sport.sport_name || sport.name || '',
-                skillLevel: sport.skill_level || 'beginner',
-                icon: sport.icon || undefined,
+            ? userData.user_sports.map((sportData: any) => ({
+                sportId: sportData.sport_id,
+                sportName: sportData.sport ? sportData.sport.name : 'Bilinmeyen Spor',
+                skillLevel: sportData.skill_level || 'beginner',
+                icon: sportData.sport ? sportData.sport.icon : undefined,
               }))
             : [],
           defaultLocation: userData.default_location_latitude && userData.default_location_longitude ? {
@@ -73,6 +73,8 @@ export const userProfileService = {
           } : undefined,
           friends: Array.isArray(userData.friends) ? userData.friends : []
         };
+        
+        console.log('Spor tercihleri dönüştürüldü:', transformedData.sportPreferences);
         
         return {
           success: true,
@@ -159,17 +161,85 @@ export const userProfileService = {
   },
 
   /**
-   * Spor tercihlerini günceller
+   * Tek bir spor tercihi ekler veya günceller
    */
-  updateSportPreferences: async (preferences: UserSportPreference[]): Promise<ApiResponse<{ sportPreferences: UserSportPreference[] }>> => {
+  updateSportPreferences: async (preference: UserSportPreference): Promise<ApiResponse<{ sportPreferences: UserSportPreference[] }>> => {
     try {
-      const response = await apiClient.put('/users/profile/sports', { sportPreferences: preferences });
+      // Tercihi backend formatına dönüştür - sadece sportId ve skillLevel gönder
+      const backendPreference = {
+        sportId: preference.sportId,
+        skillLevel: preference.skillLevel
+      };
+      
+      console.log('Backend\'e gönderilecek spor tercihi:', JSON.stringify(backendPreference, null, 2));
+      
+      // API'ye sadece sportId ve skillLevel bilgilerini gönder
+      const response = await apiClient.post('/users/profile/sport-interest', backendPreference);
+      
+      // Backend yanıtını frontend formatına dönüştür
+      if (response.data.success && response.data.data && response.data.data.user_sports) {
+        // Backend'den dönen spor tercihlerini dönüştür
+        const sportPreferences = response.data.data.user_sports.map((sportData: any) => ({
+          sportId: sportData.sport_id,
+          sportName: sportData.sport ? sportData.sport.name : 'Bilinmeyen Spor',
+          skillLevel: sportData.skill_level || 'beginner',
+          icon: sportData.sport ? sportData.sport.icon : undefined,
+        }));
+        
+        console.log('Backend\'den dönen spor tercihleri:', sportPreferences);
+        
+        return {
+          success: true,
+          data: { sportPreferences },
+          message: response.data.message || 'Spor tercihi başarıyla güncellendi.'
+        };
+      }
+      
       return response.data;
     } catch (error) {
-      console.error('Spor tercihleri güncelleme hatası:', error);
+      console.error('Spor tercihi güncelleme hatası:', error);
       return {
         success: false,
-        error: 'Spor tercihleriniz güncellenemedi. Lütfen daha sonra tekrar deneyin.'
+        error: 'Spor tercihiniz güncellenemedi. Lütfen daha sonra tekrar deneyin.'
+      };
+    }
+  },
+
+  /**
+   * Bir spor tercihini kaldırır
+   */
+  removeSportPreference: async (sportId: string): Promise<ApiResponse<{ sportPreferences: UserSportPreference[] }>> => {
+    try {
+      console.log('Kaldırılacak spor tercihi ID:', sportId);
+      
+      // API'ye sportId gönder
+      const response = await apiClient.delete(`/users/profile/sport-interest/${sportId}`);
+      
+      // Backend yanıtını frontend formatına dönüştür
+      if (response.data.success && response.data.data && response.data.data.user_sports) {
+        // Backend'den dönen spor tercihlerini dönüştür
+        const sportPreferences = response.data.data.user_sports.map((sportData: any) => ({
+          sportId: sportData.sport_id,
+          sportName: sportData.sport ? sportData.sport.name : 'Bilinmeyen Spor',
+          skillLevel: sportData.skill_level || 'beginner',
+          icon: sportData.sport ? sportData.sport.icon : undefined,
+        }));
+        
+        console.log('Backend\'den spor tercihi kaldırıldıktan sonra dönen tercihler:', sportPreferences);
+        
+        return {
+          success: true,
+          data: { sportPreferences },
+          message: response.data.message || 'Spor tercihi başarıyla kaldırıldı.'
+        };
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Spor tercihi kaldırma hatası:', error);
+      return {
+        success: false,
+        error: 'Spor tercihiniz kaldırılamadı. Lütfen daha sonra tekrar deneyin.'
       };
     }
   },
