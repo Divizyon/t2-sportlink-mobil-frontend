@@ -546,12 +546,12 @@ export const EventDetailScreen: React.FC = () => {
             </Text>
           
             <View style={[styles.statusBadge, { 
-              backgroundColor: currentEvent.status === 'active' ? theme.colors.accent + '20' : getStatusColor(currentEvent.status, theme.colors)
+              backgroundColor: currentEvent.status === 'active' ? theme.colors.accent + '20' : getStatusColor(currentEvent.status, currentEvent.event_date, theme.colors)
             }]}>
               <Text style={[styles.statusText, {
                 color: currentEvent.status === 'active' ? theme.colors.accent : 'white'
               }]}>
-                {getStatusText(currentEvent.status)}
+                {getStatusText(currentEvent.status, currentEvent.event_date)}
               </Text>
             </View>
           </View>
@@ -799,26 +799,52 @@ export const EventDetailScreen: React.FC = () => {
 };
 
 // Etkinlik durumuna göre renk
-const getStatusColor = (status: string, colors: any) => {
+const getStatusColor = (status: string, eventDate: string | undefined, colors: any) => {
+  // Tarihi geçmiş durumu için
+  if (eventDate) {
+    const eventDateObj = new Date(eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (eventDateObj < today && status === 'active') {
+      return colors.warning; // Uyarı rengi (turuncu gibi)
+    }
+  }
+  
   switch (status) {
     case 'active':
-      return colors.success;
+      return colors.accent;
+    case 'passive':
+      return colors.textSecondary; // Pasif rengi (gri gibi)
     case 'canceled':
       return colors.error;
     case 'completed':
-      return colors.info;
+      return colors.success;
     case 'draft':
-      return colors.warning;
+      return colors.textSecondary;
     default:
-      return colors.secondary;
+      return colors.text;
   }
 };
 
 // Etkinlik durumuna göre metin
-const getStatusText = (status: string) => {
+const getStatusText = (status: string, eventDate?: string) => {
+  // Etkinlik tarihi geçmiş mi kontrol et
+  if (eventDate) {
+    const eventDateObj = new Date(eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Bugünün başlangıcı için saat ayarla
+    
+    if (eventDateObj < today && status === 'active') {
+      return 'Tarihi Geçmiş';
+    }
+  }
+  
   switch (status) {
     case 'active':
       return 'Aktif';
+    case 'passive':
+      return 'Pasif';
     case 'canceled':
       return 'İptal Edildi';
     case 'completed':
@@ -828,7 +854,7 @@ const getStatusText = (status: string) => {
     default:
       return status;
   }
-}
+};
 
 const styles = StyleSheet.create({
   container: {

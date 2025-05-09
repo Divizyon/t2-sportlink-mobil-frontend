@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { Event } from '../../types/eventTypes/event.types';
-import { formatDate, formatTimeRange } from '../../utils/dateUtils';
+import { formatDate, formatTimeRange, isDatePassed } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -157,6 +157,11 @@ export const EventCard: React.FC<EventCardProps> = ({
     return fullName || username || 'Kullanıcı';
   };
   
+  // Tarihi geçmiş veya pasif etkinlik mi kontrol et
+  const isExpiredEvent = safeEvent.event_date && isDatePassed(safeEvent.event_date) && safeEvent.status === 'active';
+  const isPassiveEvent = safeEvent.status === 'passive';
+  const shouldHighlight = isExpiredEvent || isPassiveEvent;
+  
   return (
     <TouchableOpacity 
       style={[
@@ -165,10 +170,12 @@ export const EventCard: React.FC<EventCardProps> = ({
           backgroundColor: theme.colors.cardBackground || theme.colors.background,
           borderColor: safeEvent.is_private 
             ? theme.colors.accent 
-            : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            : getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) + '40',
           borderWidth: safeEvent.is_private ? 2 : 1,
           shadowColor: safeEvent.is_private ? theme.colors.accent : '#000',
           shadowOpacity: safeEvent.is_private ? 0.1 : 0.05,
+          // Pasif veya tarihi geçmiş etkinlikler için opaklığı azalt
+          opacity: shouldHighlight ? 0.8 : 1,
         },
         style
       ]} 
@@ -183,6 +190,22 @@ export const EventCard: React.FC<EventCardProps> = ({
           color={theme.colors.accent} 
         />
       </View>
+      
+      {/* Pasif veya Tarihi Geçmiş Badge */}
+      {shouldHighlight && (
+        <View style={[
+          styles.expiredBadge, 
+          { 
+            backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) 
+          }
+        ]}>
+          <Ionicons 
+            name={getStatusIcon(safeEvent.status, safeEvent.event_date)} 
+            size={12} 
+            color="white" 
+          />
+        </View>
+      )}
       
       {/* Header */}
       <View style={styles.header}>
@@ -199,13 +222,19 @@ export const EventCard: React.FC<EventCardProps> = ({
         <View style={[
           styles.statusBadge, 
           { 
-            backgroundColor: theme.colors.accent + '20',
-            borderColor: safeEvent.status === 'active' ? theme.colors.accent : theme.colors.error, 
+            backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) + '20',
+            borderColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), 
           }
         ]}>
-          <View style={[styles.statusDot, { backgroundColor: safeEvent.status === 'active' ? theme.colors.accent : theme.colors.error }]} />
-          <Text style={[styles.statusText, { color: safeEvent.status === 'active' ? theme.colors.accent : theme.colors.error }]}>
-            {getStatusText(safeEvent.status)}
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) }]} />
+          <Ionicons 
+            name={getStatusIcon(safeEvent.status, safeEvent.event_date)} 
+            size={12} 
+            color={getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors)} 
+            style={{marginRight: 4}} 
+          />
+          <Text style={[styles.statusText, { color: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), fontWeight: '700' }]}>
+            {getStatusText(safeEvent.status, safeEvent.event_date)}
           </Text>
         </View>
         
@@ -314,25 +343,41 @@ export const EventCard: React.FC<EventCardProps> = ({
   );
 };
 
-const getStatusColor = (status: string, colors: any) => {
+// Etkinlik durumuna göre renk belirle
+const getStatusColor = (status: string, eventDate: string | undefined, colors: any) => {
+  // Etkinlik tarihi geçmiş mi kontrol et
+  if (eventDate && isDatePassed(eventDate) && status === 'active') {
+    return colors.warning; // Uyarı rengi (turuncu gibi)
+  }
+  
   switch (status) {
     case 'active':
-      return colors.success;
+      return colors.accent;
+    case 'passive':
+      return colors.textSecondary; // Pasif rengi (gri gibi)
     case 'canceled':
       return colors.error;
     case 'completed':
-      return colors.info;
+      return colors.success;
     case 'draft':
-      return colors.warning;
+      return colors.textSecondary;
     default:
-      return colors.secondary;
+      return colors.text;
   }
 };
 
-const getStatusText = (status: string) => {
+// Etkinlik durumuna göre metin belirle
+const getStatusText = (status: string, eventDate?: string) => {
+  // Etkinlik tarihi geçmiş mi kontrol et
+  if (eventDate && isDatePassed(eventDate) && status === 'active') {
+    return 'Tarihi Geçmiş';
+  }
+  
   switch (status) {
     case 'active':
       return 'Aktif';
+    case 'passive':
+      return 'Pasif';
     case 'canceled':
       return 'İptal Edildi';
     case 'completed':
@@ -341,6 +386,29 @@ const getStatusText = (status: string) => {
       return 'Taslak';
     default:
       return status;
+  }
+};
+
+// Status badge ikonu belirle
+const getStatusIcon = (status: string, eventDate?: string) => {
+  // Tarihi geçmiş etkinlikler için
+  if (eventDate && isDatePassed(eventDate) && status === 'active') {
+    return 'time-outline';
+  }
+  
+  switch (status) {
+    case 'active':
+      return 'checkmark-circle-outline';
+    case 'passive':
+      return 'eye-off-outline';
+    case 'canceled':
+      return 'close-circle-outline';
+    case 'completed':
+      return 'trophy-outline';
+    case 'draft':
+      return 'document-outline';
+    default:
+      return 'help-circle-outline';
   }
 };
 
@@ -536,5 +604,18 @@ const styles = StyleSheet.create({
   creatorName: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  expiredBadge: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });

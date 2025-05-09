@@ -194,6 +194,15 @@
   - [x] API istek format uyumsuzluğu çözümü
   - [x] Davet kodu doğrulama hatası çözümü
 - [x] Etkinlik arama/filtreleme
+  - [x] Spor kategorisine göre filtreleme
+  - [x] Tarihe göre filtreleme
+  - [x] Pasif etkinlikleri gösterme/gizleme seçeneği
+  - [x] Tarihi geçmiş etkinlikleri gösterme/gizleme seçeneği
+  - [x] Etkinlik listeleme sayfasında kolay erişilebilir filtreleme butonu eklenmesi
+  - [x] EventCard bileşeninde etkinlik durumu (aktif, pasif, iptal, tamamlandı, taslak) görsel gösterimi
+  - [x] EventCard bileşeninde tarihi geçmiş etkinlikler için özel durum gösterimi
+  - [x] Pasif ve tarihi geçmiş etkinlikler için ek belirteç (badge) eklenmesi
+  - [x] API'den tüm etkinlik türlerini (aktif, pasif, tamamlanmış) çekme desteği
 - [x] Google Maps entegrasyonu
   - [x] Haritada etkinlik görüntüleme
   - [x] Etkinliğe mesafe hesaplama

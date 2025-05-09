@@ -79,4 +79,23 @@ export const getRelativeDate = (dateString: string): string => {
   }
   
   return formatDate(dateString);
+};
+
+/**
+ * Bir tarihin geçmiş olup olmadığını kontrol eder
+ * @param dateString ISO formatında tarih
+ * @returns Boolean - tarihin geçip geçmediği
+ */
+export const isDatePassed = (dateString: string): boolean => {
+  if (!dateString) return false;
+  
+  const date = new Date(dateString);
+  const today = new Date();
+  
+  // Tarih bilgilerini sıfırla (sadece gün/ay/yıl karşılaştırması yapmak için)
+  const dateWithoutTime = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
+  // Tarih bugünden önceyse (geçmişse) true döndür
+  return dateWithoutTime < todayWithoutTime;
 }; 

@@ -48,6 +48,10 @@ export const EventsScreen: React.FC = () => {
 
   // Filtre durumu
   const [activeSportId, setActiveSportId] = useState<string | null>(null);
+  
+  // Status filtresi (pasif etkinlikleri de gösterme seçeneği)
+  const [showPassiveEvents, setShowPassiveEvents] = useState<boolean>(true);
+  const [showExpiredEvents, setShowExpiredEvents] = useState<boolean>(true);
 
   // Arama durumu
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -101,6 +105,32 @@ export const EventsScreen: React.FC = () => {
     longitudeDelta: 0.5,
   };
 
+  // Filtreleme fonksiyonu - etkinliklerin son halini filtreler
+  const applyFilters = (eventsToFilter: Event[]) => {
+    if (!eventsToFilter) return [];
+    
+    // Önce spor filtresi
+    let filteredEvents = eventsToFilter;
+    
+    // Pasif etkinlikleri gösterme filtreleri
+    if (!showPassiveEvents) {
+      filteredEvents = filteredEvents.filter(event => event.status !== 'passive' as any);
+    }
+    
+    // Tarihi geçmiş etkinlikleri gösterme
+    if (!showExpiredEvents) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      filteredEvents = filteredEvents.filter(event => {
+        const eventDate = new Date(event.event_date);
+        return eventDate >= today || event.status !== 'active';
+      });
+    }
+    
+    return filteredEvents;
+  };
+  
   // Sıralanmış etkinlikler - En yeni oluşturulanlar önce gösterilir
   const sortedEvents = useMemo(() => {
     // İlk olarak filtrelenecek etkinlikleri belirle
@@ -112,39 +142,25 @@ export const EventsScreen: React.FC = () => {
     } else if (!events || events.length === 0) {
       return [];
     } else {
+      // Normal durumda tüm etkinlikleri kullan
       filteredEvents = [...events];
+      
+      // Spor ID'ye göre filtreleme
+      if (activeSportId) {
+        filteredEvents = filteredEvents.filter(event => event.sport_id === activeSportId);
+      }
     }
-
-    // Tarih filtresi aktifse etkinlikleri yıl ve ay filtresine göre filtrele
-    if (isDateFilterActive) {
-      // Hem 2025 hem de 2026 için seçilen ayları dikkate al
-      const filteredByYear2025 = selectedMonths2025.length > 0 ? filteredEvents.filter(event => {
-        const eventDate = new Date(event.event_date);
-        const eventYear = eventDate.getFullYear();
-        const eventMonth = eventDate.getMonth();
-
-        return eventYear === 2025 && selectedMonths2025.includes(eventMonth);
-      }) : [];
-
-      const filteredByYear2026 = selectedMonths2026.length > 0 ? filteredEvents.filter(event => {
-        const eventDate = new Date(event.event_date);
-        const eventYear = eventDate.getFullYear();
-        const eventMonth = eventDate.getMonth();
-
-        return eventYear === 2026 && selectedMonths2026.includes(eventMonth);
-      }) : [];
-
-      // İki yılın filtrelenmiş sonuçlarını birleştir
-      filteredEvents = [...filteredByYear2025, ...filteredByYear2026];
-    }
-
-    // Tarihe göre sırala (en yeni oluşturulanlar önce)
+    
+    // Filtrelemeleri uygula
+    filteredEvents = applyFilters(filteredEvents);
+    
+    // Tarihe göre sırala - Yaklaşan etkinlikler önce
     return filteredEvents.sort((a, b) => {
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-      return dateB.getTime() - dateA.getTime();
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
     });
-  }, [events, searchResults, isSearchActive, isDateFilterActive, selectedMonths2025, selectedMonths2026]);
+  }, [events, activeSportId, searchResults, isSearchActive, showPassiveEvents, showExpiredEvents]);
 
   // Component mount edildiğinde etkinlikleri ve spor kategorilerini getir
   useEffect(() => {
@@ -220,7 +236,7 @@ export const EventsScreen: React.FC = () => {
 
   // Etkinlikleri yükle
   const loadEvents = async () => {
-    let params: any = { page: 1, limit: 20 };
+    let params: any = { page: 1, limit: 20, status: 'all' };
 
     // Spor ID'ye göre filtreleme
     if (activeSportId) {
@@ -712,6 +728,57 @@ export const EventsScreen: React.FC = () => {
     );
   };
 
+  // Filtre sekmelerini render et
+  const renderFilterOptions = () => {
+    return (
+      <View style={styles.filterOptionsContainer}>
+        <TouchableOpacity
+          style={[
+            styles.filterOption,
+            { backgroundColor: showPassiveEvents ? theme.colors.accent + '20' : theme.colors.light }
+          ]}
+          onPress={() => setShowPassiveEvents(!showPassiveEvents)}
+        >
+          <Ionicons 
+            name={showPassiveEvents ? "eye-outline" : "eye-off-outline"} 
+            size={16} 
+            color={showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary} 
+          />
+          <Text 
+            style={[
+              styles.filterOptionText, 
+              { color: showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary }
+            ]}
+          >
+            Pasif Etkinlikler
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.filterOption,
+            { backgroundColor: showExpiredEvents ? theme.colors.accent + '20' : theme.colors.light }
+          ]}
+          onPress={() => setShowExpiredEvents(!showExpiredEvents)}
+        >
+          <Ionicons 
+            name={showExpiredEvents ? "time-outline" : "calendar-outline"} 
+            size={16} 
+            color={showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary} 
+          />
+          <Text 
+            style={[
+              styles.filterOptionText, 
+              { color: showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary }
+            ]}
+          >
+            Geçmiş Etkinlikler
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
@@ -835,6 +902,9 @@ export const EventsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Filtre Seçenekleri */}
+      {renderFilterOptions()}
     </SafeAreaView>
   );
 };
@@ -1093,5 +1163,27 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
+  },
+  filterOptionsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    marginRight: 8,
+  },
+  filterOptionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
 });
