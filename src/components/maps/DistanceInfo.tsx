@@ -42,7 +42,6 @@ export const DistanceInfo: React.FC<DistanceInfoProps> = ({
   // Effect hook to calculate distance
   useEffect(() => {
     if (origin && destination) {
-      console.log('DistanceInfo - origin ve destination değerleri bulundu, hesaplama başlatılıyor');
       handleCalculateDistance();
     } else {
       console.warn('DistanceInfo - origin veya destination değerleri eksik');
@@ -52,7 +51,6 @@ export const DistanceInfo: React.FC<DistanceInfoProps> = ({
   // Effect to call onCalculated callback
   useEffect(() => {
     if (lastCalculatedDistance && onCalculated) {
-      console.log('DistanceInfo - hesaplama tamamlandı, callback çağrılıyor');
       onCalculated(lastCalculatedDistance);
     }
   }, [lastCalculatedDistance, onCalculated]);
@@ -67,7 +65,6 @@ export const DistanceInfo: React.FC<DistanceInfoProps> = ({
 
     // Hata varsa ve otomatik retry limiti aşılmadıysa
     if (distanceError && retryCount < 2 && !isManualRetry) {
-      console.log(`DistanceInfo - Otomatik yeniden deneme (${retryCount+1}/2)`);
       const retryTimer = setTimeout(() => {
         handleCalculateDistance();
         setRetryCount(prev => prev + 1);

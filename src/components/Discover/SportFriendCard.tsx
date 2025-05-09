@@ -79,22 +79,7 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
     checkStatus();
   }, [friend.id]);
 
-  // İstek durumunu gösteren bildirim ekleyelim
-  useEffect(() => {
-    // Arkadaşlık isteği gönderildiğinde veya iptal edildiğinde kullanıcıya bilgi ver
-    if (message) {
-      console.log("Arkadaşlık durumu mesajı:", message);
-      // Burada bir Toast bildirim gösterilebilir (henüz implementasyonu yok)
-    }
-  }, [message]);
 
-  // Hata durumlarını izleyelim
-  useEffect(() => {
-    if (error) {
-      console.log("Arkadaşlık durumu hatası:", error);
-      // Burada bir hata bildirimi gösterilebilir
-    }
-  }, [error]);
 
   // Arkadaşlık isteği gönder
   const handleAddFriend = async () => {
@@ -103,9 +88,7 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
       const success = await sendFriendRequest(friend.id);
       if (success) {
         setFriendshipStatus('sent');
-        console.log("Arkadaşlık isteği başarıyla gönderildi:", friend.first_name);
       } else {
-        console.log("Arkadaşlık isteği gönderilemedi:", error);
       }
     } catch (err) {
       console.error("Arkadaşlık isteği gönderirken hata:", err);
@@ -126,7 +109,6 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
       const success = await cancelFriendRequest(friend.id);
       if (success) {
         setFriendshipStatus('none');
-        console.log("Arkadaşlık isteği başarıyla iptal edildi:", friend.first_name);
       } else {
         console.log("Arkadaşlık isteği iptal edilemedi:", error);
       }
@@ -244,26 +226,7 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
 
   // Farklı formatlardaki spor verilerini standardize et ve getir
   const getSportsList = () => {
-    // API verilerinin yapısını kontrol et
-    console.log("Friend spor verileri:", {
-      id: friend.id,
-      name: `${friend.first_name} ${friend.last_name}`,
-      interests: friend.interests ? friend.interests.length : 0,
-      user_sports: friend.user_sports ? friend.user_sports.length : 0,
-      sports: friend.sports ? friend.sports.length : 0
-    });
 
-    // Detaylı debug - user_sports yapısı
-    if (friend.user_sports && friend.user_sports.length > 0) {
-      console.log("User sports detayları:", 
-        friend.user_sports.map(s => ({
-          sport_id: s.sport_id,
-          skill: s.skill_level,
-          sport_name: s.sport?.name || "bilinmiyor",
-          sport_icon: s.sport?.icon || "bilinmiyor"
-        }))
-      );
-    }
     
     // 1. Öncelikle interests alanını kontrol et - en basit format
     if (friend.interests && friend.interests.length > 0) {

@@ -361,7 +361,6 @@ const SkillLevelSelectionModal: React.FC<SkillLevelSelectionModalProps> = ({
   sportName,
   themeColors
 }) => {
-  console.log(`SkillLevelSelectionModal: visible=${visible}, sportName=${sportName}, initialLevel=${initialLevel}`);
   
   const [selectedLevel, setSelectedLevel] = useState<string>(initialLevel);
   const [selectedStars, setSelectedStars] = useState<number>(getSkillStars(initialLevel));
@@ -369,7 +368,6 @@ const SkillLevelSelectionModal: React.FC<SkillLevelSelectionModalProps> = ({
   useEffect(() => {
     if (visible) {
       // Modal açıldığında seviyeyi başlangıç değerine ayarla
-      console.log(`Beceri seviyesi modalı açıldı, seviye: ${initialLevel}`);
       setSelectedLevel(initialLevel);
       setSelectedStars(getSkillStars(initialLevel));
     }
@@ -385,13 +383,11 @@ const SkillLevelSelectionModal: React.FC<SkillLevelSelectionModalProps> = ({
 
   // Yıldız seçildiğinde
   const handleStarPress = (starCount: number) => {
-    console.log(`Yıldız seçildi: ${starCount}`);
     setSelectedStars(starCount);
     setSelectedLevel(getLevelFromStars(starCount));
   };
 
   const handleSave = () => {
-    console.log(`Beceri seviyesi kaydediliyor: ${selectedLevel}`);
     onSelectSkill(selectedLevel);
   };
 

@@ -17,7 +17,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onPress })
   const handleAddFacility = () => {
     setIsFacilityAdded(true);
     // Burada API'ye istek gönderme işlemi yapılacak
-    console.log('Tesis favorilere eklendi: ', facility.name);
   };
 
   const handleRemoveFacility = () => {
@@ -27,7 +26,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onPress })
   const confirmRemoveFacility = () => {
     setIsFacilityAdded(false);
     // Burada API'ye favori kaldırıldığını bildiren istek gönderilecek
-    console.log('Tesis favorilerden çıkarıldı: ', facility.name);
     setIsModalVisible(false);
   };
 

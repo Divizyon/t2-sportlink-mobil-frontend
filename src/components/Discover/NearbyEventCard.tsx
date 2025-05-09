@@ -102,7 +102,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
       try {
         // Kullanıcının konumu varsa, gerçek mesafeyi hesapla
         if (lastLocation) {
-          console.log('Konum bilgisi bulundu. Mesafe hesaplanıyor...');
           const origin = `${lastLocation.latitude},${lastLocation.longitude}`;
           const destination = `${event.location_latitude},${event.location_longitude}`;
           
@@ -110,7 +109,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
           const result = await calculateDistance(origin, destination);
           
           if (result && result.distance) {
-            console.log('Mesafe başarıyla hesaplandı:', result.distance.text);
             setDistance(result.distance.text);
             setDuration(result.duration.text);
           } else {
@@ -118,7 +116,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             // Mesafe hesaplanamazsa, distance_info objesine bakabiliriz
             if (event.distance_info && event.distance_info.distance) {
               const distanceKm = event.distance_info.distance / 1000; // metre -> km
-              console.log('distance_info kullanılarak mesafe hesaplandı:', distanceKm.toFixed(1));
               setDistance(`${distanceKm.toFixed(1)} km`);
               
               // Süre bilgisi de varsa
@@ -128,10 +125,8 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
               }
             } else if (event.distance) {
               // doğrudan event üzerinde distance değeri varsa
-              console.log('event.distance kullanılarak mesafe hesaplandı:', event.distance.toFixed(1));
               setDistance(`${event.distance.toFixed(1)} km`);
             } else {
-              console.error('Hiçbir mesafe verisi bulunamadı');
               setDistance('Mesafe hesaplanamadı');
             }
           }
@@ -140,10 +135,8 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
           // Kullanıcının konumu yoksa, event üzerinde distance varsa onu kullan
           if (event.distance_info && event.distance_info.distance) {
             const distanceKm = event.distance_info.distance / 1000; // metre -> km
-            console.log('distance_info kullanılarak mesafe hesaplandı:', distanceKm.toFixed(1));
             setDistance(`${distanceKm.toFixed(1)} km`);
           } else if (event.distance) {
-            console.log('event.distance kullanılarak mesafe hesaplandı:', event.distance.toFixed(1));
             setDistance(`${event.distance.toFixed(1)} km`);
           } else {
             setDistance('Konum izni gerekli');
@@ -184,7 +177,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const handleJoinEvent = () => {
     setIsJoined(true);
     // Burada API'ye istek gönderme işlemi yapılacak
-    console.log('Etkinliğe katılım isteği gönderildi: ', event.title);
   };
 
   const handleCancelJoin = () => {
@@ -194,7 +186,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const confirmCancelJoin = () => {
     setIsJoined(false);
     // Burada API'ye katılım iptal edildiğini bildiren istek gönderilecek
-    console.log('Etkinliğe katılım iptal edildi: ', event.title);
     setIsModalVisible(false);
   };
 

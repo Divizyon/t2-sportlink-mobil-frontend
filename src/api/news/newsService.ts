@@ -12,10 +12,8 @@ export const newsService = {
   }): Promise<NewsListResponse> => {
     try {
       const response = await apiClient.get(BASE_PATH, { params });
-      console.log('API Yanıt (getNews):', JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error) {
-      console.error('API Hatası (getNews):', error);
       throw error;
     }
   },
@@ -24,10 +22,8 @@ export const newsService = {
   getNewsDetail: async (newsId: string): Promise<NewsResponse> => {
     try {
       const response = await apiClient.get(`${BASE_PATH}/${newsId}`);
-      console.log('API Yanıt (getNewsDetail):', JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error) {
-      console.error('API Hatası (getNewsDetail):', error);
       throw error;
     }
   },
