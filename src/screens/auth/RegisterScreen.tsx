@@ -21,8 +21,12 @@ import { useThemeStore } from '../../store/appStore/themeStore';
 import { useAuthStore } from '../../store/userStore/authStore';
 import { registerSchema, validateWithSchema } from '../../utils/validators/yupValidators';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../constants/colors/colors';
 
 const { width } = Dimensions.get('window');
+
+// Yaprak resmi URL'si
+const leafImageUrl = "https://cdn.pixabay.com/photo/2018/01/06/23/25/nature-3016292_1280.jpg";
 
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -187,6 +191,31 @@ export const RegisterScreen: React.FC = () => {
     const hasErrors = Object.values(formErrors).some(error => error !== '');
     
     if (hasErrors) {
+      console.log('Form validasyon hataları tespit edildi:', formErrors);
+      return false;
+    }
+    
+    // Şifre ve onay şifresi eşleşiyor mu kontrol et
+    if (password !== confirmPassword) {
+      setValidationErrors({
+        ...validationErrors,
+        confirmPassword: 'Şifreler eşleşmiyor'
+      });
+      console.log('Şifreler eşleşmiyor');
+      return false;
+    }
+    
+    // Tüm gerekli alanların doldurulduğunu kontrol et
+    if (!username || !email || !password || !firstName || !lastName) {
+      const missingFields = [];
+      if (!username) missingFields.push('Kullanıcı Adı');
+      if (!email) missingFields.push('E-posta');
+      if (!password) missingFields.push('Şifre');
+      if (!firstName) missingFields.push('Ad');
+      if (!lastName) missingFields.push('Soyad');
+      
+      Alert.alert('Eksik Bilgi', `Lütfen tüm zorunlu alanları doldurun: ${missingFields.join(', ')}`);
+      console.log('Eksik alanlar:', missingFields);
       return false;
     }
     
@@ -249,7 +278,7 @@ export const RegisterScreen: React.FC = () => {
         console.log('Kayıt başarılı, login sayfasına yönlendiriliyor');
         Alert.alert(
           'Kayıt Başarılı',
-          'Kayıt işleminiz başarıyla tamamlandı! Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin. E-posta kutunuzu (spam klasörünü de) kontrol etmeyi unutmayın.',
+          'Hesabınız başarıyla oluşturuldu! Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin. E-posta kutunuzu ve spam klasörünüzü kontrol etmeyi unutmayın.',
           [{ 
             text: 'Tamam', 
             onPress: () => navigation.navigate('Login', { registeredEmail: email }) 
@@ -259,11 +288,19 @@ export const RegisterScreen: React.FC = () => {
         // Register fonksiyonu false döndüyse ve store'da error varsa, onu göster
         if (error) {
           console.error('Kayıt sırasında hata oluştu:', error);
-          Alert.alert('Kayıt Hatası', error);
+          
+          // Spesifik hata türlerine göre özelleştirilmiş mesajlar
+          if (error.includes('already exists') || error.includes('zaten kullanılıyor')) {
+            Alert.alert('Kayıt Hatası', 'Bu e-posta adresi veya kullanıcı adı zaten kullanılmaktadır. Lütfen farklı bir e-posta veya kullanıcı adı deneyin.');
+          } else if (error.includes('password') || error.includes('şifre')) {
+            Alert.alert('Kayıt Hatası', 'Şifreniz gerekli güvenlik kriterlerini karşılamıyor. Lütfen daha güçlü bir şifre belirleyin.');
+          } else {
+            Alert.alert('Kayıt Hatası', error);
+          }
         } else {
           // Beklenmedik bir durum
           console.error('Kayıt başarısız oldu ancak özel bir hata mesajı yok');
-          Alert.alert('Kayıt Hatası', 'Kayıt işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+          Alert.alert('Kayıt Hatası', 'Kayıt işlemi sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
         }
       }
     } catch (error) {
@@ -291,298 +328,302 @@ export const RegisterScreen: React.FC = () => {
   };
 
   return (
-    <View 
-      style={[styles.backgroundContainer, { backgroundColor: theme.colors.silver }]}
-    >
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
-          <ScrollView 
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={styles.headerBackButton}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.navigate('Welcome')}
           >
-            <View style={styles.topBar}>
-              <TouchableOpacity 
-                style={styles.backButton}
-                onPress={() => navigation.navigate('Welcome')}
-              >
-                <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
-              </TouchableOpacity>
-              
-              <Text style={[styles.headerTitle, { color: theme.colors.primary }]}>Yeni Hesap Oluştur</Text>
+            <Ionicons name="chevron-back" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.registerHeader}>
+          <Text style={styles.registerTitle}>Kayıt Ol</Text>
+          <Text style={styles.registerSubtitle}>Yeni hesap oluştur</Text>
+          <ImageBackground 
+            source={{ uri: leafImageUrl }} 
+            style={styles.leafDecoration}
+            resizeMode="contain"
+          />
+        </View>
+        
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Ad</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.firstName || validationErrors.firstName) ? styles.inputError : null
+              ]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Adınız"
+                  value={firstName}
+                  onChangeText={(text) => validateName(text, 'firstName')}
+                  placeholderTextColor="#A0A0A0"
+                />
+              </View>
+              {formErrors.firstName ? (
+                <Text style={styles.errorText}>{formErrors.firstName}</Text>
+              ) : validationErrors.firstName ? (
+                <Text style={styles.errorText}>{validationErrors.firstName}</Text>
+              ) : null}
             </View>
             
-            <View style={styles.headerContainer}>
-              <Text style={[styles.headerSubtitle, { color: theme.colors.primary }]}>
-                SportLink'e kayıt ol ve spor etkinliklerine katıl
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Soyad</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.lastName || validationErrors.lastName) ? styles.inputError : null
+              ]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Soyadınız"
+                  value={lastName}
+                  onChangeText={(text) => validateName(text, 'lastName')}
+                  placeholderTextColor="#A0A0A0"
+                />
+              </View>
+              {formErrors.lastName ? (
+                <Text style={styles.errorText}>{formErrors.lastName}</Text>
+              ) : validationErrors.lastName ? (
+                <Text style={styles.errorText}>{validationErrors.lastName}</Text>
+              ) : null}
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Kullanıcı Adı</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.username || validationErrors.username) ? styles.inputError : null
+              ]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Kullanıcı adınız"
+                  value={username}
+                  onChangeText={validateUsername}
+                  autoCapitalize="none"
+                  placeholderTextColor="#A0A0A0"
+                />
+              </View>
+              {formErrors.username ? (
+                <Text style={styles.errorText}>{formErrors.username}</Text>
+              ) : validationErrors.username ? (
+                <Text style={styles.errorText}>{validationErrors.username}</Text>
+              ) : null}
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Telefon</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.phone || validationErrors.phone) ? styles.inputError : null
+              ]}>
+                <Text style={styles.phonePrefix}>+90</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Telefon numaranız"
+                  value={phone}
+                  onChangeText={validatePhone}
+                  keyboardType="phone-pad"
+                  placeholderTextColor="#A0A0A0"
+                />
+              </View>
+              {formErrors.phone ? (
+                <Text style={styles.errorText}>{formErrors.phone}</Text>
+              ) : validationErrors.phone ? (
+                <Text style={styles.errorText}>{validationErrors.phone}</Text>
+              ) : null}
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>E-posta</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.email || validationErrors.email) ? styles.inputError : null
+              ]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="E-posta adresiniz"
+                  value={email}
+                  onChangeText={validateEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  placeholderTextColor="#A0A0A0"
+                />
+              </View>
+              {formErrors.email ? (
+                <Text style={styles.errorText}>{formErrors.email}</Text>
+              ) : validationErrors.email ? (
+                <Text style={styles.errorText}>{validationErrors.email}</Text>
+              ) : null}
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Şifre</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.password || validationErrors.password) ? styles.inputError : null
+              ]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Şifreniz"
+                  value={password}
+                  onChangeText={checkPasswordStrength}
+                  secureTextEntry={!isPasswordVisible}
+                  placeholderTextColor="#A0A0A0"
+                />
+                <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+                  <Ionicons
+                    name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                    size={24}
+                    color="#A0A0A0"
+                  />
+                </TouchableOpacity>
+              </View>
+              {password.length > 0 && (
+                <View style={styles.passwordStrengthContainer}>
+                  <View style={[styles.passwordStrengthBar, { width: `${(passwordStrength.score / 5) * 100}%`, backgroundColor: passwordStrength.color }]} />
+                </View>
+              )}
+              {formErrors.password ? (
+                <Text style={styles.errorText}>{formErrors.password}</Text>
+              ) : validationErrors.password ? (
+                <Text style={styles.errorText}>{validationErrors.password}</Text>
+              ) : null}
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Şifreyi Doğrula</Text>
+              <View style={[
+                styles.inputContainer, 
+                (formErrors.confirmPassword || validationErrors.confirmPassword) ? styles.inputError : null
+              ]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Şifrenizi tekrar girin"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!isConfirmPasswordVisible}
+                  placeholderTextColor="#A0A0A0"
+                />
+                <TouchableOpacity onPress={toggleConfirmPasswordVisibility} style={styles.eyeIcon}>
+                  <Ionicons
+                    name={isConfirmPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                    size={24}
+                    color="#A0A0A0"
+                  />
+                </TouchableOpacity>
+              </View>
+              {formErrors.confirmPassword ? (
+                <Text style={styles.errorText}>{formErrors.confirmPassword}</Text>
+              ) : validationErrors.confirmPassword ? (
+                <Text style={styles.errorText}>{validationErrors.confirmPassword}</Text>
+              ) : null}
+            </View>
+            
+            <View style={styles.termsContainer}>
+              <Text style={styles.termsText}>
+                Kayıt olarak{' '}
+                <Text style={styles.termsLink}>Kullanım Şartları</Text>{' '}
+                ve <Text style={styles.termsLink}>Gizlilik Politikası</Text>'nı kabul etmiş olursunuz
               </Text>
             </View>
             
-            <View style={styles.card}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Kullanıcı Adı</Text>
-                <View style={[
-                  styles.inputContainer, 
-                  (formErrors.username || validationErrors.username) ? styles.inputError : null
-                ]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Kullanıcı adınızı girin"
-                    value={username}
-                    onChangeText={validateUsername}
-                    autoCapitalize="none"
-                    placeholderTextColor="#A0A0A0"
-                  />
-                </View>
-                {formErrors.username ? (
-                  <Text style={styles.errorText}>{formErrors.username}</Text>
-                ) : validationErrors.username ? (
-                  <Text style={styles.errorText}>{validationErrors.username}</Text>
-                ) : null}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>E-posta</Text>
-                <View style={[
-                  styles.inputContainer, 
-                  (formErrors.email || validationErrors.email) ? styles.inputError : null
-                ]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="E-posta adresinizi girin"
-                    value={email}
-                    onChangeText={validateEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    placeholderTextColor="#A0A0A0"
-                  />
-                </View>
-                {formErrors.email ? (
-                  <Text style={styles.errorText}>{formErrors.email}</Text>
-                ) : validationErrors.email ? (
-                  <Text style={styles.errorText}>{validationErrors.email}</Text>
-                ) : null}
-              </View>
-              
-              <View style={styles.rowContainer}>
-                <View style={styles.halfWidth}>
-                  <Text style={styles.inputLabel}>Ad</Text>
-                  <View style={[
-                    styles.inputContainer, 
-                    (formErrors.firstName || validationErrors.firstName) ? styles.inputError : null
-                  ]}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Adınız"
-                      value={firstName}
-                      onChangeText={(text) => validateName(text, 'firstName')}
-                      placeholderTextColor="#A0A0A0"
-                    />
-                  </View>
-                  {formErrors.firstName ? (
-                    <Text style={styles.errorText}>{formErrors.firstName}</Text>
-                  ) : validationErrors.firstName ? (
-                    <Text style={styles.errorText}>{validationErrors.firstName}</Text>
-                  ) : null}
-                </View>
-                
-                <View style={styles.halfWidth}>
-                  <Text style={styles.inputLabel}>Soyad</Text>
-                  <View style={[
-                    styles.inputContainer, 
-                    (formErrors.lastName || validationErrors.lastName) ? styles.inputError : null
-                  ]}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Soyadınız"
-                      value={lastName}
-                      onChangeText={(text) => validateName(text, 'lastName')}
-                      placeholderTextColor="#A0A0A0"
-                    />
-                  </View>
-                  {formErrors.lastName ? (
-                    <Text style={styles.errorText}>{formErrors.lastName}</Text>
-                  ) : validationErrors.lastName ? (
-                    <Text style={styles.errorText}>{validationErrors.lastName}</Text>
-                  ) : null}
-                </View>
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Telefon</Text>
-                <View style={[
-                  styles.phoneInputContainer, 
-                  (formErrors.phone || validationErrors.phone) ? styles.inputError : null
-                ]}>
-                  <View style={styles.phonePrefix}>
-                    <Text style={styles.phonePrefixText}>+90</Text>
-                  </View>
-                  <TextInput
-                    style={styles.phoneInput}
-                    placeholder="5XX XXX XXXX"
-                    value={phone}
-                    onChangeText={validatePhone}
-                    keyboardType="phone-pad"
-                    placeholderTextColor="#A0A0A0"
-                  />
-                </View>
-                {formErrors.phone ? (
-                  <Text style={styles.errorText}>{formErrors.phone}</Text>
-                ) : validationErrors.phone ? (
-                  <Text style={styles.errorText}>{validationErrors.phone}</Text>
-                ) : null}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Şifre</Text>
-                <View style={[
-                  styles.inputContainer, 
-                  (formErrors.password || validationErrors.password) ? styles.inputError : null
-                ]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Şifrenizi girin"
-                    value={password}
-                    onChangeText={checkPasswordStrength}
-                    secureTextEntry={!isPasswordVisible}
-                    placeholderTextColor="#A0A0A0"
-                  />
-                  <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-                    <Ionicons
-                      name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-                      size={24}
-                      color="#A0A0A0"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {password.length > 0 && (
-                  <View style={styles.passwordStrengthContainer}>
-                    <View style={[styles.passwordStrengthBar, { width: `${(passwordStrength.score / 5) * 100}%`, backgroundColor: passwordStrength.color }]} />
-                    <Text style={[styles.passwordStrengthText, { color: passwordStrength.color }]}>{passwordStrength.message}</Text>
-                  </View>
-                )}
-                {formErrors.password ? (
-                  <Text style={styles.errorText}>{formErrors.password}</Text>
-                ) : validationErrors.password ? (
-                  <Text style={styles.errorText}>{validationErrors.password}</Text>
-                ) : null}
-                <Text style={styles.passwordHint}>
-                  En az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir
-                </Text>
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Şifre Tekrarı</Text>
-                <View style={[
-                  styles.inputContainer, 
-                  (formErrors.confirmPassword || validationErrors.confirmPassword) ? styles.inputError : null
-                ]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Şifrenizi tekrar girin"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={!isConfirmPasswordVisible}
-                    placeholderTextColor="#A0A0A0"
-                  />
-                  <TouchableOpacity onPress={toggleConfirmPasswordVisibility} style={styles.eyeIcon}>
-                    <Ionicons
-                      name={isConfirmPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-                      size={24}
-                      color="#A0A0A0"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {formErrors.confirmPassword ? (
-                  <Text style={styles.errorText}>{formErrors.confirmPassword}</Text>
-                ) : validationErrors.confirmPassword ? (
-                  <Text style={styles.errorText}>{validationErrors.confirmPassword}</Text>
-                ) : null}
-              </View>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.registerButton,
-                  (isSubmitting || Object.values(formErrors).some(err => err !== '') || isRegistering) && styles.disabledButton
-                ]}
-                onPress={handleRegister}
-                disabled={isSubmitting || Object.values(formErrors).some(err => err !== '') || isRegistering}
-                activeOpacity={0.8}
-              >
-                {isRegistering ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.buttonText}>Kayıt Ol</Text>
-                )}
+            <TouchableOpacity 
+              style={[
+                styles.signUpButton,
+                (isSubmitting || Object.values(formErrors).some(err => err !== '') || isRegistering) && styles.disabledButton
+              ]}
+              onPress={handleRegister}
+              disabled={isSubmitting || Object.values(formErrors).some(err => err !== '') || isRegistering}
+              activeOpacity={0.8}
+            >
+              {isRegistering ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.signUpButtonText}>Kayıt Ol</Text>
+              )}
+            </TouchableOpacity>
+            
+            <View style={styles.loginLinkContainer}>
+              <Text style={styles.loginQuestion}>
+                Zaten hesabınız var mı?
+              </Text>
+              <TouchableOpacity onPress={navigateToLogin}>
+                <Text style={styles.loginLink}>Giriş Yap</Text>
               </TouchableOpacity>
-              
-              <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>
-                  Zaten hesabınız var mı?
-                </Text>
-                <TouchableOpacity onPress={navigateToLogin}>
-                  <Text style={styles.loginLink}>Giriş Yap</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+
+        
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundContainer: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: '#FFFFFF',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 16,
+  keyboardView: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 12,
+  headerBackButton: {
+    marginTop: 10,
+    alignItems: 'flex-start',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 25,
   },
-  headerContainer: {
-    marginBottom: 12,
+  registerHeader: {
+    marginVertical: 20,
+    position: 'relative',
   },
-  headerTitle: {
-    fontSize: 24,
+  registerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: colors.accent,
+    marginBottom: 8,
   },
-  headerSubtitle: {
+  registerSubtitle: {
     fontSize: 16,
-    color: 'white',
-    opacity: 0.9,
+    color: '#666',
   },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+  leafDecoration: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    right: 0,
+    top: 5,
+    opacity: 0.8,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
     width: '100%',
-    alignSelf: 'center',
   },
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: 20,
   },
   inputLabel: {
     fontSize: 16,
@@ -598,17 +639,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 50,
   },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    height: 50,
-    overflow: 'hidden',
-  },
   inputError: {
     borderWidth: 1,
-    borderColor: 'red',
+    borderColor: '#FF3B30',
   },
   input: {
     flex: 1,
@@ -616,41 +649,13 @@ const styles = StyleSheet.create({
     color: '#333',
     height: '100%',
   },
-  phoneInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-    height: '100%',
-    paddingHorizontal: 8,
-  },
-  inputTip: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
-    marginLeft: 2,
-  },
-  passwordHint: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
-    marginLeft: 2,
-  },
   eyeIcon: {
     padding: 8,
   },
   errorText: {
-    color: 'red',
+    color: '#FF3B30',
     fontSize: 12,
     marginTop: 4,
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginBottom: 12,
-  },
-  halfWidth: {
-    flex: 1,
   },
   passwordStrengthContainer: {
     marginTop: 8,
@@ -663,56 +668,72 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '0%',
   },
-  passwordStrengthText: {
-    fontSize: 12,
-    marginTop: 4,
-    textAlign: 'right',
+  termsContainer: {
+    marginVertical: 16,
   },
-  registerButton: {
-    backgroundColor: '#338626',
-    borderRadius: 8,
+  termsText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  termsLink: {
+    color: colors.accent,
+    fontWeight: '500',
+  },
+  signUpButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 25,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    shadowColor: 'rgba(51, 134, 38, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
   disabledButton: {
     backgroundColor: '#CCCCCC',
-    opacity: 0.7,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
   },
-  buttonText: {
+  signUpButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
-  loginContainer: {
+  loginLinkContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,
-    gap: 4,
   },
-  loginText: {
+  loginQuestion: {
     fontSize: 14,
     color: '#666',
   },
   loginLink: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#338626',
-    marginLeft: 4,
+    color: colors.accent,
+    marginLeft: 5,
+  },
+  formSectionHeader: {
+    marginBottom: 16,
+  },
+  formSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   phonePrefix: {
-    backgroundColor: '#E8E8E8',
-    width: 75,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 0,
-  },
-  phonePrefixText: {
-    color: '#333',
     fontSize: 16,
-    fontWeight: '500',
+    color: '#333',
+    marginRight: 4,
+  },
+  testButtonText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '600',
   },
 }); 

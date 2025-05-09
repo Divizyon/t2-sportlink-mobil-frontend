@@ -1,12 +1,36 @@
 import { create } from 'zustand';
 import { friendsApi, Friend, SuggestedFriend, FriendRequest, FriendshipStatus } from '../../api/friends/friendsApi';
 import { useApiStore } from '../appStore/apiStore';
+import { getConfigValues } from '../appStore/configStore';
+import { tokenManager } from '../../utils/tokenManager';
+
+// Kullanıcı profil bilgileri
+interface UserProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  username: string;
+  profile_picture?: string;
+  user_sports?: {
+    id: string;
+    name: string;
+    icon: string;
+    skill_level: string;
+  }[];
+  stats?: {
+    createdEventsCount: number;
+    participatedEventsCount: number;
+    averageRating: number;
+    friendsCount: number;
+  };
+}
 
 interface FriendsState {
   // Veri
   friends: Friend[];
   suggestedFriends: SuggestedFriend[];
   friendRequests: FriendRequest[];
+  userProfile: UserProfile | null; // Yeni: Kullanıcı profil bilgisi
   
   // Pagination
   totalFriends: number;
@@ -19,9 +43,11 @@ interface FriendsState {
   isLoadingSuggestions: boolean;
   isLoadingRequests: boolean;
   isProcessingRequest: boolean;
+  isLoadingUserProfile: boolean; // Yeni: Profil yükleme durumu
   
   // Hata durumları
   error: string | null;
+  userProfileError: string | null; // Yeni: Profil yükleme hatası
   
   // İşlem sonucu mesajı
   message: string | null;
@@ -36,6 +62,7 @@ interface FriendsState {
   fetchSuggestedFriends: (limit?: number) => Promise<void>;
   fetchFriendRequests: (status?: 'pending' | 'accepted' | 'rejected', page?: number, limit?: number) => Promise<void>;
   checkFriendshipStatus: (userId: string) => Promise<FriendshipStatus | null>;
+  getUserProfile: (userId: string) => Promise<UserProfile | null>; // Yeni: Kullanıcı profili alma
   
   // - Arkadaşlık İşlemleri
   sendFriendRequest: (userId: string) => Promise<boolean>;
@@ -48,12 +75,14 @@ interface FriendsState {
   clearErrors: () => void;
   clearMessage: () => void;
   resetState: () => void;
+  clearUserProfile: () => void; // Yeni: Profil bilgilerini temizleme
 }
 
 const initialState = {
   friends: [],
   suggestedFriends: [],
   friendRequests: [],
+  userProfile: null, // Yeni
   totalFriends: 0,
   totalRequests: 0,
   currentFriendsPage: 1,
@@ -62,7 +91,9 @@ const initialState = {
   isLoadingSuggestions: false,
   isLoadingRequests: false,
   isProcessingRequest: false,
+  isLoadingUserProfile: false, // Yeni
   error: null,
+  userProfileError: null, // Yeni
   message: null,
   friendshipStatusCache: {},
 };
@@ -525,9 +556,121 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     }
   },
 
+  // Kullanıcı profil bilgilerini getir
+  getUserProfile: async (userId: string) => {
+    try {
+      set({ isLoadingUserProfile: true, userProfileError: null });
+      
+      // API Store'a istek kaydı ekle
+      const apiRequestId = useApiStore.getState().addRequest({
+        url: `/users/${userId}/profile`,
+        method: 'GET'
+      });
+      
+      // API çağrısı yaparak kullanıcı verisini al
+      const response = await fetch(`${getConfigValues().apiBaseUrl}/users/${userId}/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await tokenManager.getToken()}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // API isteği tamamlandı
+      useApiStore.getState().completeRequest(apiRequestId, response.status);
+      
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Farklı API yanıt formatlarını destekleyecek şekilde verileri hazırla
+        const statsData = {
+          createdEventsCount: 0,
+          participatedEventsCount: 0,
+          averageRating: 0,
+          friendsCount: 0
+        };
+        
+        // data.data.stats nesnesi varsa
+        if (data.data.stats) {
+          statsData.createdEventsCount = 
+            typeof data.data.stats.createdEventsCount === 'number' 
+              ? data.data.stats.createdEventsCount 
+              : (data.data.stats.created_events_count || 0);
+          
+          statsData.participatedEventsCount = 
+            typeof data.data.stats.participatedEventsCount === 'number'
+              ? data.data.stats.participatedEventsCount
+              : (data.data.stats.participated_events_count || 0);
+          
+          statsData.averageRating = 
+            typeof data.data.stats.averageRating === 'number'
+              ? data.data.stats.averageRating
+              : (data.data.stats.average_rating || 0);
+          
+          statsData.friendsCount = 
+            typeof data.data.stats.friendsCount === 'number'
+              ? data.data.stats.friendsCount
+              : (data.data.stats.friends_count || 0);
+        } 
+        // Alternatif format - düz veri
+        else {
+          statsData.createdEventsCount = data.data.created_events_count || 0;
+          statsData.participatedEventsCount = data.data.participated_events_count || 0;
+          statsData.averageRating = data.data.average_rating || 0;
+          statsData.friendsCount = data.data.friends_count || 0;
+        }
+        
+        // API yanıtını uygun profile yapısına dönüştür
+        const userProfile: UserProfile = {
+          id: data.data.id,
+          first_name: data.data.first_name || '',
+          last_name: data.data.last_name || '',
+          username: data.data.username || '',
+          profile_picture: data.data.profile_picture || undefined,
+          // Backend'den gelen user_sports verisini dönüştür ve kontrol et
+          user_sports: Array.isArray(data.data.user_sports) 
+            ? data.data.user_sports.map((sport: any) => ({
+                id: sport.id || sport.sport_id || '',
+                name: sport.name || sport.sport_name || '',
+                icon: sport.icon || 'fitness-outline', // Varsayılan ikon
+                skill_level: sport.skill_level || 'beginner'
+              }))
+            : [],
+          // Stats verilerini doğrula ve işle
+          stats: statsData
+        };
+        
+        set({ 
+          userProfile, 
+          isLoadingUserProfile: false,
+          userProfileError: null 
+        });
+        
+        return userProfile;
+      } else {
+        throw new Error(data.message || 'Kullanıcı profil bilgileri alınamadı');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Kullanıcı profil bilgileri alınamadı';
+      console.error('Kullanıcı profil getirme hatası:', errorMessage);
+      
+      set({ 
+        userProfileError: errorMessage, 
+        isLoadingUserProfile: false 
+      });
+      
+      return null;
+    }
+  },
+  
+  // Profil bilgilerini temizle
+  clearUserProfile: () => {
+    set({ userProfile: null, userProfileError: null });
+  },
+
   // Hataları temizle
   clearErrors: () => {
-    set({ error: null });
+    set({ error: null, userProfileError: null });
   },
 
   // Mesajı temizle
@@ -540,6 +683,7 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     set({
       ...initialState,
       error: null,
+      userProfileError: null,
       message: null,
     });
     console.log('FriendsStore durumu sıfırlandı');

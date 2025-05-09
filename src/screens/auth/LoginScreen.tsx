@@ -10,7 +10,8 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Dimensions
+  Dimensions,
+  ImageBackground
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAuthStore } from '../../store/userStore/authStore';
@@ -18,6 +19,7 @@ import { useDeviceStore } from '../../store/userStore/deviceStore';
 import { loginSchema, validateWithSchema } from '../../utils/validators/yupValidators';
 import { getConfigValues } from '../../store/appStore/configStore';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../constants/colors/colors';
 
 // Route paramları için tip tanımlaması
 type LoginScreenParams = {
@@ -25,6 +27,9 @@ type LoginScreenParams = {
 };
 
 const { width } = Dimensions.get('window');
+
+// Yaprak resmi URL'si
+const leafImageUrl = "https://cdn.pixabay.com/photo/2018/05/17/14/53/plant-3408820_1280.png";
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -177,22 +182,34 @@ export const LoginScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="chevron-back" size={24} color="#333" />
-          </TouchableOpacity>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeTitle}>Tekrar Hoşgeldiniz</Text>
+            <Text style={styles.welcomeSubtitle}>Hesabınıza giriş yapın</Text>
+            <ImageBackground 
+              source={{ uri: leafImageUrl }} 
+              style={styles.leaf}
+              resizeMode="contain"
+            />
+          </View>
 
           <View style={styles.formContainer}>
-            <Text style={styles.title}>E-posta</Text>
+            <Text style={styles.inputLabel}>E-posta</Text>
             <View style={[
               styles.inputContainer,
               validationErrors.email && styles.inputError
             ]}>
               <TextInput
                 style={styles.input}
-                placeholder="E-posta adresinizi girin"
+                placeholder="E-posta adresiniz"
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -204,14 +221,14 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.errorText}>{validationErrors.email}</Text>
             )}
 
-            <Text style={styles.title}>Şifre</Text>
+            <Text style={styles.inputLabel}>Şifre</Text>
             <View style={[
               styles.inputContainer,
               validationErrors.password && styles.inputError
             ]}>
               <TextInput
                 style={styles.input}
-                placeholder="Şifrenizi girin"
+                placeholder="Şifreniz"
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -247,24 +264,6 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.loginButtonText}>Giriş Yap</Text>
             </TouchableOpacity>
 
-            <View style={styles.orContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.orText}>Or Login with</Text>
-              <View style={styles.divider} />
-            </View>
-
-            <View style={styles.socialButtonsContainer}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-google" size={24} color="#DB4437" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-apple" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
-
             <View style={styles.registerContainer}>
               <Text style={styles.registerText}>Hesabınız yok mu?</Text>
               <TouchableOpacity onPress={navigateToRegister}>
@@ -281,33 +280,59 @@ export const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContainer: {
     padding: 20,
+    flexGrow: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: 20,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+  },
+  welcomeContainer: {
+    marginBottom: 40,
+    position: 'relative',
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: colors.accent,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  leaf: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    right: -20,
+    top: -20,
+    opacity: 0.9,
   },
   formContainer: {
     width: '100%',
-    paddingHorizontal: 10,
   },
-  title: {
+  inputLabel: {
     fontSize: 16,
     color: '#333',
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 8,
-    marginTop: 16,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -316,11 +341,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     height: 50,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   inputError: {
     borderWidth: 1,
-    borderColor: 'red',
+    borderColor: '#FF3B30',
   },
   input: {
     flex: 1,
@@ -331,67 +356,43 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   errorText: {
-    color: 'red',
+    color: '#FF3B30',
     fontSize: 12,
-    marginBottom: 8,
+    marginTop: -12,
+    marginBottom: 16,
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',
-    marginBottom: 20,
-    marginTop: 10,
+    marginBottom: 24,
   },
   forgotPasswordText: {
-    color: '#338626',
+    color: colors.accent,
     fontSize: 14,
     fontWeight: '500',
   },
   loginButton: {
-    backgroundColor: '#338626',
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    borderRadius: 25,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    shadowColor: 'rgba(51, 134, 38, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: 'white',
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-  orText: {
-    marginHorizontal: 10,
-    color: '#888',
-    fontSize: 14,
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 10,
   },
   registerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 16,
   },
   registerText: {
     fontSize: 14,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
   registerLink: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#338626',
+    color: colors.accent,
     marginLeft: 5,
   },
 }); 

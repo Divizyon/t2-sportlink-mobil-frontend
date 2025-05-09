@@ -50,7 +50,10 @@ export const FriendProfileScreen: React.FC = () => {
     cancelFriendRequest,
     acceptFriendRequest,
     removeFriend,
-    rejectFriendRequest
+    rejectFriendRequest,
+    getUserProfile,
+    isLoadingUserProfile,
+    userProfileError
   } = useFriendsStore();
 
   const userId = route.params.userId;
@@ -69,141 +72,19 @@ export const FriendProfileScreen: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // Kullanıcı API'sinden profil bilgilerini al
-        // Gerçek bir API çağrısı yaparak kullanıcı profilini almak için 
-        // burada API servisine bir istek yapacağız
-        
-        try {
-          // API çağrısı yaparak kullanıcı verisini al
-          const response = await fetch(`${getConfigValues().apiBaseUrl}/users/${userId}/profile`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${await tokenManager.getToken()}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          const data = await response.json();
-          
-          // Backend'den gelen veriyi görüntüle
-          console.log('Backend API yanıtı:', JSON.stringify(data, null, 2));
-          
-          if (data.success && data.data) {
-            // Backend'den gelen kullanıcı verilerini daha detaylı görüntüle
-            console.log('Kullanıcı profil verileri:', {
-              id: data.data.id,
-              name: `${data.data.first_name} ${data.data.last_name}`,
-              username: data.data.username,
-              sports: data.data.user_sports,
-              stats: data.data.stats
-            });
-            
-            // Farklı API yanıt formatlarını destekleyecek şekilde verileri hazırla
-            const statsData = {
-              createdEventsCount: 0,
-              participatedEventsCount: 0,
-              averageRating: 0,
-              friendsCount: 0
-            };
-            
-            // data.data.stats nesnesi varsa
-            if (data.data.stats) {
-              statsData.createdEventsCount = 
-                typeof data.data.stats.createdEventsCount === 'number' 
-                  ? data.data.stats.createdEventsCount 
-                  : (data.data.stats.created_events_count || 0);
-              
-              statsData.participatedEventsCount = 
-                typeof data.data.stats.participatedEventsCount === 'number'
-                  ? data.data.stats.participatedEventsCount
-                  : (data.data.stats.participated_events_count || 0);
-              
-              statsData.averageRating = 
-                typeof data.data.stats.averageRating === 'number'
-                  ? data.data.stats.averageRating
-                  : (data.data.stats.average_rating || 0);
-              
-              statsData.friendsCount = 
-                typeof data.data.stats.friendsCount === 'number'
-                  ? data.data.stats.friendsCount
-                  : (data.data.stats.friends_count || 0);
-            } 
-            // Alternatif format - düz veri
-            else {
-              statsData.createdEventsCount = data.data.created_events_count || 0;
-              statsData.participatedEventsCount = data.data.participated_events_count || 0;
-              statsData.averageRating = data.data.average_rating || 0;
-              statsData.friendsCount = data.data.friends_count || 0;
-            }
-            
-            // API yanıtını uygun profile yapısına dönüştür
-            setProfile({
-              id: data.data.id,
-              first_name: data.data.first_name || '',
-              last_name: data.data.last_name || '',
-              username: data.data.username || '',
-              profile_picture: data.data.profile_picture || undefined,
-              // Backend'den gelen user_sports verisini dönüştür ve kontrol et
-              user_sports: Array.isArray(data.data.user_sports) 
-                ? data.data.user_sports.map((sport: any) => ({
-                    id: sport.id || sport.sport_id || '',
-                    name: sport.name || sport.sport_name || '',
-                    icon: sport.icon || 'fitness-outline', // Varsayılan ikon
-                    skill_level: sport.skill_level || 'beginner'
-                  }))
-                : [],
-              // Stats verilerini doğrula ve işle
-              stats: statsData
-            });
-          } else {
-            // API yanıtı başarısız olursa test verileri kullan
-            console.warn('API yanıtı başarısız, test verileri kullanılıyor');
-            setProfile({
-              id: userId,
-              first_name: "Test",
-              last_name: "Kullanıcı",
-              username: "testuser",
-              profile_picture: undefined,
-              user_sports: [
-                { id: "1", name: "Futbol", icon: "football-outline", skill_level: "intermediate" },
-                { id: "2", name: "Yüzme", icon: "water-outline", skill_level: "beginner" },
-                { id: "3", name: "Koşu", icon: "walk-outline", skill_level: "advanced" },
-              ],
-              stats: {
-                createdEventsCount: 0,
-                participatedEventsCount: 0,
-                averageRating: 0,
-                friendsCount: 0
-              }
-            });
-          }
-        } catch (apiError) {
-          console.error('API çağrısı hatası:', apiError);
-          // API hatası durumunda test verileri göster
-          setProfile({
-            id: userId,
-            first_name: "Test",
-            last_name: "Kullanıcı",
-            username: "testuser",
-            profile_picture: undefined,
-            user_sports: [
-              { id: "1", name: "Futbol", icon: "football-outline", skill_level: "intermediate" },
-              { id: "2", name: "Yüzme", icon: "water-outline", skill_level: "beginner" },
-              { id: "3", name: "Koşu", icon: "walk-outline", skill_level: "advanced" },
-            ],
-            stats: {
-              createdEventsCount: 0,
-              participatedEventsCount: 0,
-              averageRating: 0,
-              friendsCount: 0
-            }
-          });
-        }
-        
         // Arkadaşlık durumunu kontrol et
         const status = await checkFriendshipStatus(userId);
         if (status) {
           setFriendshipStatus(status);
+        }
+        
+        // Zustand store ile kullanıcı profilini al
+        const userProfile = await getUserProfile(userId);
+        if (userProfile) {
+          setProfile(userProfile);
+          setError(null);
+        } else if (userProfileError) {
+          setError(userProfileError);
         }
         
         setIsLoading(false);

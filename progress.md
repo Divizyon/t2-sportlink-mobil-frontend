@@ -22,6 +22,11 @@
 - [x] Karşılama ekranında buton boyutları eşitlendi ve UI tutarlılığı sağlandı
 - [x] Tüm giriş ekranlarında silver arka plan ve primary metin renklendirmesi uygulandı
 - [x] Karşılama ekranına SVG logo entegre edildi ve tema renkleriyle uyumlu hale getirildi
+- [x] WelcomeScreen'de başlık ayarlandı ve "Sport" ve "Link" yazıları uygun renklerle stillendirildi
+- [x] LoginScreen ve RegisterScreen'de yeşil yapraklı tasarım entegre edildi
+- [x] Tüm metinler Türkçeye çevrildi ve kullanıcı dostu hale getirildi 
+- [x] Butonlar ve formlar modern tasarıma uygun hale getirildi
+- [x] Yeşil renk tonu olarak accent rengi kullanıldı
 
 ### Komponentler
 - [x] Text input
@@ -223,6 +228,13 @@
   - [x] LocationPicker bileşeninde API anahtarının .env dosyasından alınması
   - [x] MapsStore'da API anahtarının Constants üzerinden alınması
   - [x] FacilitiesStore'da API anahtarının Constants üzerinden alınması ve hata yönetiminin iyileştirilmesi
+- [x] Arkadaşlık sistemi
+  - [x] Arkadaşlık isteği gönderme
+  - [x] Arkadaşlık isteği kabul etme/reddetme
+  - [x] Arkadaşlık isteği iptal etme
+  - [x] Arkadaş çıkarma
+  - [x] Arkadaş profil görüntüleme
+  - [x] Arkadaş profil sayfası için Zustand entegrasyonu ve API çağrılarının optimizasyonu
 
 ### Yeni Özellikler
 - [ ] Yeni özellik eklendi

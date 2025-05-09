@@ -36,6 +36,7 @@
     "react-native": "0.76.9",
     "react-native-date-picker": "^5.0.12",
     "react-native-dotenv": "^3.4.11",
+    "react-native-fast-image": "^8.6.3",
     "react-native-flash-message": "^0.4.2",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-get-random-values": "^1.11.0",
