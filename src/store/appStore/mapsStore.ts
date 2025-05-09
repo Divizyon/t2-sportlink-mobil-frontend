@@ -39,6 +39,7 @@ interface LocationData {
   latitude: number;
   longitude: number;
   address?: string;
+  timestamp?: number;
 }
 
 interface MapsState {
@@ -60,6 +61,7 @@ interface MapsState {
   setLocationServiceStatus: (isEnabled: boolean) => void;
   setLocationPermissionStatus: (status: Location.PermissionStatus) => void;
   initLocation: () => Promise<LocationData | null>;
+  refreshLocation: () => Promise<LocationData | null>;
   // Google Distance Matrix API ile mesafe hesaplama
   calculateDistance: (origin: string, destination: string, mode?: 'driving' | 'walking' | 'bicycling' | 'transit') => Promise<DistanceResult | null>;
   calculateBulkDistances: (origin: string, destinations: string[], mode?: 'driving' | 'walking' | 'bicycling' | 'transit') => Promise<BulkDistanceResults | null>;
@@ -404,6 +406,79 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         bulkDistanceError: `Toplu mesafe hesaplanamadı: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
       });
       
+      return null;
+    }
+  },
+  
+  // Konum yenileme fonksiyonu
+  refreshLocation: async () => {
+    console.log('Konum yenileniyor...');
+    try {
+      // Konum servislerinin açık olup olmadığını kontrol et
+      const serviceEnabled = await Location.hasServicesEnabledAsync();
+      get().setLocationServiceStatus(serviceEnabled);
+      
+      if (!serviceEnabled) {
+        console.warn('Konum servisleri kapalı!');
+        return null;
+      }
+      
+      // Konum izin durumunu kontrol et
+      const permissionStatus = get().locationPermissionStatus;
+      
+      if (permissionStatus !== Location.PermissionStatus.GRANTED) {
+        // Eğer izin yoksa, tekrar iste
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        get().setLocationPermissionStatus(status);
+        
+        if (status !== Location.PermissionStatus.GRANTED) {
+          console.warn('Konum izni reddedildi!');
+          return null;
+        }
+      }
+      
+      // Güncel konumu al
+      console.log('Güncel konum alınıyor...');
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced
+      });
+      
+      // Adres bilgisini almaya çalış
+      let addressStr = '';
+      try {
+        const addressResponse = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
+        });
+        
+        if (addressResponse && addressResponse.length > 0) {
+          const address = addressResponse[0];
+          addressStr = `${address.street || ''} ${address.name || ''}, ${address.district || ''}, ${address.city || ''}`;
+          console.log('Adres başarıyla alındı:', addressStr);
+        }
+      } catch (geocodeError) {
+        console.error('Adres alınırken hata oluştu:', geocodeError);
+      }
+      
+      // Konum bilgisini store'a kaydet
+      get().setLastLocation(
+        location.coords.latitude,
+        location.coords.longitude,
+        addressStr
+      );
+      
+      const locationData = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        address: addressStr,
+        timestamp: Date.now()
+      };
+      
+      console.log('Konum yenileme tamamlandı:', locationData);
+      
+      return locationData;
+    } catch (error) {
+      console.error('Konum yenileme hatası:', error);
       return null;
     }
   }

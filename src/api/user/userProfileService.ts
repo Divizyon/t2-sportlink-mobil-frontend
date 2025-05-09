@@ -143,12 +143,27 @@ export const userProfileService = {
    */
   updateProfilePicture: async (imageData: FormData): Promise<ApiResponse<{ profilePicture: string }>> => {
     try {
-      const response = await apiClient.put('/users/profile', imageData, {
+      // Doğru endpoint: /users/profile/avatar
+      const response = await apiClient.put('/users/profile/avatar', imageData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-      return response.data;
+      
+      const apiData = response.data;
+      
+      // Backend yanıtını kontrol et
+      if (apiData.success && apiData.data) {
+        return {
+          success: true,
+          data: {
+            profilePicture: apiData.data.profile_picture || ''
+          },
+          message: apiData.message || 'Profil fotoğrafı başarıyla güncellendi.'
+        };
+      }
+      
+      return apiData;
     } catch (error) {
       console.error('Profil fotoğrafı güncelleme hatası:', error);
       return {
@@ -163,13 +178,77 @@ export const userProfileService = {
    */
   updateSportPreferences: async (preferences: UserSportPreference[]): Promise<ApiResponse<{ sportPreferences: UserSportPreference[] }>> => {
     try {
-      const response = await apiClient.put('/users/profile/sports', { sportPreferences: preferences });
-      return response.data;
-    } catch (error) {
-      console.error('Spor tercihleri güncelleme hatası:', error);
+      // Gelen veriyi görelim
+      console.log('Frontend sportPreferences input:', JSON.stringify(preferences, null, 2));
+      
+      // Kullanıcı spor tercihlerini backend formatına dönüştür
+      // Backend sadece sportId ve skillLevel alanlarını bekliyor
+      const backendFormat = preferences.map(pref => ({
+        sportId: pref.sportId,
+        skillLevel: pref.skillLevel
+      }));
+      
+      console.log('Backend\'e gönderilecek format:', JSON.stringify(backendFormat, null, 2));
+      
+      // API isteği gönder
+      const response = await apiClient.put('/users/profile/sports', backendFormat);
+      console.log('Backend yanıtı:', JSON.stringify(response.data, null, 2));
+      
+      const apiData = response.data;
+      
+      // Backend yanıtını kontrol et
+      if (apiData.success) {
+        console.log('Başarılı API yanıtı');
+        
+        // Backend'den gelen veriyi frontend formatına dönüştür
+        let transformedSports: UserSportPreference[] = [];
+        
+        if (apiData.data && Array.isArray(apiData.data)) {
+          // Doğrudan dizi olarak gelen veri
+          transformedSports = apiData.data.map((sport: any) => ({
+            sportId: sport.sport_id || (sport.sport && sport.sport.id) || '',
+            sportName: sport.sport_name || (sport.sport && sport.sport.name) || '',
+            skillLevel: sport.skill_level || 'beginner',
+            icon: sport.icon || (sport.sport && sport.sport.icon) || undefined
+          }));
+        } else if (apiData.data && apiData.data.sports && Array.isArray(apiData.data.sports)) {
+          // { sports: [] } formatında gelen veri
+          transformedSports = apiData.data.sports.map((sport: any) => ({
+            sportId: sport.id || sport.sportId || '',
+            sportName: sport.name || sport.sportName || '',
+            skillLevel: sport.skillLevel || sport.skill_level || 'beginner',
+            icon: sport.icon || undefined
+          }));
+        }
+        
+        console.log('Dönüştürülmüş spor tercihleri:', JSON.stringify(transformedSports, null, 2));
+        
+        return {
+          success: true,
+          data: {
+            sportPreferences: transformedSports
+          },
+          message: apiData.message || 'Spor tercihleri başarıyla güncellendi.'
+        };
+      }
+      
+      // Hata durumu
+      console.error('API başarısız cevap:', apiData);
       return {
         success: false,
-        error: 'Spor tercihleriniz güncellenemedi. Lütfen daha sonra tekrar deneyin.'
+        error: apiData.message || 'Spor tercihleri güncellenemedi.'
+      };
+    } catch (error) {
+      console.error('Spor tercihleri güncelleme hatası:', error);
+      
+      // Kapsamlı hata mesajı oluştur
+      const errorMessage = error instanceof Error 
+        ? `Spor tercihleri güncellenemedi: ${error.message}`
+        : 'Spor tercihleri güncellenemedi. Lütfen daha sonra tekrar deneyin.';
+      
+      return {
+        success: false,
+        error: errorMessage
       };
     }
   },

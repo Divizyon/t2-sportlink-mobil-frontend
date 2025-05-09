@@ -93,6 +93,18 @@ apiClient.interceptors.request.use(
       } else {
         console.log('Token bulunamadı, Authorization header eklenemedi');
       }
+      
+      // FormData kontrolü - multipart/form-data içeriği varsa
+      if (config.data instanceof FormData) {
+        // Content-Type'ı otomatik ayarlanması için headers'dan kaldır
+        // Axios otomatik olarak doğru multipart boundary ile ayarlayacak
+        delete config.headers['Content-Type'];
+        
+        if (isDebugMode) {
+          console.log('FormData tespit edildi, Content-Type header\'ı otomatik ayarlanacak');
+        }
+      }
+      
       return config;
     } catch (error) {
       // Hata durumunda API store'da işlem güncelle

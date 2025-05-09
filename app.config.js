@@ -14,7 +14,7 @@ export default {
       backgroundColor: '#ffffff'
     },
     assetBundlePatterns: [
-      "**/*"
+      "/*"
     ],
     ios: {
       supportsTablet: true,
@@ -37,9 +37,9 @@ export default {
       SECURE_STORAGE_KEY: process.env.SECURE_STORAGE_KEY || 'deepvision_secure_storage',
       // Aynı API anahtarı hem Google Distance API hem de Places API için kullanılıyor
       // Google Cloud Console'da bu API anahtarı için hem Distance Matrix API hem de Places API etkinleştirilmeli
-      GOOGLE_DISTANCE_API_KEY: "YOUR_GOOGLE_DISTANCE_API_KEY",
+      GOOGLE_DISTANCE_API_KEY: "YAIzaSyAjnjZl3Cty3U1JB3PYBATBH6ujuHk5c3A",
       // Places API için aynı anahtarı kullanıyoruz (yedek olarak burada tutuyoruz)
-      GOOGLE_PLACES_API_KEY: "YOUR_GOOGLE_PLACES_API_KEY",
+      GOOGLE_PLACES_API_KEY: "AIzaSyD5kDRgkklpeTkz-dbaW8LHc6ZHvW2kSmA",
       eas: {
         projectId: "fd8f1dce-1f2c-4902-b19f-ed90c2e25ede"
       }
@@ -63,4 +63,4 @@ export default {
     }
   },
   newArchEnabled: true,
-}; 
+};

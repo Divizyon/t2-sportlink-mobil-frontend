@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useProfileStore } from '../../store/userStore/profileStore';
@@ -31,6 +31,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   const navigation = useNavigation<ProfileNavigationProp>();
   const { updateProfilePicture } = useProfileStore();
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImagePick = async () => {
     try {
@@ -52,26 +53,52 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        allowsMultipleSelection: false,
       });
 
-      if (!result.canceled && result.assets[0].uri) {
-        // Profil fotoğrafını güncelle
-        const success = await updateProfilePicture(result.assets[0].uri);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Yükleme durumunu başlat
+        setIsUploading(true);
         
-        if (!success) {
+        try {
+          // Profil fotoğrafını güncelle
+          const success = await updateProfilePicture(result.assets[0].uri);
+          
+          if (success) {
+            // Başarılı mesajı
+            Alert.alert(
+              'Başarılı',
+              'Profil fotoğrafınız başarıyla güncellenmiştir.',
+              [{ text: 'Tamam' }]
+            );
+          } else {
+            // Hata mesajı
+            Alert.alert(
+              'Hata',
+              'Profil fotoğrafı güncellenirken bir hata oluştu.',
+              [{ text: 'Tamam' }]
+            );
+          }
+        } catch (uploadError) {
+          console.error('Fotoğraf yükleme hatası:', uploadError);
           Alert.alert(
             'Hata',
-            'Profil fotoğrafı güncellenirken bir hata oluştu.',
+            'Profil fotoğrafı yüklenirken beklenmeyen bir hata oluştu.',
             [{ text: 'Tamam' }]
           );
+        } finally {
+          // Yükleme durumunu sonlandır
+          setIsUploading(false);
         }
       }
     } catch (error) {
+      console.error('Fotoğraf seçme hatası:', error);
       Alert.alert(
         'Hata',
         'Profil fotoğrafı seçilirken bir hata oluştu.',
         [{ text: 'Tamam' }]
       );
+      setIsUploading(false);
     }
   };
 
@@ -92,7 +119,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <View style={styles.profileImageContainer}>
-          {profilePicture ? (
+          {isUploading ? (
+            // Yükleme göstergesini göster
+            <View style={[styles.defaultAvatar, { backgroundColor: '#f2f2f2' }]}>
+              <ActivityIndicator size="large" color="#338626" />
+            </View>
+          ) : profilePicture ? (
             <Image 
               source={{ uri: profilePicture }} 
               style={styles.profileImage} 
@@ -108,8 +140,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <TouchableOpacity 
             style={styles.cameraButton}
             onPress={handleImagePick}
+            disabled={isUploading}
           >
-            <Ionicons name="camera" size={16} color="white" />
+            <Ionicons name={isUploading ? "hourglass" : "camera"} size={16} color="white" />
           </TouchableOpacity>
         </View>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserSportPreference } from '../../store/userStore/profileStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
@@ -282,7 +282,14 @@ const SportSelectionModal: React.FC<SportSelectionModalProps> = ({
             onPress={onSave}
             disabled={!hasChanges}
           >
-            <Text style={styles.saveButtonText}>Kaydet</Text>
+            <View style={styles.saveButtonContent}>
+              <Ionicons name="save-outline" size={20} color="white" style={{marginRight: 8}} />
+              <Text style={styles.saveButtonText}>
+                {tempPreferences.length > 0 
+                  ? `${tempPreferences.length} Spor Seçimini Kaydet` 
+                  : 'Kaydet'}
+              </Text>
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -536,6 +543,35 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   
   // Spor seçildiğinde
   const handleSelectSport = (sport: Sport) => {
+    if (!sport || !sport.id) {
+      console.error("Geçersiz spor seçimi:", sport);
+      Alert.alert("Hata", "Geçersiz spor seçimi. Lütfen tekrar deneyin.");
+      return;
+    }
+    
+    // Zaten seçilmiş mi kontrol et
+    const alreadySelected = tempPreferences.some(pref => pref.sportId === sport.id);
+    if (alreadySelected) {
+      console.log(`${sport.name} zaten seçilmiş`);
+      Alert.alert(
+        "Bilgi", 
+        `${sport.name} zaten seçili. Beceri seviyesini değiştirmek istiyorsanız devam edin.`,
+        [
+          { text: "İptal" },
+          { 
+            text: "Devam Et", 
+            onPress: () => {
+              setSelectedSport(sport);
+              setSkillModalVisible(true);
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
+    // Yeni spor seçimi
+    console.log("Spor seçildi:", sport.name, sport.id);
     setSelectedSport(sport);
     setSkillModalVisible(true);
   };
@@ -575,16 +611,87 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   };
   
   // Modal değişiklikleri kaydet
-  const handleSaveChanges = () => {
-    setPreferences([...tempPreferences]);
-    
-    // API'ye güncelleme gönder
-    if (onUpdatePreferences) {
-      onUpdatePreferences(tempPreferences);
+  const handleSaveChanges = async () => {
+    try {
+      if (onUpdatePreferences) {
+        // Spor tercihleri formatını kontrol et
+        if (!Array.isArray(tempPreferences)) {
+          console.error("Geçersiz spor tercihleri formatı:", tempPreferences);
+          Alert.alert("Hata", "Spor tercihleri geçersiz formatta, lütfen tekrar deneyin.");
+          return;
+        }
+
+        // Spor ID'lerini kontrol et
+        const invalidPrefs = tempPreferences.filter(p => !p.sportId);
+        if (invalidPrefs.length > 0) {
+          console.error("Bazı spor tercihlerinde geçersiz ID'ler var:", invalidPrefs);
+          Alert.alert("Hata", "Bazı spor tercihleri geçersiz. Lütfen tekrar spor seçin.");
+          return;
+        }
+
+        console.log("Spor tercihleri güncelleniyor...", JSON.stringify(tempPreferences, null, 2));
+        
+        try {
+          // Güncelleme durumunu göster
+          Alert.alert(
+            "Bilgi", 
+            "Spor tercihleriniz kaydediliyor...", 
+            [{ text: "Tamam", style: "cancel" }]
+          );
+          
+          // API çağrısını yap
+          const success = await onUpdatePreferences(tempPreferences);
+          
+          if (success) {
+            console.log("Spor tercihleri başarıyla güncellendi!");
+            
+            // Local state'i güncelle
+            setPreferences([...tempPreferences]);
+            setSportModalVisible(false);
+            setHasChanges(false);
+            
+            // Kullanıcıya bilgi ver
+            Alert.alert("Başarılı", "Spor tercihleriniz başarıyla güncellendi.");
+          } else {
+            console.error("Spor tercihleri güncellenemedi!");
+            Alert.alert(
+              "Hata", 
+              "Spor tercihleriniz güncellenirken bir sorun oluştu. Lütfen tekrar deneyin.",
+              [
+                { 
+                  text: "Tekrar Dene", 
+                  onPress: handleSaveChanges 
+                },
+                {
+                  text: "İptal"
+                }
+              ]
+            );
+          }
+        } catch (apiError) {
+          console.error("API çağrısı hatası:", apiError);
+          Alert.alert("Hata", "Sunucu iletişiminde bir sorun oluştu. Lütfen tekrar deneyin.");
+        }
+      } else {
+        console.error("onUpdatePreferences fonksiyonu bulunamadı!");
+        Alert.alert("Hata", "Sistem hatası nedeniyle spor tercihleriniz güncellenemedi.");
+      }
+    } catch (error) {
+      console.error("Spor tercihleri güncelleme hatası:", error);
+      Alert.alert(
+        "Hata", 
+        "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+        [
+          { 
+            text: "Tekrar Dene", 
+            onPress: handleSaveChanges 
+          },
+          {
+            text: "İptal"
+          }
+        ]
+      );
     }
-    
-    setSportModalVisible(false);
-    setHasChanges(false);
   };
 
   // Küçük harfli futbolu kaldıran debug bileşeni
@@ -975,5 +1082,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     top: 8
+  },
+  saveButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }); 

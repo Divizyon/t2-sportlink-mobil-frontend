@@ -228,12 +228,16 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       set({ isUpdating: true, error: null, successMessage: null });
       
+      // Dosya tipini URI'dan belirle
+      const fileType = imageUri.endsWith('.png') ? 'image/png' : 'image/jpeg';
+      const fileName = imageUri.split('/').pop() || 'profile.jpg';
+      
       // FormData oluştur
       const formData = new FormData();
       formData.append('avatar', {
         uri: imageUri,
-        type: 'image/jpeg',
-        name: 'profile.jpg'
+        type: fileType,
+        name: fileName
       } as any);
       
       // API isteği kimliği oluştur
@@ -246,7 +250,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       const response = await userProfileService.updateProfilePicture(formData);
       
       // API isteği tamamlandı
-      useApiStore.getState().completeRequest(apiRequestId, 200);
+      useApiStore.getState().completeRequest(apiRequestId, response.success ? 200 : 400);
       
       if (response.success && response.data) {
         // State'i güncelle
@@ -255,6 +259,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           isUpdating: false,
           successMessage: response.message || 'Profil fotoğrafı başarıyla güncellendi.'
         });
+        
+        // Profil bilgilerini tamamen yenile
+        await get().fetchUserProfile();
         
         return true;
       } else {
@@ -286,26 +293,78 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         method: 'PUT'
       });
       
+      // Spor tercihlerinin formatını kontrol et
+      if (!Array.isArray(preferences)) {
+        console.error('Spor tercihleri geçersiz formatta:', preferences);
+        throw new Error('Spor tercihleri geçersiz formatta');
+      }
+      
+      // Boş array kontrolü
+      if (preferences.length === 0) {
+        console.warn('Boş spor tercihleri dizisi gönderiliyor');
+      }
+      
+      // Spor tercihlerini detaylı logla
+      preferences.forEach((pref, index) => {
+        console.log(`Spor #${index + 1}:`, {
+          sportId: pref.sportId,
+          sportName: pref.sportName,
+          skillLevel: pref.skillLevel
+        });
+      });
+      
       // API servisini çağır
+      console.log('ProfileStore: updateSportPreferences çağrılıyor...');
       const response = await userProfileService.updateSportPreferences(preferences);
+      console.log('ProfileStore: API yanıtı alındı:', response.success ? 'başarılı' : 'başarısız');
       
       // API isteği tamamlandı
-      useApiStore.getState().completeRequest(apiRequestId, 200);
+      useApiStore.getState().completeRequest(apiRequestId, 
+        response.success ? 200 : 400
+      );
       
       if (response.success && response.data) {
-        // State'i güncelle
-        set({
-          sportPreferences: response.data.sportPreferences,
-          isUpdating: false,
-          successMessage: response.message || 'Spor tercihleri başarıyla güncellendi.'
-        });
+        console.log('ProfileStore: Başarılı spor tercihleri güncelleme');
         
-        return true;
+        // Yanıt verilerini kontrol et
+        if (response.data.sportPreferences) {
+          const { sportPreferences } = response.data;
+          
+          // Veri dizisi doğrulama
+          if (!Array.isArray(sportPreferences)) {
+            console.error('Geçersiz API yanıtı - sportPreferences bir dizi değil');
+            throw new Error('Geçersiz API yanıtı formatı');
+          }
+          
+          // State'i güncelle
+          set({
+            sportPreferences: sportPreferences,
+            isUpdating: false,
+            successMessage: response.message || 'Spor tercihleri başarıyla güncellendi.'
+          });
+          
+          // Profil verilerini tekrar çekerek güncel bilgileri alalım
+          setTimeout(async () => {
+            try {
+              await get().fetchUserProfile();
+              console.log('Profil bilgileri yenilendi');
+            } catch (error) {
+              console.error('Profil bilgileri yenilenirken hata:', error);
+            }
+          }, 500);
+          
+          return true;
+        } else {
+          console.error('API yanıtında sportPreferences verisi eksik:', response);
+          throw new Error('API yanıtında spor tercihleri verisi bulunamadı');
+        }
       } else {
+        console.error('API hatası:', response.error);
         throw new Error(response.error || 'Spor tercihleri güncellenemedi');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Spor tercihleri güncellenemedi';
+      console.error('Spor tercihleri güncelleme hatası:', errorMessage);
       
       // API isteği başarısız
       useApiStore.getState().setGlobalError(errorMessage);
