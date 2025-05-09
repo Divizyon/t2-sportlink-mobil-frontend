@@ -17,6 +17,8 @@ interface EventWithDistance extends Event {
   distance_info?: {
     distance: number;
     duration: number;
+    distance_text: string;
+    duration_text: string;
   };
 }
 
@@ -734,7 +736,7 @@ export const useEventStore = create<EventState>((set, get) => ({
       const response = await eventService.getEvents({ 
         status: 'active',
         page: 1,
-        limit: 100 // Daha fazla etkinlik almak için limit yüksek tutuldu
+        limit: 200 // Daha fazla etkinlik almak için limit yüksek tutuldu
       });
       
       if (!response.success || !response.data || !response.data.events) {
@@ -758,7 +760,9 @@ export const useEventStore = create<EventState>((set, get) => ({
               ...event,
               distance_info: {
                 distance: Number.MAX_SAFE_INTEGER, // Çok uzak bir mesafe olarak işaretle
-                duration: 0
+                duration: 0,
+                distance_text: 'Bilinmiyor',
+                duration_text: 'Bilinmiyor'
               }
             };
           }
@@ -781,11 +785,24 @@ export const useEventStore = create<EventState>((set, get) => ({
           // Arabayla tahmini süre (saniye)
           const durationInSeconds = distanceInMeters / 11.11;
           
+          // Mesafe ve süre metinlerini formatla
+          const distanceText = distance < 1 ? 
+            `${Math.round(distanceInMeters)} m` : 
+            `${distance.toFixed(1)} km`;
+          
+          // Dakika olarak süre
+          const minutes = Math.round(durationInSeconds / 60);
+          const durationText = minutes < 1 ? 
+            '1 dk' : 
+            `${minutes} dk`;
+          
           return {
             ...event,
             distance_info: {
               distance: distanceInMeters, // metre cinsinden mesafe
-              duration: durationInSeconds // saniye cinsinden süre
+              duration: durationInSeconds, // saniye cinsinden süre
+              distance_text: distanceText,
+              duration_text: durationText
             }
           };
         });

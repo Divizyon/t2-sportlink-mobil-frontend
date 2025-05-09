@@ -9,6 +9,7 @@ import { SessionSettings } from '../screens/profile/settings/SessionSettings';
 import { NotificationSettingsScreen } from '../screens/profile/settings/NotificationSettingsScreen';
 import { FriendsListScreen } from '../screens/profile/FriendsListScreen';
 import { UserEventsScreen } from '../screens/profile/UserEventsScreen';
+import { EditSportPreferencesScreen } from '../screens/profile/EditSportPreferencesScreen';
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -24,6 +25,7 @@ export type ProfileStackParamList = {
     userId: string | undefined;
     title: string;
   };
+  EditSportPreferences: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -130,6 +132,20 @@ export const ProfileStack = () => {
           headerShadowVisible: false,
           animation: 'slide_from_right'
         })}
+      />
+      <Stack.Screen 
+        name="EditSportPreferences" 
+        component={EditSportPreferencesScreen}
+        options={{
+          headerShown: true,
+          title: 'Spor Tercihlerini Düzenle',
+          headerTintColor: '#338626',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerShadowVisible: false,
+          animation: 'slide_from_right'
+        }}
       />
     </Stack.Navigator>
   );

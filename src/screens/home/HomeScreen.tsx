@@ -21,6 +21,7 @@ import { useThemeStore } from '../../store/appStore/themeStore';
 import { useHomeStore } from '../../store/appStore/homeStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
 import { useAuthStore } from '../../store/userStore/authStore';
+import { useProfileStore } from '../../store/userStore/profileStore';
 import { Event } from '../../types/eventTypes/event.types';
 import { News, Sport, Announcement } from '../../types/apiTypes/api.types';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +33,8 @@ import { colors } from '../../constants/colors/colors';
 import { useMapsStore } from '../../store/appStore/mapsStore';
 import * as Location from 'expo-location';
 import NearbyEventsComponent from '../../components/Shared/NearbyEventsComponent';
+import RecommendationReason from '../../components/Home/RecommendationReason/RecommendationReason';
+import { getSportImageSource } from '../../components/Discover/NearbyEventCard';
 
 // Komponentler
 import SectionHeader from '../../components/Home/SectionHeader/SectionHeader';
@@ -81,6 +84,7 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationType>();
   const { user } = useAuthStore();
   const { friendRequests, fetchFriendRequests } = useFriendsStore();
+  const { sportPreferences } = useProfileStore();
   
   // Store verilerini al - nearbyEvents için eventStore'u kullan
   const { 
@@ -95,7 +99,8 @@ export const HomeScreen: React.FC = () => {
     isLoadingNews,
     isLoadingSports,
     isLoadingAnnouncements,
-    refreshAll
+    refreshAll,
+    fetchRecommendedEvents
   } = useHomeStore();
   
   // eventStore'dan yakındaki etkinlikleri al
@@ -236,6 +241,15 @@ export const HomeScreen: React.FC = () => {
     
     loadLocationAndEvents();
   }, []);
+  
+  // Spor tercihlerine göre önerilen etkinlikleri güncelle
+  useEffect(() => {
+    // Spor tercihleri değiştiğinde önerilen etkinlikleri güncelle
+    if (sportPreferences && sportPreferences.length > 0) {
+      console.log("Spor tercihleri değişti, önerilen etkinlikler güncelleniyor...");
+      fetchRecommendedEvents();
+    }
+  }, [sportPreferences]);
   
   // Konum izni modal kapat fonksiyonu
   const handleLocationPermission = async () => {
@@ -695,9 +709,7 @@ export const HomeScreen: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'flex-end'
               }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
+               
               </View>
             </TouchableOpacity>
           </View>
@@ -707,120 +719,111 @@ export const HomeScreen: React.FC = () => {
               <ActivityIndicator size="small" color={theme.colors.accent} />
             </View>
           ) : recommendedEvents.length > 0 ? (
-            <View style={styles.verticalCardContainer}>
-              {recommendedEvents.slice(0, 3).map((event) => (
-                <View key={event.id} style={styles.eventCardWrapper}>
-                  <TouchableOpacity
-                    style={[styles.eventCard, { backgroundColor: theme.colors.card }]}
-                    onPress={() => handleEventPress(event)}
-                    activeOpacity={0.7}
-                  >
-                    {/* Etkinlik resmi veya spor ikonu */}
-                    <View style={styles.eventImageContainer}>
-                      {event.image_url ? (
-                        console.log("event.image_url", event.image_url),
-                        <Image 
-                          source={{uri: event.image_url}}
-                          style={styles.eventImage}
-                          resizeMode="cover"
-                        />
-                      ) : event.sport_id.toLowerCase().includes('tenis') ? (
-                        <Image 
-                          source={{uri: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c1'}}
-                          style={styles.eventImage}
-                          resizeMode="cover"
-                        />
-                      ) : event.sport_id.toLowerCase().includes('futbol') ? (
-                        <Image 
-                          source={{uri: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55'}}
-                          style={styles.eventImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={[styles.eventImagePlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
-                          <Ionicons name="star" size={40} color={colors.accentDark} />
-                        </View>
-                      )}
-                    </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContent}
+            >
+              {recommendedEvents.map((event) => (
+                <TouchableOpacity
+                  key={event.id}
+                  style={[styles.recommendedEventCard, { backgroundColor: theme.colors.card }]}
+                  onPress={() => handleEventPress(event)}
+                  activeOpacity={0.7}
+                >
+                  {/* Etkinlik resmi veya spor ikonu */}
+                  <View style={styles.recommendedEventImageContainer}>
+                    {event.image_url ? (
+                      <Image 
+                        source={{ uri: event.image_url }}
+                        style={styles.recommendedEventImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Image 
+                        source={getSportImageSource(event.sport?.name || '')}
+                        style={styles.recommendedEventImage}
+                        resizeMode="cover"
+                      />
+                    )}
                     
-                    {/* Etkinlik bilgileri */}
-                    <View style={styles.eventInfo}>
-                      <View style={styles.eventHeader}>
-                        <Text style={[styles.eventTitle, { color: theme.colors.text }]} numberOfLines={1}>
-                          {event.title}
+                    {/* Öneri nedeni */}
+                    {event.recommendation_reason && (
+                      <View style={[styles.recommendationReasonBadge, { backgroundColor: theme.colors.card }]}>
+                        <RecommendationReason reason={event.recommendation_reason} />
+                      </View>
+                    )}
+                  </View>
+                  
+                  {/* Etkinlik bilgileri */}
+                  <View style={styles.recommendedEventContent}>
+                    <Text 
+                      style={[styles.recommendedEventTitle, { color: theme.colors.text }]} 
+                      numberOfLines={1}
+                    >
+                      {event.title}
+                    </Text>
+                    
+                    <View style={styles.recommendedEventMeta}>
+                      {/* Tarih bilgisi */}
+                      <View style={styles.recommendedEventDetail}>
+                        <Ionicons name="calendar-outline" size={12} color={theme.colors.textSecondary} />
+                        <Text style={[styles.recommendedEventMetaText, { color: theme.colors.textSecondary }]}>
+                          {new Date(event.event_date).toLocaleDateString('tr-TR')}
                         </Text>
-                        <Ionicons name="chevron-forward" size={18} color={colors.accentDark} />
                       </View>
                       
-                      <View style={styles.eventTagContainer}>
-                        <View style={[styles.eventTag, { backgroundColor: theme.colors.primary + '20' }]}>
-                          <Text style={[styles.eventTagText, { color: theme.colors.primary }]}>
-                            {event.sport_id}
-                          </Text>
-                        </View>
-                        
-                        <View style={[styles.eventTag, { 
-                          backgroundColor: theme.colors.success + '20', 
-                          marginLeft: 8 
-                        }]}>
-                          <Text style={[styles.eventTagText, { color: theme.colors.success }]}>
-                            Önerilen
-                          </Text>
-                        </View>
+                      {/* Konum bilgisi */}
+                      <View style={styles.recommendedEventDetail}>
+                        <Ionicons name="location-outline" size={12} color={theme.colors.textSecondary} />
+                        <Text 
+                          style={[styles.recommendedEventMetaText, { color: theme.colors.textSecondary }]} 
+                          numberOfLines={1}
+                        >
+                          {event.location_name}
+                        </Text>
                       </View>
                       
-                      <View style={styles.eventDetails}>
-                        <View style={styles.eventDetailRow}>
-                          <Ionicons name="location-outline" size={16} color={colors.accentDark} />
-                          <Text style={[styles.eventDetailText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                            {event.location_name || 'Konum bilgisi yok'}
-                          </Text>
-                        </View>
-                        
-                        <View style={styles.eventDetailRow}>
-                          <Ionicons name="calendar-outline" size={16} color={colors.accentDark} />
-                          <Text style={[styles.eventDetailText, { color: theme.colors.textSecondary }]}>
-                            {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
-                          </Text>
-                          <Ionicons name="time-outline" size={16} color={colors.accentDark} style={{ marginLeft: 8 }} />
-                          <Text style={[styles.eventDetailText, { color: theme.colors.textSecondary }]}>
-                            {event.start_time || '00:00'}
-                          </Text>
-                        </View>
-                        
-                        <View style={styles.eventActionRow}>
-                          <View style={[styles.participantsBadge, { backgroundColor: theme.colors.primary + '15' }]}>
-                            <Ionicons name="people" size={14} color={colors.accentDark} />
-                            <Text style={[styles.participantsCount, { color: theme.colors.primary }]}>
-                              {event.current_participants || 0}/{event.max_participants || 'sınırsız'}
-                            </Text>
-                          </View>
-                          
-                          <TouchableOpacity style={[styles.joinButton, { backgroundColor: theme.colors.accent }]}>
-                            <Text style={styles.joinButtonText}>Katıl</Text>
-                          </TouchableOpacity>
-                        </View>
+                      {/* Katılımcı sayısı */}
+                      <View style={styles.recommendedEventDetail}>
+                        <Ionicons name="people-outline" size={12} color={theme.colors.textSecondary} />
+                        <Text style={[styles.recommendedEventMetaText, { color: theme.colors.textSecondary }]}>
+                          {event.current_participants || 0}/{event.max_participants}
+                        </Text>
                       </View>
                     </View>
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
               ))}
               
-              {recommendedEvents.length > 3 && (
-                <TouchableOpacity 
-                  style={[styles.showMoreButton, { borderColor: theme.colors.border }]} 
-                  onPress={handleViewAllEvents}
-                >
-                  <Text style={{ color: theme.colors.accent, fontWeight: '600' }}>Daha Fazla Göster</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+              {/* Tümünü gör butonu */}
+              <TouchableOpacity 
+                style={[styles.viewAllRecommendedCard, { backgroundColor: theme.colors.card + '80' }]}
+                onPress={handleViewAllEvents}
+              >
+               
+              </TouchableOpacity>
+            </ScrollView>
           ) : (
             <View style={[styles.emptyCardWide, { backgroundColor: theme.colors.card }]}>
               <Ionicons name="star-outline" size={24} color={colors.accentDark} />
               <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
                 Senin için önerilen etkinlik bulunamadı
               </Text>
+              <Text style={[styles.emptySubText, { color: theme.colors.textSecondary }]}>
+                Profil sayfasından spor tercihlerini güncelleyebilir veya arkadaş ekleyerek kişiselleştirilmiş öneriler alabilirsin.
+              </Text>
+              
+              <TouchableOpacity
+                style={[styles.emptyActionButton, { backgroundColor: theme.colors.accent }]}
+                onPress={() => {
+                  // @ts-ignore - Tip hatası nedeniyle burada navigation tipini yoksayacağız
+                  navigation.navigate('Profile');
+                  // Profil stack'inden EditSportPreferences sayfasına yönlendirme sonraki aşamada manuel olarak gerçekleşecek
+                }}
+              >
+                <Text style={styles.emptyActionButtonText}>Spor Tercihlerimi Güncelle</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -1293,9 +1296,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   horizontalScrollContent: {
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    paddingRight: 8,
-    paddingBottom: 2,
+    paddingRight: 5,
   },
   announcementCardHorizontal: {
     flexDirection: 'row',
@@ -1495,6 +1498,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
+  emptySubText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 8,
+    opacity: 0.8,
+    marginBottom: 16,
+  },
   messageBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1690,6 +1700,100 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: 'white',
+  },
+  emptyActionButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  emptyActionButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  recommendationReasonContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+  },
+  eventContent: {
+    padding: 16,
+  },
+  eventDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  recommendedEventCard: {
+    width: 260,
+    borderRadius: 12,
+    marginRight: 12,
+    marginBottom: 2,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  recommendedEventImageContainer: {
+    width: '100%',
+    height: 150,
+    position: 'relative',
+  },
+  recommendedEventImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recommendedEventContent: {
+    padding: 12,
+  },
+  recommendedEventTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  recommendedEventMeta: {
+    gap: 4,
+  },
+  recommendedEventDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  recommendedEventMetaText: {
+    fontSize: 12,
+    flex: 1,
+  },
+  viewAllRecommendedCard: {
+    width: 160,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    marginRight: 12,
+  },
+  recommendationReasonBadge: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 6,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
 });
 

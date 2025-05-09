@@ -3,10 +3,12 @@ import eventService from '../../api/events/eventService';
 import newsService from '../../api/news/newsService';
 import sportsService from '../../api/sports/sportsService';
 import announcementService from '../../api/announcements/announcementService';
-import { Event } from '../../types/eventTypes/event.types';
+import { Event, RecommendationReasonType } from '../../types/eventTypes/event.types';
 import { News, Sport, Announcement } from '../../types/apiTypes/api.types';
 import { useEventStore } from '../eventStore/eventStore';
 import { useMapsStore } from './mapsStore';
+import { useProfileStore } from '../userStore/profileStore';
+import { UserSportPreference } from '../userStore/profileStore';
 
 interface HomeStoreState {
   // Veriler
@@ -152,42 +154,72 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   fetchRecommendedEvents: async () => {
     set({ isLoadingRecommendedEvents: true, recommendedEventsError: null });
     try {
-      // EventStore'un recommended etkinliklerini kullan
-      const eventStore = useEventStore.getState();
+      // ProfileStore'dan kullanıcı tercihlerini al
+      const { sportPreferences } = useProfileStore.getState();
+      console.log("Kullanıcı spor tercihleri:", sportPreferences?.length || 0);
       
-      // EventStore'da önerilen etkinlikler yoksa, önce verileri yükle
-      if (eventStore.recommendedEvents.length === 0) {
-        await eventStore.fetchRecommendedEvents();
+      // API'den önerilen etkinlikleri doğrudan getir
+      const response = await eventService.getRecommendedEvents();
+      
+      console.log("API'den gelen önerilen etkinlik yanıtı:", response.success, "Etkinlik sayısı:", response.data?.events?.length || 0);
+      
+      // API yanıtını kontrol et
+      if (response.success && response.data && Array.isArray(response.data.events)) {
+        const recommendedEvents = response.data.events;
+        
+        // Backend gelen recommendation_reason alanlarını kontrol et ve doğru tipe dönüştür
+        // Eğer recommendation_reason alanı yoksa, varsayılan değerler oluştur
+        const eventsWithRecommendationInfo = recommendedEvents.map(event => {
+          // Eğer recommendation_reason yoksa ve sport alanı varsa, spor bazlı öneri kabul et
+          if (!event.recommendation_reason && event.sport && sportPreferences) {
+            const matchingSport = sportPreferences.find(pref => pref.sportId === event.sport_id);
+            
+            if (matchingSport) {
+              return {
+                ...event,
+                recommendation_reason: {
+                  type: 'sport_preference' as 'sport_preference',
+                  sport_id: event.sport_id,
+                  sport_name: event.sport?.name || 'Bilinmeyen Spor',
+                  skill_level: matchingSport.skillLevel
+                }
+              };
+            }
+          }
+          
+          // Eğer recommendation_reason varsa, varsayılan olarak doğru tipe dönüştür
+          if (event.recommendation_reason) {
+            const { type } = event.recommendation_reason;
+            
+            if (type === 'both' || type === 'sport_preference' || type === 'friend_participation') {
+              // Bu tiplerden biriyse doğru formatta
+              return {
+                ...event,
+                recommendation_reason: {
+                  ...event.recommendation_reason,
+                  type: type as RecommendationReasonType
+                }
+              };
+            }
+          }
+          
+          // Hiçbir düzeltme gerekmiyorsa olduğu gibi döndür
+          return event;
+        });
+        
+        console.log('Önerilen etkinlikler işlendi:', eventsWithRecommendationInfo.length);
+        set({ recommendedEvents: eventsWithRecommendationInfo, isLoadingRecommendedEvents: false });
+      } else {
+        console.error('API yanıtı beklenen formatta değil:', response);
+        set({ recommendedEvents: [], isLoadingRecommendedEvents: false });
       }
-      
-      const recommendedEvents = useEventStore.getState().recommendedEvents;
-      console.log('Önerilen etkinlikler eventStore\'dan alındı:', recommendedEvents.length);
-      set({ recommendedEvents, isLoadingRecommendedEvents: false });
     } catch (error) {
       console.error('Önerilen etkinlikleri getirirken hata oluştu:', error);
       set({ 
         recommendedEventsError: 'Önerilen etkinlikler yüklenirken hata oluştu', 
-        isLoadingRecommendedEvents: false 
+        isLoadingRecommendedEvents: false,
+        recommendedEvents: [] // Hata durumunda boş dizi
       });
-      
-      // Yedek olarak direkt API'den çekme yöntemine geri dön
-      try {
-        const response = await eventService.getRecommendedEvents();
-        if (response.data && response.data.events) {
-          console.log('Yedek API çağrısı ile önerilen etkinlikler alındı:', response.data.events.length);
-          set({ recommendedEvents: response.data.events, isLoadingRecommendedEvents: false });
-        } else {
-          console.error('API yanıtı beklenen formatta değil:', response);
-          set({ recommendedEvents: [], isLoadingRecommendedEvents: false });
-        }
-      } catch (backupError) {
-        console.error('Yedek önerilen etkinlikleri getirirken hata oluştu:', backupError);
-        set({ 
-          recommendedEventsError: 'Önerilen etkinlikler yüklenirken hata oluştu', 
-          isLoadingRecommendedEvents: false,
-          recommendedEvents: [] // Hata durumunda boş dizi
-        });
-      }
     }
   },
   

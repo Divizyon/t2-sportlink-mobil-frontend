@@ -8,10 +8,11 @@ import { ConfirmationModal } from '../common/ConfirmationModal';
 
 // Spor kategorilerine göre internet URL'lerinden resim tanımları
 const sportImageURLs: Record<string, string> = {
-  futbol: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
-  basketbol: 'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+  futbol: 'https://images.unsplash.com/photo-1627834249219-048df1143a01?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  basketbol: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=2980&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   tenis: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
-  voleybol: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+  voleybol: 'https://images.unsplash.com/photo-1592656094267-764a45160876?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  yüzme: 'https://plus.unsplash.com/premium_photo-1701030722617-25087a8fe287?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   default: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
 };
 
@@ -25,6 +26,7 @@ export const getSportImageSource = (sportName: string): ImageSourcePropType => {
   if (sport.includes('basket')) return { uri: sportImageURLs.basketbol };
   if (sport.includes('tenis')) return { uri: sportImageURLs.tenis };
   if (sport.includes('voleybol')) return { uri: sportImageURLs.voleybol };
+  if (sport.includes('yüzme')) return { uri: sportImageURLs.yüzme };
   
   return { uri: sportImageURLs.default };
 };

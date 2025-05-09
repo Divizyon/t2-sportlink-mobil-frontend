@@ -25,6 +25,31 @@ export interface EventCreator {
 }
 
 /**
+ * Etkinlik önerme nedenleri için tipler
+ */
+export type RecommendationReasonType = 'sport_preference' | 'friend_participation' | 'both';
+
+/**
+ * Etkinlik önerme nedeni
+ */
+export interface RecommendationReason {
+  type: RecommendationReasonType;
+  sport_id?: string;
+  sport_name?: string;
+  skill_level?: string;
+  friend_count?: number;
+  friends?: Array<{
+    id: string;
+    username: string;
+    first_name: string | null;
+    last_name: string | null;
+    profile_picture: string | null;
+  }>;
+  sport_preference?: RecommendationReason;
+  friend_participation?: RecommendationReason;
+}
+
+/**
  * Etkinlik tipi
  */
 export interface Event {
@@ -56,6 +81,14 @@ export interface Event {
   invitation_code?: string; // Davet kodu (özel etkinlikler için)
   sport?: Sport;
   participant_count?: number;
+  recommendation_reason?: RecommendationReason; // Etkinliğin neden önerildiği bilgisi
+  distance?: number; // Kullanıcıya mesafe bilgisi
+  distance_info?: {
+    distance: number;
+    duration: number;
+    distance_text: string;
+    duration_text: string;
+  }; // Mesafe hesaplama API'sinden gelen detaylı mesafe bilgisi
 }
 
 /**
