@@ -14,7 +14,7 @@ export interface ConfigValues {
 
 // Ortam tabanlı yapılandırma değerleri
 const developmentConfig: ConfigValues = {
-  apiBaseUrl: 'http://10.5.49.152:3000/api',
+  apiBaseUrl: 'https://mobil-backend-le6wyd4b4-ebrar-tamers-projects.vercel.app/api',
   apiTimeout: 10000,
   appName: 'SportVision',
   appVersion: '1.0.0',
@@ -22,7 +22,7 @@ const developmentConfig: ConfigValues = {
 };
 
 const productionConfig: ConfigValues = {
-  apiBaseUrl: 'https://api.sportvision.com/api',
+  apiBaseUrl: 'https://mobil-backend-le6wyd4b4-ebrar-tamers-projects.vercel.app/api',
   
   apiTimeout: 30000,
   appName: 'SportVision',

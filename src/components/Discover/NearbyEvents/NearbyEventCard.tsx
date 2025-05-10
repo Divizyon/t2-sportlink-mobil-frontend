@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../../store/appStore/themeStore';
 import { Event } from '../../../types/eventTypes/event.types';
 import { formatDistanceInfo, getDistanceColor } from '../../../utils/format.utils';
+import { useEventStore } from '../../../store/eventStore/eventStore';
 
 interface NearbyEventCardProps {
   event: Event;
@@ -12,6 +13,7 @@ interface NearbyEventCardProps {
 
 export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress }) => {
   const { theme } = useThemeStore();
+  const { joinEvent } = useEventStore();
   
   // Distance_info kontrolü ekle
   const hasDistanceInfo = event && 
@@ -19,6 +21,18 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   
   // Mesafe renklerini al
   const distanceColor = hasDistanceInfo ? getDistanceColor(event) : '#CCCCCC';
+  
+  // Etkinliğe katılma işlemi
+  const handleJoinEvent = async (e: React.TouchEvent<HTMLElement>) => {
+    e.stopPropagation(); // Kart yönlendirmesini engelle
+    await joinEvent(event.id);
+  };
+  
+  // Etkinlik dolu mu kontrol et
+  const isEventFull = event.current_participants >= event.max_participants;
+  
+  // Katılabilme durumunu kontrol et
+  const canJoin = !event.is_joined && !isEventFull && event.status === 'active';
   
   return (
     <TouchableOpacity
@@ -101,12 +115,27 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
               </Text>
             </View>
             
-            <TouchableOpacity 
-              style={[styles.joinButton, { backgroundColor: theme.colors.accent }]}
-              onPress={() => onPress(event)}
-            >
-              <Text style={styles.joinButtonText}>Katıl</Text>
-            </TouchableOpacity>
+            {event.is_joined ? (
+              <View 
+                style={[styles.joinedButton, { backgroundColor: theme.colors.success }]}
+              >
+                <Ionicons name="checkmark-circle" size={14} color="white" style={{ marginRight: 4 }} />
+                <Text style={styles.joinButtonText}>Katıldınız</Text>
+              </View>
+            ) : isEventFull ? (
+              <View 
+                style={[styles.joinButton, { backgroundColor: theme.colors.textSecondary }]}
+              >
+                <Text style={styles.joinButtonText}>Etkinlik Dolu</Text>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.joinButton, { backgroundColor: theme.colors.accent }]}
+                onPress={() => onPress(event)}
+              >
+                <Text style={styles.joinButtonText}>Katıl</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -213,6 +242,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 12,
+  },
+  joinedButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   joinButtonText: {
     color: 'white',

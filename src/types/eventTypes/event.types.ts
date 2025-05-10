@@ -25,6 +25,23 @@ export interface EventCreator {
 }
 
 /**
+ * Etkinlik katılımcısı tipi
+ */
+export interface EventParticipant {
+  event_id: string;
+  user_id: string;
+  joined_at: string;
+  role: string;
+  user?: {
+    id: string;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    profile_picture?: string | null;
+  };
+}
+
+/**
  * Etkinlik önerme nedenleri için tipler
  */
 export type RecommendationReasonType = 'sport_preference' | 'friend_participation' | 'both';
@@ -81,6 +98,7 @@ export interface Event {
   invitation_code?: string; // Davet kodu (özel etkinlikler için)
   sport?: Sport;
   participant_count?: number;
+  participants?: EventParticipant[]; // Etkinlik katılımcıları
   recommendation_reason?: RecommendationReason; // Etkinliğin neden önerildiği bilgisi
   distance?: number; // Kullanıcıya mesafe bilgisi
   distance_info?: {

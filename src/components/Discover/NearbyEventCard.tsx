@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useMapsStore } from '../../store/appStore/mapsStore';
 import { ConfirmationModal } from '../common/ConfirmationModal';
+import { useEventStore } from '../../store/eventStore/eventStore';
 
 
 // Spor kategorilerine göre internet URL'lerinden resim tanımları
@@ -65,15 +66,16 @@ interface NearbyEventCardProps {
 
 export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress }) => {
   const { theme } = useThemeStore();
-  const [isJoined, setIsJoined] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [distance, setDistance] = useState<string | null>(null);
   const [duration, setDuration] = useState<string | null>(null);
   const [isLoadingDistance, setIsLoadingDistance] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [isJoining, setIsJoining] = useState(false);
   
   const { lastLocation, calculateDistance } = useMapsStore();
+  const { joinEvent, leaveEvent } = useEventStore();
 
   // Görsel yüklenemediğinde hata yakalama
   const handleImageError = (error: NativeSyntheticEvent<ImageErrorEventData>) => {
@@ -174,20 +176,43 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  const handleJoinEvent = () => {
-    setIsJoined(true);
-    // Burada API'ye istek gönderme işlemi yapılacak
+  // Etkinliğe katılma işlemi için güncelleme
+  const handleJoinEvent = async (e: any) => {
+    // Kart yönlendirmesini engelle
+    e.stopPropagation();
+    
+    setIsJoining(true);
+    try {
+      // Store'dan joinEvent fonksiyonunu çağır
+      await joinEvent(event.id);
+    } catch (error) {
+      console.error('Etkinliğe katılma hatası:', error);
+    } finally {
+      setIsJoining(false);
+    }
   };
 
-  const handleCancelJoin = () => {
+  // Katılımı iptal et modalını göster
+  const handleCancelJoin = (e: any) => {
+    // Kart yönlendirmesini engelle
+    e.stopPropagation();
     setIsModalVisible(true);
   };
 
-  const confirmCancelJoin = () => {
-    setIsJoined(false);
-    // Burada API'ye katılım iptal edildiğini bildiren istek gönderilecek
-    setIsModalVisible(false);
+  // Katılımı iptal et
+  const confirmCancelJoin = async () => {
+    try {
+      // Store'dan leaveEvent fonksiyonunu çağır
+      await leaveEvent(event.id);
+    } catch (error) {
+      console.error('Etkinlikten ayrılma hatası:', error);
+    } finally {
+      setIsModalVisible(false);
+    }
   };
+
+  // Etkinlik dolu mu kontrol et
+  const isEventFull = event.current_participants >= event.max_participants;
 
   // Kategori görselini ve tag rengini belirleme
   const sportImage = imageError ? { uri: sportImageURLs.default } : getSportImageSource(event.sport.name);
@@ -317,24 +342,52 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
 
         {/* Katıl/İptal Butonu */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={[
-              styles.joinButton, 
-              isJoined 
-                ? { backgroundColor: theme.colors.accent }
-                : { backgroundColor: 'transparent', borderColor: theme.colors.accent, borderWidth: 1 }
-            ]}
-            onPress={isJoined ? handleCancelJoin : handleJoinEvent}
-          >
-            <Text 
+          {event.is_joined ? (
+            <TouchableOpacity 
               style={[
-                styles.joinButtonText,
-                { color: isJoined ? 'white' : theme.colors.accent }
+                styles.joinButton, 
+                { backgroundColor: theme.colors.success }
+              ]}
+              onPress={handleCancelJoin}
+              disabled={isJoining}
+            >
+              <Ionicons name="checkmark-circle-outline" size={16} color="white" style={styles.buttonIcon} />
+              <Text style={[styles.joinButtonText, { color: 'white' }]}>
+                Katıldınız
+              </Text>
+            </TouchableOpacity>
+          ) : isEventFull ? (
+            <View 
+              style={[
+                styles.joinButton, 
+                { backgroundColor: 'transparent', borderColor: theme.colors.textSecondary, borderWidth: 1 }
               ]}
             >
-              {isJoined ? 'Katıldın' : 'Katıl'}
-            </Text>
-          </TouchableOpacity>
+              <Text style={[styles.joinButtonText, { color: theme.colors.textSecondary }]}>
+                Etkinlik Dolu
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[
+                styles.joinButton, 
+                { backgroundColor: 'transparent', borderColor: theme.colors.accent, borderWidth: 1 }
+              ]}
+              onPress={handleJoinEvent}
+              disabled={isJoining}
+            >
+              {isJoining ? (
+                <ActivityIndicator size="small" color={theme.colors.accent} />
+              ) : (
+                <>
+                  <Ionicons name="add-circle-outline" size={16} color={theme.colors.accent} style={styles.buttonIcon} />
+                  <Text style={[styles.joinButtonText, { color: theme.colors.accent }]}>
+                    Katıl
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableOpacity>
 
@@ -454,4 +507,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  buttonIcon: {
+    marginRight: 4
+  }
 });

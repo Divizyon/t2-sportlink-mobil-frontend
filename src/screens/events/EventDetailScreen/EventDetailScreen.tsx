@@ -16,6 +16,7 @@ import {
   Platform,
   Modal,
   TextInput,
+  FlatList,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,6 +76,9 @@ export const EventDetailScreen: React.FC = () => {
   
   // Transport mode için state
   const [selectedTransportMode, setSelectedTransportMode] = useState<'driving' | 'walking' | 'transit'>('driving');
+  
+  // Katılımcı durumu için state'ler ekleyelim
+  const [participantsModalVisible, setParticipantsModalVisible] = useState<boolean>(false);
   
   // Component mount edildiğinde etkinlik detayını getir
   useEffect(() => {
@@ -166,6 +170,16 @@ export const EventDetailScreen: React.FC = () => {
     setInvitationCodeModalVisible(false);
     setInvitationCode('');
     setInvitationCodeError('');
+  };
+  
+  // Katılımcılar modalını aç
+  const handleOpenParticipantsModal = () => {
+    setParticipantsModalVisible(true);
+  };
+  
+  // Katılımcılar modalını kapat
+  const handleCloseParticipantsModal = () => {
+    setParticipantsModalVisible(false);
   };
   
   // Etkinlikten ayrıl
@@ -448,6 +462,110 @@ export const EventDetailScreen: React.FC = () => {
     );
   };
   
+  // Katılımcılar modalını render et
+  const renderParticipantsModal = () => {
+    // currentEvent.participants kullanımını düzeltelim
+    // API yanıtından gelen participants verisi için güvenli erişim sağlayalım
+    const participants = currentEvent?.participants || [];
+    
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={participantsModalVisible}
+        onRequestClose={handleCloseParticipantsModal}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={handleCloseParticipantsModal}
+        >
+          <View style={[styles.modalContainer, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Katılımcılar ({currentParticipants}/{maxParticipants})
+              </Text>
+              <TouchableOpacity onPress={handleCloseParticipantsModal}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              {participants && participants.length > 0 ? (
+                <FlatList
+                  data={participants}
+                  keyExtractor={(item) => item.user_id}
+                  renderItem={({ item }) => (
+                    <View style={[styles.participantItem, {
+                      borderBottomColor: theme.colors.border,
+                      borderBottomWidth: 1,
+                    }]}>
+                      <View style={styles.participantAvatar}>
+                        {item.user?.profile_picture ? (
+                          <Image 
+                            source={{ uri: item.user.profile_picture }}
+                            style={styles.avatarImage}
+                          />
+                        ) : (
+                          <View style={[styles.defaultAvatar, { backgroundColor: theme.colors.accent }]}>
+                            <Text style={styles.avatarText}>
+                              {item.user?.first_name?.charAt(0)?.toUpperCase() || '?'}
+                            </Text>
+                          </View>
+                        )}
+                        {item.role === 'admin' && (
+                          <View style={[styles.adminBadge, { backgroundColor: theme.colors.accent }]}>
+                            <Ionicons name="star" size={10} color="white" />
+                          </View>
+                        )}
+                      </View>
+                      
+                      <View style={styles.participantInfo}>
+                        <Text style={[styles.participantName, { color: theme.colors.text }]}>
+                          {`${item.user?.first_name || ''} ${item.user?.last_name || ''}`.trim() || 'İsimsiz Kullanıcı'}
+                          {item.user_id === user?.id ? ' (Sen)' : ''}
+                        </Text>
+                        <Text style={[styles.participantUsername, { color: theme.colors.textSecondary }]}>
+                          @{item.user?.username || 'kullanıcı'}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.participantRole}>
+                        <Text style={[
+                          styles.roleText, 
+                          { 
+                            color: item.role === 'admin' ? theme.colors.primary : theme.colors.accent
+                          }
+                        ]}>
+                          {item.role === 'admin' ? 'Organizatör' : 'Katılımcı'}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                  style={styles.participantsList}
+                />
+              ) : (
+                <View style={styles.emptyParticipants}>
+                  <Ionicons name="people" size={50} color={theme.colors.textSecondary} />
+                  <Text style={[styles.emptyText, { color: theme.colors.text }]}>
+                    Henüz katılımcı bulunmuyor
+                  </Text>
+                </View>
+              )}
+              
+              <TouchableOpacity
+                style={[styles.closeButton, { backgroundColor: theme.colors.accent }]}
+                onPress={handleCloseParticipantsModal}
+              >
+                <Text style={styles.closeButtonText}>Kapat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+  
   // İçerik yükleniyorsa
   if (isLoading && !currentEvent) {
     return (
@@ -624,12 +742,26 @@ export const EventDetailScreen: React.FC = () => {
             </View>
           </View>
           
-          <Text style={[styles.participantsStatus, { color: theme.colors.textSecondary }]}>
-            {isEventFull 
-              ? 'Bu etkinliğin kontenjanı dolmuştur.' 
-              : `${remainingSpots} kişilik yer kaldı`
-            }
-          </Text>
+          <View style={styles.participantsActions}>
+            <Text style={[styles.participantsStatus, { color: theme.colors.textSecondary }]}>
+              {isEventFull 
+                ? 'Bu etkinliğin kontenjanı dolmuştur.' 
+                : `${remainingSpots} kişilik yer kaldı`
+              }
+            </Text>
+            
+            {currentParticipants > 0 && (
+              <TouchableOpacity 
+                style={[styles.viewAllButton, { borderColor: theme.colors.accent }]}
+                onPress={handleOpenParticipantsModal}
+              >
+                <Text style={[styles.viewAllButtonText, { color: theme.colors.accent }]}>
+                  Tüm Katılımcıları Gör
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={theme.colors.accent} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         
         {/* Konum ve Mesafe Bilgisi */}
@@ -794,6 +926,9 @@ export const EventDetailScreen: React.FC = () => {
       
       {/* Davet kodu modalı */}
       {renderInvitationCodeModal()}
+      
+      {/* Participants Modal */}
+      {renderParticipantsModal()}
     </SafeAreaView>
   );
 };
@@ -997,7 +1132,29 @@ const styles = StyleSheet.create({
   participantsStatus: {
     fontSize: 14,
     marginTop: 4,
-    textAlign: 'center',
+    flex: 1,
+  },
+  participantsActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  viewAllButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 2,
+  },
+  participantsList: {
+    maxHeight: 400,
   },
   locationName: {
     fontSize: 16,
@@ -1242,5 +1399,87 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 12,
     fontWeight: '500',
+  },
+  emptyParticipants: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  closeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  participantItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  participantAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    position: 'relative',
+  },
+  defaultAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  adminBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  participantInfo: {
+    flex: 1,
+  },
+  participantName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  participantUsername: {
+    fontSize: 14,
+  },
+  participantRole: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
