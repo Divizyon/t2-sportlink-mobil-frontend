@@ -66,8 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
           const mapsStore = useMapsStore.getState();
           await mapsStore.initLocation();
-          console.log('Giriş sonrası konum bilgisi güncellendi');
-        } catch (locationError) {
+          } catch (locationError) {
           console.error('Giriş sonrası konum güncellenirken hata:', locationError);
         }
         
@@ -197,7 +196,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             try {
               const mapsStore = useMapsStore.getState();
               await mapsStore.initLocation();
-              console.log('Token girişi sonrası konum bilgisi güncellendi');
             } catch (locationError) {
               console.error('Token girişi sonrası konum güncellenirken hata:', locationError);
             }
@@ -225,7 +223,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             try {
               const mapsStore = useMapsStore.getState();
               await mapsStore.initLocation();
-              console.log('API kullanıcı doğrulaması sonrası konum bilgisi güncellendi');
             } catch (locationError) {
               console.error('API kullanıcı doğrulaması sonrası konum güncellenirken hata:', locationError);
             }

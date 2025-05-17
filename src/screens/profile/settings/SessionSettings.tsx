@@ -92,7 +92,6 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
     const token = await tokenManager.getToken();
     
     if (!token) {
-      console.warn('Token bulunamadı, oturum açılması gerekiyor');
       return []; // Token yoksa boş dizi dön
     }
     
@@ -101,7 +100,6 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
     
     // Cihaz adını al
     const currentDeviceName = await getDeviceName();
-    console.log("Mevcut cihaz adı:", currentDeviceName);
     
     // Network hatalarını önlemek için timeout ayarlı API isteği
     const controller = new AbortController();
@@ -122,25 +120,13 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
         // DeviceStore'dan mevcut cihaz token'ını al
         const currentDeviceToken = useDeviceStore.getState().deviceToken;
         
-        console.log("Cihaz tespit için mevcut deviceToken:", currentDeviceToken);
-        
         // Eğer mevcut token yoksa, yeni bir token oluştur
         if (!currentDeviceToken) {
           await useDeviceStore.getState().generateDeviceToken();
-          console.log("Yeni token oluşturuldu:", useDeviceStore.getState().deviceToken);
         }
         
         // Platformu tespit et (ios, android, web)
         const currentPlatform = Platform.OS;
-        console.log("Mevcut platform:", currentPlatform);
-        
-        // API yanıtını incele
-        console.log("API'den gelen cihaz sayısı:", response.data.data.devices.length);
-        
-        // Cihaz token'larını logla
-        response.data.data.devices.forEach((device, index) => {
-          console.log(`Cihaz ${index + 1} token:`, device.token, "platform:", device.platform);
-        });
         
         // API yanıtını SessionDevice[] formatına dönüştür
         return response.data.data.devices.map(device => {
@@ -148,13 +134,6 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
           // 1. İlk kontrol: DeviceStore'dan alınan token bilgisi ile eşleşiyorsa mevcut cihaz
           // 2. İkinci kontrol: Platformlar eşleşiyorsa ve tarih en yeniyse
           // 3. Son çare: En son güncellenen cihazı aktif say
-          
-          // API'den token değerinin gelip gelmediğini kontrol et
-          if (!device.token) {
-            console.warn(`API'den token değeri gelmiyor, Cihaz ID: ${device.id}, platform: ${device.platform}`);
-          } else {
-            console.log(`API'den token değeri başarıyla alındı, Cihaz ID: ${device.id}, token: ${device.token.substring(0, 10)}...`);
-          }
           
           const tokenMatch = currentDeviceToken && device.token === currentDeviceToken;
           const platformMatch = device.platform === currentPlatform;
@@ -166,24 +145,18 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
           // Token eşleşmiyorsa, platform ve tarih kontrolü yap
           if (!isCurrentDevice && platformMatch && isLatest) {
             isCurrentDevice = true;
-            console.log("Platform ve tarih eşleşmesi ile cihaz tespit edildi:", device.id);
           }
           
           // Yine bulunamadıysa, en son cihazı kullan
           if (!isCurrentDevice && isLatest && !response.data.data.devices.some(d => d.token === currentDeviceToken)) {
             isCurrentDevice = true;
-            console.log("En son tarih ile cihaz tespit edildi:", device.id);
           }
           
           if (isCurrentDevice) {
-            console.log("Bu cihaz tespit edildi:", device.id, "token:", device.token ? device.token.substring(0, 10) + '...' : 'yok');
-            
             // Eğer tespit edilen cihazın token'ı, mevcut token'dan farklıysa, güncelle
             if (device.token && device.token !== currentDeviceToken) {
-              console.log(`Cihaz token'ı güncelleniyor... Eski: ${currentDeviceToken?.substring(0, 10) || 'yok'}, Yeni: ${device.token.substring(0, 10)}`);
               AsyncStorage.setItem(DEVICE_TOKEN_KEY, device.token);
               useDeviceStore.setState({ deviceToken: device.token });
-              console.log("Cihaz token'ı güncellendi");
             }
           }
           
@@ -220,7 +193,6 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
           };
         });
       } else {
-        console.error('API yanıtı başarısız:', response.data);
         throw new Error(`API yanıtı başarısız: ${response.status}`);
       }
     } catch (error: any) {
@@ -237,8 +209,6 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
       throw error;
     }
   } catch (error) {
-    console.error('Cihazları getirme hatası:', error);
-    
     // Hata durumunda boş dizi dön
     return [];
   }
@@ -246,12 +216,9 @@ const fetchDevicesFromApi = async (): Promise<SessionDevice[]> => {
 
 const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<boolean> => {
   try {
-    console.log('revokeDeviceFromApi çağrıldı:', { deviceId, token });
-    
     // Önce yetkilendirme token'ını al
     const authToken = await tokenManager.getToken();
     if (!authToken) {
-      console.error('Kimlik doğrulama token\'ı bulunamadı, oturum açılması gerekiyor');
       return false;
     }
     
@@ -260,11 +227,7 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
     
     // Token doğrulama kontrolleri
     if (!token || token.trim() === '') {
-      console.warn('Silinecek cihaz token\'ı bulunamadı, deviceId kullanılacak:', deviceId);
-      
       try {
-        console.log('Cihazları listeleniyor, ID\'ye göre token bulunacak');
-        
         // Timeout kontrolü ile istek gönderme
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -285,10 +248,6 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
         
         if (response.status === 200 && response.data.success) {
           const devices = response.data.data.devices;
-          console.log(`${devices.length} cihaz bulundu, aranan cihaz ID: ${deviceId}`);
-          
-          // API yanıtındaki devices array'ini detaylı olarak incele
-          console.log('Tüm cihaz verileri:', JSON.stringify(devices));
           
           // deviceId'ye göre cihazı bul - API'nin yapısına göre kontrol et
           // devices içinde id yerine _id veya başka bir özellik kullanılıyor olabilir
@@ -299,45 +258,30 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
           );
           
           if (targetDevice) {
-            console.log('Cihaz bulundu:', JSON.stringify(targetDevice));
-            
             // token değeri var mı kontrol et
             if (targetDevice.token) {
-              console.log('Cihaz token bulundu, silme işlemi yapılıyor:', targetDevice.token);
-              
               // Bulunan token ile silme işlemini devam ettir
               return await performTokenDeletion(targetDevice.token, authToken, apiBaseUrl);
             } else {
               // Token yoksa ama cihaz bulunduysa, güncel cihazın token değerini kullanmayı dene
               const currentToken = useDeviceStore.getState().deviceToken;
               if (currentToken) {
-                console.log('Cihaz için token bulunamadı, mevcut cihazın token değeri kullanılıyor:', currentToken);
                 return await performTokenDeletion(currentToken, authToken, apiBaseUrl);
               } else {
-                console.error('Cihazda token yok ve mevcut cihaz token değeri de bulunamadı:', deviceId);
                 return false;
               }
             }
           } else {
-            console.error('Cihaz bulunamadı, ID:', deviceId);
-            console.log('Var olan cihaz ID değerleri:', devices.map((d: any) => d.id || d._id || 'ID yok').join(', '));
             return false;
           }
         } else {
-          console.error('Cihazları listeleme yanıtı başarısız:', response.status, response.data);
           return false;
         }
       } catch (error) {
         if (axios.isAxiosError(error)) {
           if (error.code === 'ECONNABORTED' || error.name === 'AbortError') {
-            console.error('Cihaz listeleme isteği zaman aşımına uğradı');
-          } else {
-            console.error('API hatası:', error.message);
-            console.error('Yanıt durumu:', error.response?.status);
-            console.error('Yanıt verisi:', error.response?.data);
+            // Zaman aşımı hatası
           }
-        } else {
-          console.error('Cihazları listeleme hatası:', error);
         }
         return false;
       }
@@ -347,20 +291,14 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
     const currentDeviceToken = useDeviceStore.getState().deviceToken;
     const isCurrentDevice = currentDeviceToken === token;
     
-    console.log('Token silme işlemi başlatıldı:', { deviceId, token, isCurrentDevice });
-    
     // Mevcut cihaz ise deviceStore'daki unregisterDeviceToken fonksiyonunu kullan
     if (isCurrentDevice) {
-      console.log('Mevcut cihaz token\'ı siliniyor');
       const success = await useDeviceStore.getState().unregisterDeviceToken();
       
       if (success) {
         // Token başarıyla silindi, deviceToken'ı AsyncStorage'dan da temizle
         await AsyncStorage.removeItem(DEVICE_TOKEN_KEY);
         useDeviceStore.setState({ deviceToken: null });
-        console.log('Mevcut cihaz token\'ı başarıyla silindi');
-      } else {
-        console.error('DeviceStore unregisterDeviceToken başarısız oldu');
       }
       
       return success;
@@ -370,13 +308,6 @@ const revokeDeviceFromApi = async (deviceId: string, token?: string): Promise<bo
       return await performTokenDeletion(token, authToken, apiBaseUrl);
     }
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('API hatası:', error.message);
-      console.error('Yanıt durumu:', error.response?.status);
-      console.error('Yanıt verisi:', error.response?.data);
-    } else {
-      console.error('Cihaz oturumu kapatma hatası:', error);
-    }
     return false;
   }
 };
@@ -386,11 +317,8 @@ const performTokenDeletion = async (token: string, authToken: string, apiBaseUrl
   try {
     // Token geçerlilik kontrolü
     if (!token || token.trim() === '') {
-      console.error('Geçersiz token değeri, silme işlemi yapılamıyor');
       return false;
     }
-    
-    console.log('Token silme isteği gönderiliyor:', token);
     
     // API isteği - devices/unregister endpoint'i
     const response = await axios.post(
@@ -405,25 +333,13 @@ const performTokenDeletion = async (token: string, authToken: string, apiBaseUrl
       }
     );
     
-    console.log('API yanıtı:', response.status, response.data);
-    
     // API yanıtı kontrolü - succcess değerini kontrol et
     if (response.data && response.data.success === true) {
-      console.log('Token başarıyla silindi:', token);
       return true;
     } else {
-      console.error('Token silme yanıtı başarısız:', response.data);
       return false;
     }
   } catch (error: any) {
-    // Detaylı hata bilgisi
-    if (axios.isAxiosError(error)) {
-      console.error('API hatası:', error.message);
-      console.error('Yanıt durumu:', error.response?.status);
-      console.error('Yanıt verisi:', error.response?.data);
-    } else {
-      console.error('Token silme hatası:', error);
-    }
     return false;
   }
 };
@@ -530,19 +446,12 @@ interface DeviceItemProps {
 }
 
 const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
-  // Debug: token değerini konsola yazdır
-  useEffect(() => {
-    console.log(`Cihaz ID: ${device.id}, Token: ${device.token || 'undefined/null'}, Platform: ${device.platform}`);
-  }, [device.id]);
-
   // Token kontrolü yapmak için yardımcı fonksiyon
   const handleRevoke = () => {
     if (!device.token) {
-      console.warn(`Token değeri bulunamadı, Cihaz ID: ${device.id}`);
       // token değeri yoksa bile deviceId ile çağır
       onRevoke(device.id, '');
     } else {
-      console.log(`Çıkış işlemi başlatılıyor, Token: ${device.token}`);
       onRevoke(device.id, device.token);
     }
   };
@@ -682,7 +591,6 @@ const getDeviceName = async (): Promise<string> => {
           deviceName = 'Android Cihaz';
         }
       } catch (err) {
-        console.log('Android cihaz adı alınamadı:', err);
         deviceName = 'Android Cihaz';
       }
     } 
@@ -693,7 +601,6 @@ const getDeviceName = async (): Promise<string> => {
         const model = NativeModules.DeviceInfo?.model || 'iOS Cihaz';
         deviceName = model;
       } catch (err) {
-        console.log('iOS cihaz adı alınamadı:', err);
         deviceName = 'iOS Cihaz';
       }
     } 
@@ -706,7 +613,6 @@ const getDeviceName = async (): Promise<string> => {
     await AsyncStorage.setItem('@device_name', deviceName);
     return deviceName;
   } catch (error) {
-    console.error('Cihaz adı alma hatası:', error);
     return `${Platform.OS.charAt(0).toUpperCase() + Platform.OS.slice(1)} Cihaz`;
   }
 };
@@ -745,16 +651,12 @@ export const SessionSettings: React.FC = () => {
     try {
       // DeviceStore'dan token al - eğer yoksa yeni oluştur
       const existingToken = useDeviceStore.getState().deviceToken;
-      console.log("Mevcut cihaz token (saveCurrentDeviceToken başlangıç):", existingToken);
-      
       // Cihaz adını al
-      const deviceName = await getDeviceName();
-      console.log("Cihaz adı alındı:", deviceName);
+      await getDeviceName();
 
       if (!existingToken) {
         // Token yoksa yeni oluştur
-        const newToken = await generateDeviceToken();
-        console.log("Yeni oluşturulan token:", newToken);
+        await generateDeviceToken();
         
         // Token'ı kaydettikten sonra API'ye bildir
         try {
@@ -762,18 +664,15 @@ export const SessionSettings: React.FC = () => {
           const platform = Platform.OS;
           // Token'ı kaydet
           await useDeviceStore.getState().registerDeviceToken(platform);
-          console.log("Token API'ye kaydedildi:", { token: newToken, platform, deviceName });
         } catch (registerError) {
-          console.error("Token API kaydı sırasında hata:", registerError);
+          // Token API kaydı hatası
         }
-      } else {
-        console.log("Var olan token kullanılıyor:", existingToken);
       }
       
       // Token oluşturulduktan sonra cihaz listesini getir
       await fetchDevices();
     } catch (err) {
-      console.error('Cihaz token işlemleri sırasında hata:', err);
+      // Cihaz token işlemleri hatası
     }
   };
   
@@ -782,7 +681,6 @@ export const SessionSettings: React.FC = () => {
     saveCurrentDeviceToken();
     
     const refreshInterval = setInterval(() => {
-      console.log("Otomatik cihaz listesi yenileniyor...");
     fetchDevices();
     }, 30000); // Her 30 saniyede bir yenile
     
@@ -792,7 +690,6 @@ export const SessionSettings: React.FC = () => {
   // deviceToken değiştiğinde cihaz listesini yenile
   useEffect(() => {
     if (deviceToken) {
-      console.log("Device token değişti, cihaz listesi yenileniyor:", deviceToken);
       fetchDevices();
     }
   }, [deviceToken]);
@@ -800,7 +697,6 @@ export const SessionSettings: React.FC = () => {
   // Manüel yenileme işlemini güçlendir
   const onRefresh = async () => {
     setRefreshing(true);
-    console.log("Manuel yenileme başlatıldı");
     
     // Cihaz token'ı yeniden doğrula
     const existingToken = useDeviceStore.getState().deviceToken;
@@ -823,11 +719,9 @@ export const SessionSettings: React.FC = () => {
   
   // Cihaz erişimini iptal etme
   const handleRevokeDevice = (deviceId: string, token?: string) => {
-    console.log('handleRevokeDevice çağrıldı:', { deviceId, token });
     
     // Mevcut cihazın token'ı ile karşılaştır
     const currentDeviceToken = useDeviceStore.getState().deviceToken;
-    console.log('Mevcut cihaz token:', currentDeviceToken);
     
     // Mevcut cihaz mı kontrol et
     const isCurrent = token === currentDeviceToken || deviceId === devices.find(d => d.isCurrentDevice)?.id;
@@ -850,14 +744,11 @@ export const SessionSettings: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             // İşlem başladı uyarısı göster
-            const loadingAlert = Alert.alert('İşlem Başladı', 'Oturum kapatılıyor, lütfen bekleyin...');
+            Alert.alert('İşlem Başladı', 'Oturum kapatılıyor, lütfen bekleyin...');
             
             try {
-              console.log('Oturum kapatma işlemi başlatılıyor:', { deviceId, token: effectiveToken, isCurrent });
-              
               // Cihaz token değerini sil
               const success = await revokeDevice(deviceId, effectiveToken);
-              console.log('Oturum kapatma işlemi sonucu:', { success });
               
               if (success) {
                 if (isCurrent) {

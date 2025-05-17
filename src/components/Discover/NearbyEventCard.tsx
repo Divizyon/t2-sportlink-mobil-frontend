@@ -114,7 +114,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             setDistance(result.distance.text);
             setDuration(result.duration.text);
           } else {
-            console.warn('Mesafe hesaplanamadı, yedek yöntemlere geçiliyor...');
             // Mesafe hesaplanamazsa, distance_info objesine bakabiliriz
             if (event.distance_info && event.distance_info.distance) {
               const distanceKm = event.distance_info.distance / 1000; // metre -> km
@@ -133,7 +132,6 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             }
           }
         } else {
-          console.warn('Kullanıcı konumu bulunamadı, alternatif mesafe verilerine bakılıyor...');
           // Kullanıcının konumu yoksa, event üzerinde distance varsa onu kullan
           if (event.distance_info && event.distance_info.distance) {
             const distanceKm = event.distance_info.distance / 1000; // metre -> km

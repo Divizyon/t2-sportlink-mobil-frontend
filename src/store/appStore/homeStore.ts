@@ -110,7 +110,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
       });
       
       set({ upcomingEvents: sortedEvents, isLoadingUpcomingEvents: false });
-      console.log('Yaklaşan etkinlikler başarıyla filtrelendi:', sortedEvents.length);
     } catch (error) {
       console.error('Yaklaşan etkinlikleri filtrelemede hata oluştu:', error);
       set({ 
@@ -133,7 +132,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
             new Date(event.event_date) >= new Date(today)
           );
           
-          console.log('Yedek API çağrısı ile yaklaşan etkinlikler alındı:', upcomingEvents.length);
           set({ upcomingEvents, isLoadingUpcomingEvents: false });
         } else {
           console.error('API yanıtı beklenen formatta değil:', response);
@@ -156,12 +154,9 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
     try {
       // ProfileStore'dan kullanıcı tercihlerini al
       const { sportPreferences } = useProfileStore.getState();
-      console.log("Kullanıcı spor tercihleri:", sportPreferences?.length || 0);
-      
+          
       // API'den önerilen etkinlikleri doğrudan getir
       const response = await eventService.getRecommendedEvents();
-      
-      console.log("API'den gelen önerilen etkinlik yanıtı:", response.success, "Etkinlik sayısı:", response.data?.events?.length || 0);
       
       // API yanıtını kontrol et
       if (response.success && response.data && Array.isArray(response.data.events)) {
@@ -207,7 +202,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
           return event;
         });
         
-        console.log('Önerilen etkinlikler işlendi:', eventsWithRecommendationInfo.length);
         set({ recommendedEvents: eventsWithRecommendationInfo, isLoadingRecommendedEvents: false });
       } else {
         console.error('API yanıtı beklenen formatta değil:', response);
@@ -227,7 +221,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   fetchNearbyEvents: async (params: { latitude: number; longitude: number; radius: number }) => {
     set({ isLoadingNearbyEvents: true, nearbyEventsError: null });
     try {
-      console.log('Yakındaki etkinlikler için eventStore.fetchNearbyEvents çağrılıyor...');
       // EventStore'un fetchNearbyEvents metodunu çağır
       const eventStore = useEventStore.getState();
       await eventStore.fetchNearbyEvents(params);
@@ -237,7 +230,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         isLoadingNearbyEvents: false,
         nearbyEventsError: eventStore.error
       });
-      console.log('Yakındaki etkinlikler başarıyla alındı:', eventStore.nearbyEvents.length);
     } catch (error) {
       console.error('Yakındaki etkinlikleri getirirken hata oluştu:', error);
       set({ 
@@ -251,17 +243,14 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   fetchNews: async () => {
     set({ isLoadingNews: true, newsError: null });
     try {
-      console.log('Haberler yükleniyor...');
       const response = await newsService.getNews({ page: 1, limit: 5 });
       
       if (response.data) {
         const newsData = Array.isArray(response.data) ? response.data : 
                         (response.data.news ? response.data.news : []);
         
-        console.log('Haber verileri başarıyla alındı:', newsData.length);
         set({ news: newsData, isLoadingNews: false });
       } else {
-        console.log('API\'den haber verisi gelmedi, boş dizi kullanılıyor');
         set({ news: [], isLoadingNews: false });
       }
     } catch (error) {
@@ -278,7 +267,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   fetchSports: async () => {
     set({ isLoadingSports: true, sportsError: null });
     try {
-      console.log('Spor dalları yükleniyor...');
       const response = await sportsService.getAllSports();
       
       if (response.data) {
@@ -286,10 +274,8 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         const sportsData = Array.isArray(response.data) ? response.data : 
                          (response.data.sports ? response.data.sports : []);
         
-        console.log('Spor kategorileri başarıyla alındı:', sportsData.length);
         set({ sports: sportsData, isLoadingSports: false });
       } else {
-        console.log('API\'den spor kategori verisi gelmedi, boş dizi kullanılıyor');
         set({ sports: [], isLoadingSports: false });
       }
     } catch (error) {
@@ -306,14 +292,12 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   fetchAnnouncements: async () => {
     set({ isLoadingAnnouncements: true, announcementsError: null });
     try {
-      console.log('Duyurular yükleniyor...');
       const response = await announcementService.getAnnouncements({ 
         page: 1, 
         limit: 10,
         includeUnpublished: false
       });
       
-      console.log('Announcements API yanıtı alındı, işleniyor...', response);
       
       // API yanıt yapısını kontrol et
       if (response && response.success && response.data) {
@@ -324,7 +308,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         if (response.data.announcements && Array.isArray(response.data.announcements)) {
           // Çoklu duyuru durumu (dizi)
           const announcements = response.data.announcements;
-          console.log('Duyurular dizisi başarıyla yüklendi:', announcements.length);
           
           set({ 
             announcements: announcements, 
@@ -333,7 +316,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         } 
         else if (Array.isArray(response.data)) {
           // Data doğrudan dizi ise
-          console.log('Duyurular doğrudan dizi olarak yüklendi:', response.data.length);
           set({ 
             announcements: response.data, 
             isLoadingAnnouncements: false 
@@ -346,7 +328,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
             const singleAnnouncement = response.data as unknown as Announcement;
             
             if (singleAnnouncement.id) {
-              console.log('Tek duyuru obje olarak yüklendi:', singleAnnouncement.id);
               
               // Tek duyuruyu dizi içine koyarak state'e aktar
               set({ 
@@ -393,7 +374,6 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
   
   // Tüm verileri yenile
   refreshAll: async () => {
-    console.log('Tüm veriler yenileniyor...');
     const { 
       fetchUpcomingEvents, 
       fetchRecommendedEvents, 
@@ -416,22 +396,18 @@ export const useHomeStore = create<HomeStoreState>((set, get) => ({
         // Konum bilgisini maps store'dan al
         const lastLocation = useMapsStore.getState().lastLocation;
         if (lastLocation) {
-          console.log('Konum bilgisi alındı, yakındaki etkinlikler yenileniyor...');
           await fetchNearbyEvents({ 
             latitude: lastLocation.latitude, 
             longitude: lastLocation.longitude, 
             radius: 10 
           });
         } else {
-          console.log('Konum bilgisi bulunamadı, yakındaki etkinlikler yenilenemiyor');
         }
       } catch (error) {
-        console.error('Konum erişiminde hata:', error);
       }
     };
     
     await fetchData();
-    console.log('Tüm veriler başarıyla yenilendi');
   }
 }));
 

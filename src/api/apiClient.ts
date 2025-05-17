@@ -61,7 +61,6 @@ apiClient.interceptors.request.use(
       if (request.data) {
         // Hassas verileri loglamadan önce maske uygula
         const maskedData = maskSensitiveData(request.data);
-        console.log('API İstek Verisi:', JSON.stringify(maskedData));
       }
     }
     
@@ -69,7 +68,6 @@ apiClient.interceptors.request.use(
   },
   error => {
     if (isDebugMode) {
-      console.error('API İstek Hatası:', error.message);
     }
     return Promise.reject(error);
   }
@@ -91,7 +89,6 @@ apiClient.interceptors.request.use(
         // Token formatını kontrol et (bazı API'ler "Bearer " öneki olmadan token bekleyebilir)
         config.headers.Authorization = `Bearer ${token}`;
       } else {
-        console.log('Token bulunamadı, Authorization header eklenemedi');
       }
       return config;
     } catch (error) {
@@ -100,7 +97,6 @@ apiClient.interceptors.request.use(
         const requestId = config.headers['X-Request-ID'] as string;
         useApiStore.getState().failRequest(requestId, error instanceof Error ? error.message : 'İstek hatası');
       }
-      console.error('Token eklenirken hata:', error);
       return Promise.reject(error);
     }
   },
@@ -127,10 +123,7 @@ apiClient.interceptors.response.use(
       useApiStore.getState().completeRequest(requestId, response.status);
     }
     
-    if (isDebugMode) {
-      console.log('API Yanıt Durumu:', response.status);
-      console.log('API Yanıt Verisi:', JSON.stringify(response.data));
-    }
+ 
     
     return response;
   },
@@ -149,10 +142,7 @@ apiClient.interceptors.response.use(
     
     // 404 hatası için özel işlem - bu durumda sadece hatayı iletip işlemi sonlandırabiliriz
     if (error.response?.status === 404) {
-      console.error('Endpoint bulunamadı:', originalRequest?.url);
-      if (isDebugMode) {
-        console.log('404 hatası - İstek endpoint\'i:', originalRequest?.url);
-      }
+    
       return Promise.reject(error);
     }
    
@@ -162,7 +152,6 @@ apiClient.interceptors.response.use(
       const responseData = error.response?.data as any;
       if (responseData?.code === 'REFRESH_TOKEN_ERROR' || 
           responseData?.details?.includes('Already Used')) {
-        console.error('Refresh token zaten kullanılmış veya geçersiz. Oturum sonlandırılıyor.');
         await tokenManager.removeToken();
         useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
         return Promise.reject(error);
@@ -170,7 +159,6 @@ apiClient.interceptors.response.use(
       
       // İstek belli bir sayıdan fazla tekrar edilmişse döngüyü kır
       if (originalRequest._retryCount && originalRequest._retryCount >= 2) {
-        console.error('Maksimum yeniden deneme sayısına ulaşıldı, kullanıcı oturumu sonlandırılıyor');
         await tokenManager.removeToken();
         useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
         return Promise.reject(error);
@@ -181,7 +169,6 @@ apiClient.interceptors.response.use(
         // Eğer halihazırda bir yenileme işlemi yoksa
         if (!isRefreshing) {
           isRefreshing = true;
-          console.log('Access token süresi dolmuş, yenileniyor...');
           
           // Token verilerini al
           const tokenData = await tokenManager.getTokenData();
@@ -192,7 +179,6 @@ apiClient.interceptors.response.use(
               const newToken = await tokenManager.refreshAccessToken(tokenData.refresh_token);
               
               if (newToken) {
-                console.log('Token başarıyla yenilendi, bekleyen istekler yeniden gönderiliyor');
                 // Bekleyen tüm istekleri yeni token ile çözümle
                 pendingRequests.forEach(request => request.resolve(newToken));
                 pendingRequests = [];
@@ -229,7 +215,6 @@ apiClient.interceptors.response.use(
               return Promise.reject(error);
             }
           } else {
-            console.log('Refresh token bulunamadı, kullanıcı oturumu sonlandırılıyor');
             isRefreshing = false;
             await tokenManager.removeToken();
             useApiStore.getState().setAuthError('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
@@ -237,7 +222,6 @@ apiClient.interceptors.response.use(
           }
         } else {
           // Eğer halihazırda bir token yenileme işlemi devam ediyorsa
-          console.log('Token yenileme işlemi devam ediyor, istek kuyruğa alındı');
           // İsteği kuyruğa ekle ve yenileme tamamlandığında tekrar dene
           return new Promise((resolve, reject) => {
             pendingRequests.push({
@@ -253,7 +237,6 @@ apiClient.interceptors.response.use(
           });
         }
       } catch (refreshError) {
-        console.error('Token yenileme işlemi sırasında beklenmeyen hata:', refreshError);
         isRefreshing = false;
         // Tüm token verilerini temizle
         await tokenManager.removeToken();

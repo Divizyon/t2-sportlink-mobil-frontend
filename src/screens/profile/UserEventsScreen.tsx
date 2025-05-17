@@ -52,14 +52,7 @@ export const UserEventsScreen: React.FC = () => {
         ...(profileData.pastEvents || [])
       ];
       
-      console.log(`Toplam etkinlik sayısı: ${allEvents.length}`);
-      
-      if (allEvents.length > 0) {
-        // Etkinlik yapısını anlamak için ilk etkinliği logla
-        console.log('Örnek Etkinlik:', JSON.stringify(allEvents[0], null, 2));
-      }
-      
-      console.log(`User ID: ${profileData.userInfo.id}`);
+   
       
       // Etkinlikleri filtrele
       let filteredEvents: Event[] = [];

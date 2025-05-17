@@ -63,13 +63,11 @@ export const LoginScreen: React.FC = () => {
   // Bağlantı ayarlarını göster
   useEffect(() => {
     const configValues = getConfigValues();
-    console.log('Bağlantı Ayarları:', configValues);
   }, []);
   
   // Eğer kullanıcı otantike olmuşsa, ana sayfaya yönlendir
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('Kullanıcı doğrulandı, ana sayfaya yönlendiriliyor');
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
@@ -126,22 +124,18 @@ export const LoginScreen: React.FC = () => {
 
   const handleLogin = async () => {
     try {
-      console.log('Login deneniyor:', { email, password });
       const isValid = await validateForm();
       if (!isValid) {
-        console.log('Form doğrulama hatası:', validationErrors);
         return;
       }
       
       // Backend entegrasyonu
       const loginSuccess = await login({ email, password });
-      console.log('Login işlemi tamamlandı, sonuç:', loginSuccess ? 'Başarılı' : 'Başarısız');
       
       // Giriş başarılıysa cihaz token'ını kaydet
       if (loginSuccess) {
         try {
           await registerDeviceToken();
-          console.log('Cihaz token\'ı başarıyla kaydedildi');
         } catch (tokenError) {
           console.error('Cihaz token kaydı sırasında hata:', tokenError);
         }

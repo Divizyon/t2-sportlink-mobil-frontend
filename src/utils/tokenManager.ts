@@ -83,7 +83,6 @@ export const tokenManager = {
       if (tokenDataStr) {
         try {
           const tokenData = JSON.parse(tokenDataStr);
-          console.log('TokenData bulundu:', tokenData ? 'token veri mevcut' : 'token veri yok');
           
           // Token süresi dolmuşsa ve refresh token varsa, yenile
           if (tokenData.expires_at && tokenData.refresh_token) {
@@ -128,7 +127,6 @@ export const tokenManager = {
         return legacyToken;
       }
       
-      console.log('Token bulunamadı');
       return null;
     } catch (error) {
       console.error('Token alınırken hata oluştu:', error);

@@ -135,7 +135,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
                 longitude: details.geometry.location.lng
               };
               
-              console.log('Seçilen konum:', JSON.stringify(locationData, null, 2));
+             console.log('Seçilen konum:', JSON.stringify(locationData, null, 2));
               setSelectedLocation(locationData);
               setLocationInputText(data.description);
               onLocationSelect(locationData);

@@ -227,7 +227,6 @@ const TabNavigator = () => {
                   activeOpacity={0.7}
                   onPress={() => {
                     navigation.navigate('Discover');
-                    console.log("Keşfet butonuna tıklandı");
                   }}
                 >
                   <Ionicons name="search" size={30} color="white" />

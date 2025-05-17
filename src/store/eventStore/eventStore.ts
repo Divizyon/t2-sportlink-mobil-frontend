@@ -601,7 +601,6 @@ export const useEventStore = create<EventState>((set, get) => ({
         lastNearbyEventsLocation.longitude
       ) < DISTANCE_THRESHOLD
     ) {
-      console.log('Yakındaki etkinlikler önbellekten kullanılıyor');
       return;
     }
     
@@ -727,7 +726,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   
   // Tüm etkinlikleri mesafeye göre sıralama
   fetchAllEventsByDistance: async (useLocation: boolean = true) => {
-    console.log('Tüm etkinlikler mesafeye göre sıralanıyor...');
     
     try {
       set({ isLoading: true, error: null });
@@ -745,8 +743,7 @@ export const useEventStore = create<EventState>((set, get) => ({
       
       // Tip dönüşümü: Event[] -> EventWithDistance[]
       let events = response.data.events as EventWithDistance[];
-      console.log(`Toplam ${events.length} etkinlik alındı, mesafeye göre sıralanıyor...`);
-      
+        
       // Konum bilgisini al
       const mapsStore = useMapsStore.getState();
       const location = mapsStore.lastLocation;
@@ -813,8 +810,6 @@ export const useEventStore = create<EventState>((set, get) => ({
           const distanceB = b.distance_info?.distance || Number.MAX_SAFE_INTEGER;
           return distanceA - distanceB;
         });
-        
-        console.log('Etkinlikler mesafeye göre sıralandı');
       } else {
         // Kullanıcının konumu yoksa veya kullanılmayacaksa, tarihe göre sırala
         events.sort((a, b) => {
@@ -822,8 +817,6 @@ export const useEventStore = create<EventState>((set, get) => ({
           const dateB = new Date(b.event_date);
           return dateA.getTime() - dateB.getTime();
         });
-        
-        console.log('Etkinlikler tarihe göre sıralandı (konum bilgisi kullanılmadı)');
       }
       
       // Hem nearbyEvents hem de events listelerini güncelle
@@ -833,9 +826,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         isLoading: false 
       });
       
-      console.log('Etkinlikler başarıyla güncellendi');
     } catch (error) {
-      console.error('Etkinlikleri mesafeye göre sıralama hatası:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Etkinlikleri yüklerken bir hata oluştu.', 
         isLoading: false 

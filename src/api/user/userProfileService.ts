@@ -79,7 +79,6 @@ export const userProfileService = {
           pastEvents: Array.isArray(userData.pastEvents) ? userData.pastEvents : []
         };
         
-        console.log('Spor tercihleri dönüştürüldü:', transformedData.sportPreferences);
         
         return {
           success: true,
@@ -176,7 +175,6 @@ export const userProfileService = {
         skillLevel: preference.skillLevel
       };
       
-      console.log('Backend\'e gönderilecek spor tercihi:', JSON.stringify(backendPreference, null, 2));
       
       // API'ye sadece sportId ve skillLevel bilgilerini gönder
       const response = await apiClient.post('/users/profile/sport-interest', backendPreference);
@@ -191,7 +189,6 @@ export const userProfileService = {
           icon: sportData.sport ? sportData.sport.icon : undefined,
         }));
         
-        console.log('Backend\'den dönen spor tercihleri:', sportPreferences);
         
         return {
           success: true,
@@ -215,7 +212,6 @@ export const userProfileService = {
    */
   removeSportPreference: async (sportId: string): Promise<ApiResponse<{ sportPreferences: UserSportPreference[] }>> => {
     try {
-      console.log('Kaldırılacak spor tercihi ID:', sportId);
       
       // API'ye sportId gönder
       const response = await apiClient.delete(`/users/profile/sport-interest/${sportId}`);
@@ -230,7 +226,6 @@ export const userProfileService = {
           icon: sportData.sport ? sportData.sport.icon : undefined,
         }));
         
-        console.log('Backend\'den spor tercihi kaldırıldıktan sonra dönen tercihler:', sportPreferences);
         
         return {
           success: true,

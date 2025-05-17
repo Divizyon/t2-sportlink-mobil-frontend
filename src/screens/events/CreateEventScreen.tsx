@@ -287,7 +287,6 @@ export const CreateEventScreen: React.FC = () => {
     
     // Format tarihi YYYY-MM-DD şeklinde form için
     const formattedDate = dateTimeHelpers.formatDateToYYYYMMDD(date);
-    console.log('Selected date:', formattedDate);
     
     // Form verisini güncelle
     setFormData(prev => {
@@ -323,9 +322,6 @@ export const CreateEventScreen: React.FC = () => {
     // Ekranda gösterilecek saat formatı
     const timeDisplayString = dateTimeHelpers.formatTimeDisplay(time);
     
-    console.log('Selected start time:', timeDisplayString);
-    console.log('ISO start time:', isoStartTime);
-    
     setFormData(prev => ({ ...prev, start_time: isoStartTime }));
     setStartTimeDisplay(timeDisplayString);
     setFormErrors(prev => ({ ...prev, start_time: '' }));
@@ -347,9 +343,6 @@ export const CreateEventScreen: React.FC = () => {
     
     // Ekranda gösterilecek saat formatı
     const timeDisplayString = dateTimeHelpers.formatTimeDisplay(time);
-    
-    console.log('Selected end time:', timeDisplayString);
-    console.log('ISO end time:', isoEndTime);
     
     setFormData(prev => ({ ...prev, end_time: isoEndTime }));
     setEndTimeDisplay(timeDisplayString);
@@ -449,13 +442,8 @@ export const CreateEventScreen: React.FC = () => {
           apiRequestData.invitation_code = "0000"; // Varsayılan kod
         }
         
-        // Log the request data for debugging
-        console.log('Sending event data to API:', JSON.stringify(apiRequestData, null, 2));
-        
-        // API'den gelen yanıtı daha detaylı görmek için try-catch içinde manuel olarak çağırma yap
         try {
           const apiResponse = await eventService.createEvent(apiRequestData);
-          console.log('API response:', JSON.stringify(apiResponse, null, 2));
           
           if (apiResponse.success) {
             Alert.alert('Başarılı', 'Etkinlik başarıyla oluşturuldu.', [

@@ -509,7 +509,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   const [hasChanges, setHasChanges] = useState(false);
   
   // Her render işleminde modal durumunu loglayalım
-  console.log(`Render - Sport Modal: ${sportModalVisible}, Skill Modal: ${skillModalVisible}, Selected Sport: ${selectedSport?.name || 'none'}`);
 
   // Başlangıçta verileri yükle
   useEffect(() => {
@@ -519,13 +518,11 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
     
     if (sportPreferences && sportPreferences.length > 0) {
       // Gelen tercihleri logla
-      console.log("Gelen spor tercihleri:", JSON.stringify(sportPreferences, null, 2));
       
       // Tercihleri state'e ata
       setPreferences([...sportPreferences]);
       setTempPreferences([...sportPreferences]);
     } else {
-      console.log("Spor tercihi bulunamadı");
       setPreferences([]);
       setTempPreferences([]);
     }
@@ -533,7 +530,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
   
   // Spor tercihini kaldır
   const handleRemoveSport = (sportId: string) => {
-    console.log(`Spor tercihi kaldırılıyor: ${sportId}`);
     
     // Önce UI'dan kaldır
     const updatedPreferences = preferences.filter(pref => pref.sportId !== sportId);
@@ -543,7 +539,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
     if (removeSportPreference) {
       removeSportPreference(sportId).then(success => {
         if (success) {
-          console.log("Spor tercihi başarıyla kaldırıldı!");
         } else {
           console.error("Spor tercihi kaldırılırken bir hata oluştu");
           // Hata durumunda eski tercihleri geri yükle
@@ -614,7 +609,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
       if (updateSportPreference) {
         updateSportPreference(sportPreference).then(success => {
           if (success) {
-            console.log("Spor tercihi başarıyla eklendi/güncellendi");
           } else {
             console.error("Spor tercihi eklenirken/güncellenirken bir hata oluştu");
           }
@@ -660,7 +654,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
       icon: pref.icon
     }));
     
-    console.log("Backend'e gönderilecek spor tercihleri:", JSON.stringify(backendPreferences, null, 2));
     
     // API'ye güncelleme gönder
     if (updateSportPreference) {
@@ -727,7 +720,6 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
         data={preferences}
         keyExtractor={(item) => item.sportId}
         renderItem={({ item }) => {
-          console.log(`Spor tercihi render ediliyor: ${item.sportId} - ${item.sportName || 'İsim yok'} - ${item.skillLevel}`);
           return (
             <View style={styles.sportItem}>
               <View style={styles.sportIconContainer}>

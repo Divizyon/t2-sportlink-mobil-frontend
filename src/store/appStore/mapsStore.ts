@@ -83,11 +83,8 @@ export const useMapsStore = create<MapsState>((set, get) => ({
     // Önceki konumu al
     const previousLocation = get().lastLocation;
     
-    console.log('Konum güncelleniyor:', { latitude, longitude, address });
-    
     if (!previousLocation) {
-      console.log('İlk konum alındı, yakındaki etkinlikler yüklenecek');
-            } else {
+    } else {
       // Önceki ve yeni konum arasındaki mesafeyi hesapla
       const distanceFromPrevious = calculateHaversineDistance(
         latitude,
@@ -96,7 +93,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         previousLocation.longitude
       );
       
-      console.log(`Önceki konuma uzaklık: ${distanceFromPrevious.toFixed(3)} km`);
     }
     
     // Konum değişimi önemli mi kontrol et (100m'den fazla değişim varsa)
@@ -118,44 +114,36 @@ export const useMapsStore = create<MapsState>((set, get) => ({
     
     // Konum değişimi önemliyse yakındaki etkinlikleri yenile
     if (shouldRefreshNearbyEvents) {
-      console.log('Konum önemli ölçüde değişti (>100m), yakındaki etkinlikler yenileniyor');
           
       // Önbelleği temizle ve yakındaki etkinlikleri yeniden getir
       const eventStore = useEventStore.getState();
-      console.log('Konum önbelleği temizleniyor...');
       eventStore.clearNearbyEventsCache();
       
-      console.log(`Yakındaki etkinlikler ${latitude}, ${longitude} koordinatları için yükleniyor (yarıçap: 10km)...`);
       eventStore.fetchNearbyEvents({
         latitude,
         longitude,
         radius: 10 // 10km yarıçapında
       });
     } else if (previousLocation) {
-      console.log('Konum değişimi önemsiz (<100m), yakındaki etkinlikler yenilenmiyor');
     }
   },
   
   setLocationServiceStatus: (isEnabled: boolean) => {
-    console.log(`Konum servisi durumu güncellendi: ${isEnabled ? 'etkin' : 'devre dışı'}`);
     set({ isLocationServiceEnabled: isEnabled });
   },
   
   setLocationPermissionStatus: (status: Location.PermissionStatus) => {
-    console.log(`Konum izin durumu güncellendi: ${status}`);
     set({ locationPermissionStatus: status });
       },
       
   // Konum başlatma ve izinleri alma
   initLocation: async () => {
-    console.log('Konum başlatılıyor...');
     try {
       // Konum servislerinin açık olup olmadığını kontrol et
       const serviceEnabled = await Location.hasServicesEnabledAsync();
       get().setLocationServiceStatus(serviceEnabled);
       
       if (!serviceEnabled) {
-        console.warn('Konum servisleri kapalı!');
         return null;
       }
       
@@ -164,12 +152,10 @@ export const useMapsStore = create<MapsState>((set, get) => ({
       get().setLocationPermissionStatus(status);
           
       if (status !== Location.PermissionStatus.GRANTED) {
-        console.warn('Konum izni reddedildi!');
         return null;
           }
           
       // Mevcut konumu al
-      console.log('Kullanıcı konumu alınıyor...');
           const location = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced
           });
@@ -185,10 +171,8 @@ export const useMapsStore = create<MapsState>((set, get) => ({
             if (addressResponse && addressResponse.length > 0) {
           const address = addressResponse[0];
           addressStr = `${address.street || ''} ${address.name || ''}, ${address.district || ''}, ${address.city || ''}`;
-          console.log('Adres başarıyla alındı:', addressStr);
             }
       } catch (geocodeError) {
-        console.error('Adres alınırken hata oluştu:', geocodeError);
           }
           
       // Konum bilgisini store'a kaydet
@@ -198,11 +182,7 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         addressStr
       );
       
-      console.log('Konum başlatma tamamlandı:', {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-        address: addressStr
-      });
+
       
       return {
         latitude: location.coords.latitude,
@@ -210,7 +190,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         address: addressStr
       };
         } catch (error) {
-      console.error('Konum başlatma hatası:', error);
       return null;
         }
       },
@@ -225,12 +204,10 @@ export const useMapsStore = create<MapsState>((set, get) => ({
     const apiKey = get().googleApiKey;
         
     if (!apiKey) {
-      console.error('Google API anahtarı tanımlanmamış');
       set({ distanceError: 'API anahtarı bulunamadı' });
       return null;
     }
     
-    console.log(`Mesafe hesaplanıyor: ${origin} -> ${destination} (${mode})`);
     
     // Hesaplama başladığında durumu güncelle
     set({ 
@@ -245,7 +222,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
       const response = await fetch(url);
       const data = await response.json();
       
-      console.log('Google Distance Matrix API yanıtı:', data);
       
       // API yanıtını kontrol et
       if (data.status === 'OK' && data.rows[0].elements[0].status === 'OK') {
@@ -257,8 +233,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
           status: data.rows[0].elements[0].status
         };
         
-        console.log(`Mesafe hesaplandı: ${result.distance.text}, ${result.duration.text}`);
-        
         // Başarılı sonucu state'e kaydet
         set({ 
           isCalculatingDistance: false,
@@ -268,11 +242,9 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         
         return result;
       } else {
-        console.warn('Mesafe hesaplanamadı:', data.status);
         
         // API yanıt vermezse, kuş uçuşu mesafe hesapla
         if (origin.includes(',') && destination.includes(',')) {
-          console.log('Kuş uçuşu mesafe hesaplanıyor...');
           
           const [originLat, originLng] = origin.split(',').map(coord => parseFloat(coord.trim()));
           const [destLat, destLng] = destination.split(',').map(coord => parseFloat(coord.trim()));
@@ -321,8 +293,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         return null;
       }
     } catch (error) {
-      console.error('Mesafe hesaplama hatası:', error);
-      
       // Hatayı state'e kaydet
       set({ 
         isCalculatingDistance: false,
@@ -337,12 +307,10 @@ export const useMapsStore = create<MapsState>((set, get) => ({
     const apiKey = get().googleApiKey;
     
     if (!apiKey) {
-      console.error('Google API anahtarı tanımlanmamış');
       set({ bulkDistanceError: 'API anahtarı bulunamadı' });
       return null;
     }
     
-    console.log(`Toplu mesafe hesaplanıyor: ${origin} -> ${destinations.join(', ')} (${mode})`);
     
     // Hesaplama başladığında durumu güncelle
     set({ 
@@ -357,7 +325,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
       const response = await fetch(url);
       const data = await response.json();
       
-      console.log('Google Distance Matrix API yanıtı:', data);
       
       // API yanıtını kontrol et
       if (data.status === 'OK' && data.rows.length > 0 && data.rows[0].elements.length > 0) {
@@ -374,8 +341,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
           status: data.status
         };
         
-        console.log('Toplu mesafe hesaplandı:', bulkResults);
-        
         // Başarılı sonucu state'e kaydet
         set({ 
           isCalculatingBulkDistances: false,
@@ -385,8 +350,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         
         return bulkResults;
       } else {
-        console.warn('Toplu mesafe hesaplanamadı:', data.status);
-        
         // Hatayı state'e kaydet
         set({ 
           isCalculatingBulkDistances: false,
@@ -396,8 +359,6 @@ export const useMapsStore = create<MapsState>((set, get) => ({
         return null;
       }
     } catch (error) {
-      console.error('Toplu mesafe hesaplama hatası:', error);
-      
       // Hatayı state'e kaydet
       set({ 
         isCalculatingBulkDistances: false,

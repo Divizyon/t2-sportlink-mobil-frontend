@@ -76,8 +76,6 @@ export const DistanceInfo: React.FC<DistanceInfoProps> = ({
   
   // Handler for manual distance calculation
   const handleCalculateDistance = async () => {
-    console.log('DistanceInfo - Mesafe hesaplanıyor:', { origin, destination, transportMode });
-    console.log('API Anahtarı var mı:', !!googleApiKey);
     
     if (isManualRetry) {
       setRetryCount(0);

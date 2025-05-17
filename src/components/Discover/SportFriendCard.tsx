@@ -110,7 +110,6 @@ export const SportFriendCard: React.FC<SportFriendCardProps> = ({ friend, onPres
       if (success) {
         setFriendshipStatus('none');
       } else {
-        console.log("Arkadaşlık isteği iptal edilemedi:", error);
       }
     } catch (err) {
       console.error("Arkadaşlık isteği iptal edilirken hata:", err);

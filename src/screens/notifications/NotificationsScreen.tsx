@@ -169,11 +169,7 @@ export const NotificationsScreen: React.FC = () => {
       markAsRead(notification.id);
     }
     
-    // Yönlendirme URL varsa ona git
-    if (notification.redirect_url) {
-      // Yönlendirme işlemleri burada yapılacak
-      console.log('Bildirim yönlendirmesi:', notification.redirect_url);
-    }
+
     
     // Bildirim türüne göre aksiyon almak için
     switch (notification.type) {

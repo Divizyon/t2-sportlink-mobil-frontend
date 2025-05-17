@@ -213,7 +213,6 @@ export const HomeScreen: React.FC = () => {
     
     // Konum izinlerini alıp, etkinlikleri mesafeye göre sırala
     const loadLocationAndEvents = async () => {
-      console.log("Konum ve etkinlikler yükleniyor...");
       
       // Konum izni kontrol et
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -229,10 +228,8 @@ export const HomeScreen: React.FC = () => {
         
         // Konum izni verildiyse, tüm etkinlikleri mesafeye göre sırala
         if (location) {
-          console.log("Konum izni verildi, etkinlikler mesafeye göre sıralanıyor...");
           await fetchAllEventsByDistance(true);
         } else {
-          console.log("Konum izni verilmedi, etkinlikler tarih sırasına göre gösteriliyor.");
           // Konum izni verilmediyse, tarihe göre sırala
           await fetchAllEventsByDistance(false);
         }
@@ -246,7 +243,6 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     // Spor tercihleri değiştiğinde önerilen etkinlikleri güncelle
     if (sportPreferences && sportPreferences.length > 0) {
-      console.log("Spor tercihleri değişti, önerilen etkinlikler güncelleniyor...");
       fetchRecommendedEvents();
     }
   }, [sportPreferences]);
@@ -262,7 +258,6 @@ export const HomeScreen: React.FC = () => {
       const location = await initLocation();
       
       if (location) {
-        console.log("Konum izni verildi, etkinlikler mesafeye göre sıralanıyor...");
         await fetchAllEventsByDistance(true);
       }
     }
@@ -318,7 +313,6 @@ export const HomeScreen: React.FC = () => {
   // Yeni içerik ekleme
   const handleAddContent = () => {
     // Yeni içerik eklemek için gerekli işlemler burada yapılacak
-    console.log("Yeni içerik ekle");
   };
   
   // Duyuru detayına git
@@ -336,7 +330,6 @@ export const HomeScreen: React.FC = () => {
 
   // Arkadaşlık isteklerini görüntüle
   const handleFriendRequests = () => {
-    console.log("Arkadaşlık istekleri sayfasına yönlendiriliyor, istek sayısı:", friendRequests.length);
     navigation.navigate('FriendRequests');
   };
 

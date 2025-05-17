@@ -246,7 +246,6 @@ export const SecuritySettingsScreen: React.FC = () => {
                   style: 'destructive',
                   onPress: (password) => {
                     if (password && password.length > 0) {
-                      console.log('Hesap silme işlemi başlatıldı');
                       // Burada hesap silme işlemi için API çağrısı yapılabilir
                     } else {
                       Alert.alert('Hata', 'Lütfen şifrenizi girin');
@@ -374,7 +373,6 @@ export const SecuritySettingsScreen: React.FC = () => {
           theme={theme}
           onPress={() => {
             // Buraya gizlilik politikası sayfasına yönlendirme eklenebilir
-            console.log('Gizlilik politikası sayfasına yönlendiriliyor');
           }}
         />
         
@@ -386,7 +384,6 @@ export const SecuritySettingsScreen: React.FC = () => {
           theme={theme}
           onPress={() => {
             // Buraya veri indirme isteği sayfasına yönlendirme eklenebilir
-            console.log('Veri indirme isteği sayfasına yönlendiriliyor');
           }}
         />
         

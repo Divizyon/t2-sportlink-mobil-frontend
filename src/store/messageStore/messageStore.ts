@@ -350,7 +350,6 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       const now = Date.now();
       
       if (lastCheckedTime && (now - lastCheckedTime < 5 * 60 * 1000) && get().unreadMessagesCount >= 0) {
-        console.log('Okunmamış mesaj sayısı önbellekten alındı:', get().unreadMessagesCount);
         return get().unreadMessagesCount;
       }
       
@@ -368,7 +367,6 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       }
     } catch (error: any) {
       // Daha az korkutucu bir hata mesajı
-      console.log('Okunmamış mesaj sayısı getirme hatası:', error?.message || 'Bilinmeyen hata');
       
       // API isteği başarısız oldu, yerel hesaplama yap
       try {

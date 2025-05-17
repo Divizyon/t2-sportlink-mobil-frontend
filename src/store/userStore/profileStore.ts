@@ -287,7 +287,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       set({ isUpdating: true, error: null, successMessage: null });
       
-      console.log("Eklenecek/güncellenecek spor tercihi:", JSON.stringify(preference, null, 2));
       
       // API isteği kimliği oluştur
       const apiRequestId = useApiStore.getState().addRequest({
@@ -302,7 +301,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       useApiStore.getState().completeRequest(apiRequestId, 200);
       
       if (response.success && response.data) {
-        console.log("Backend'den dönen spor tercihleri:", JSON.stringify(response.data.sportPreferences, null, 2));
         
         // Eksik alan kontrolü yap
         const validatedPreferences = response.data.sportPreferences.map(pref => ({

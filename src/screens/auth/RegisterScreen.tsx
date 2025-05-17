@@ -191,7 +191,6 @@ export const RegisterScreen: React.FC = () => {
     const hasErrors = Object.values(formErrors).some(error => error !== '');
     
     if (hasErrors) {
-      console.log('Form validasyon hataları tespit edildi:', formErrors);
       return false;
     }
     
@@ -201,7 +200,6 @@ export const RegisterScreen: React.FC = () => {
         ...validationErrors,
         confirmPassword: 'Şifreler eşleşmiyor'
       });
-      console.log('Şifreler eşleşmiyor');
       return false;
     }
     
@@ -215,7 +213,6 @@ export const RegisterScreen: React.FC = () => {
       if (!lastName) missingFields.push('Soyad');
       
       Alert.alert('Eksik Bilgi', `Lütfen tüm zorunlu alanları doldurun: ${missingFields.join(', ')}`);
-      console.log('Eksik alanlar:', missingFields);
       return false;
     }
     
@@ -235,27 +232,21 @@ export const RegisterScreen: React.FC = () => {
   };
 
   const handleRegister = async () => {
-    console.log('RegisterScreen - handleRegister fonksiyonu çağrıldı');
-    console.log('Form verileri:', { username, email, password, firstName, lastName, phone });
     
     try {
       const isValid = await validateForm();
-      console.log('Form doğrulama sonucu:', isValid);
       
       if (!isValid) {
         // Form hatalarını göster
         if (Object.values(formErrors).some(err => err !== '')) {
-          console.log('Form hataları var:', formErrors);
           Alert.alert('Form Hataları', 'Lütfen form alanlarındaki hataları düzeltin.');
           return;
         }
         
-        console.log('Yup validasyon hataları:', validationErrors);
         return;
       }
       
       // Backend entegrasyonu
-      console.log('Form geçerli, kayıt işlemi başlatılıyor...');
       setIsSubmitting(true);
       
       // API'nin beklediği format: RegisterRequest
@@ -268,14 +259,11 @@ export const RegisterScreen: React.FC = () => {
         phone: phone ? `+90${phone}` : ''
       };
       
-      console.log('Gönderilecek kayıt verileri:', registerData);
       
       const result = await register(registerData);
-      console.log('Kayıt işlemi sonucu:', { result, error, message });
       
       if (result) {
         // Başarılı kayıt sonrası login sayfasına yönlendir
-        console.log('Kayıt başarılı, login sayfasına yönlendiriliyor');
         Alert.alert(
           'Kayıt Başarılı',
           'Hesabınız başarıyla oluşturuldu! Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin. E-posta kutunuzu ve spam klasörünüzü kontrol etmeyi unutmayın.',
@@ -287,7 +275,6 @@ export const RegisterScreen: React.FC = () => {
       } else {
         // Register fonksiyonu false döndüyse ve store'da error varsa, onu göster
         if (error) {
-          console.error('Kayıt sırasında hata oluştu:', error);
           
           // Spesifik hata türlerine göre özelleştirilmiş mesajlar
           if (error.includes('already exists') || error.includes('zaten kullanılıyor')) {
@@ -305,7 +292,6 @@ export const RegisterScreen: React.FC = () => {
       }
     } catch (error) {
       // Fonksiyon içinde yakalanan beklenmedik hatalar
-      console.error('Kayıt işlemi sırasında beklenmedik hata:', error);
       Alert.alert(
         'Beklenmedik Hata',
         'Kayıt işlemi sırasında bir sorun oluştu. Lütfen tekrar deneyin.'

@@ -82,7 +82,6 @@ const LocationPermissionModal: React.FC<LocationPermissionModalProps> = ({ onCom
       const location = await initLocation();
       
       if (location) {
-        console.log('Konum alındı, etkinlikler mesafeye göre sıralanıyor...');
         
         // Tüm etkinlikleri mesafeye göre sırala
         await fetchAllEventsByDistance();

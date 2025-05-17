@@ -38,7 +38,6 @@ export const useRealtimeNotifications = (
       })
       .subscribe((status, error) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Realtime notifications aboneliği başarılı');
         }
         if (status === 'CHANNEL_ERROR') {
           console.error('Realtime channel hatası:', error);

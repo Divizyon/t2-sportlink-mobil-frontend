@@ -243,7 +243,6 @@ export default function App() {
         notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
           try {
             const data = notification.request.content.data as any;
-            console.log('Önplanda bildirim alındı:', data);
             
             // Zustand store'a yeni bildirimi ekleyebiliriz
             // Eğer bildirim objesi tam değilse, unread sayısını artırıp sadece yenileme yapabiliriz
@@ -258,7 +257,6 @@ export default function App() {
         // Bildirime tıklandığında
         responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
           try {
-            console.log('Bildirime tıklandı:', response);
             const data = response.notification.request.content.data as any;
             
             // Bildirime tıklandığında, bildirimi okundu olarak işaretle ve yönlendirme yap
