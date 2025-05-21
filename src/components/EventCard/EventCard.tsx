@@ -199,11 +199,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) 
           }
         ]}>
-          <Ionicons 
-            name={getStatusIcon(safeEvent.status, safeEvent.event_date)} 
-            size={12} 
-            color="white" 
-          />
+          <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>!</Text>
         </View>
       )}
       
@@ -222,18 +218,19 @@ export const EventCard: React.FC<EventCardProps> = ({
         <View style={[
           styles.statusBadge, 
           { 
-            backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) + '20',
-            borderColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), 
+            backgroundColor: safeEvent.status === 'active' ? theme.colors.accent : getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) + '20',
+            borderColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors),
+            borderWidth: safeEvent.status === 'active' ? 0 : 1, 
           }
         ]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) }]} />
-          <Ionicons 
-            name={getStatusIcon(safeEvent.status, safeEvent.event_date)} 
-            size={12} 
-            color={getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors)} 
-            style={{marginRight: 4}} 
-          />
-          <Text style={[styles.statusText, { color: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), fontWeight: '700' }]}>
+          {safeEvent.status !== 'active' && <View style={[styles.statusDot, { backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) }]} />}
+          <Text style={[
+            styles.statusText, 
+            { 
+              color: safeEvent.status === 'active' ? 'white' : getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), 
+              fontWeight: '700' 
+            }
+          ]}>
             {getStatusText(safeEvent.status, safeEvent.event_date)}
           </Text>
         </View>
@@ -353,6 +350,8 @@ const getStatusColor = (status: string, eventDate: string | undefined, colors: a
   switch (status) {
     case 'active':
       return colors.accent;
+    case 'pending':
+      return colors.accent; // Pending de active gibi accent rengini kullanacak
     case 'passive':
       return colors.textSecondary; // Pasif rengi (gri gibi)
     case 'canceled':
@@ -376,6 +375,8 @@ const getStatusText = (status: string, eventDate?: string) => {
   switch (status) {
     case 'active':
       return 'Aktif';
+    case 'pending':
+      return 'Aktif'; // Pending durumunda da "Aktif" yazacak
     case 'passive':
       return 'Pasif';
     case 'canceled':
@@ -385,7 +386,7 @@ const getStatusText = (status: string, eventDate?: string) => {
     case 'draft':
       return 'Taslak';
     default:
-      return status;
+      return 'Aktif'; // Default durumda da "Aktif" göster
   }
 };
 
@@ -398,7 +399,7 @@ const getStatusIcon = (status: string, eventDate?: string) => {
   
   switch (status) {
     case 'active':
-      return 'checkmark-circle-outline';
+      return 'checkmark-circle';
     case 'passive':
       return 'eye-off-outline';
     case 'canceled':
@@ -408,7 +409,7 @@ const getStatusIcon = (status: string, eventDate?: string) => {
     case 'draft':
       return 'document-outline';
     default:
-      return 'help-circle-outline';
+      return 'checkmark-circle';
   }
 };
 

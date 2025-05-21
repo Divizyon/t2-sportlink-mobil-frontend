@@ -1,7 +1,7 @@
 /**
  * Etkinlik durumu
  */
-export type EventStatus = 'active' | 'canceled' | 'completed' | 'draft';
+export type EventStatus = 'active' | 'passive' | 'canceled' | 'completed' | 'draft';
 
 /**
  * Spor dalı tipi

@@ -57,9 +57,15 @@ const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
     switch(event.status) {
       case 'active':
         return { 
-          color: theme.colors.success, 
+          color: 'white', 
           text: 'Aktif',
-          bgColor: theme.colors.success + '15'
+          bgColor: theme.colors.accent
+        };
+      case 'passive':
+        return { 
+          color: theme.colors.textSecondary, 
+          text: 'Pasif',
+          bgColor: theme.colors.textSecondary + '15'
         };
       case 'completed':
         return { 
@@ -73,11 +79,18 @@ const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
           text: 'İptal Edildi',
           bgColor: theme.colors.error + '15'
         };
-      default:
+      case 'draft':
         return { 
-          color: theme.colors.primary, 
-          text: 'Planlandı',
-          bgColor: theme.colors.primary + '15'
+          color: theme.colors.textSecondary, 
+          text: 'Taslak',
+          bgColor: theme.colors.textSecondary + '15'
+        };
+      default:
+        // Default durumda da "Aktif" göster
+        return { 
+          color: 'white', 
+          text: 'Aktif',
+          bgColor: theme.colors.accent
         };
     }
   };

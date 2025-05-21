@@ -343,13 +343,15 @@ export const EventsScreen: React.FC = () => {
     setSelectedMonths2025([]);
     setSelectedMonths2026([]);
     setIsDateFilterActive(false);
-    loadEvents(); // Normal etkinlikleri yükle
   };
 
-  // Sadece seçimleri temizle (modal içinde)
-  const clearSelections = () => {
+  // Tüm filtreleri temizle (modal içinde)
+  const clearAllFilters = () => {
     setSelectedMonths2025([]);
     setSelectedMonths2026([]);
+    setIsDateFilterActive(false);
+    setShowPassiveEvents(true);
+    setShowExpiredEvents(true);
   };
 
   // Ay seçme işlevi
@@ -371,16 +373,15 @@ export const EventsScreen: React.FC = () => {
     }
   };
 
-  // Tarih filtresi uygula
-  const applyDateFilter = () => {
+  // Tüm filtreleri uygula
+  const applyAllFilters = () => {
     const hasSelectedMonths = selectedMonths2025.length > 0 || selectedMonths2026.length > 0;
 
-    if (hasSelectedMonths) {
-      setIsDateFilterActive(true);
-      setDateModalVisible(false);
-    } else {
-      Alert.alert("Uyarı", "Lütfen en az bir ay seçin.");
-    }
+    // Ay seçilmişse tarih filtresini aktif et, seçilmemişse pasif et
+    setIsDateFilterActive(hasSelectedMonths);
+    
+    // Modalı kapat
+    setDateModalVisible(false);
   };
 
   // Seçili ayları formatlı göster
@@ -413,31 +414,94 @@ export const EventsScreen: React.FC = () => {
     return result;
   };
 
-  // Tarih filtresi modalı
+  // Filtreler modalı
   const renderDatePickerModal = () => {
     return (
       <Modal
         animationType="slide"
         transparent={true}
         visible={dateModalVisible}
-        onRequestClose={() => setDateModalVisible(false)}
+        onRequestClose={() => {
+          applyAllFilters();
+        }}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setDateModalVisible(false)}
+          onPress={() => applyAllFilters()}
         >
-          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
+          <View 
+            style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]} 
+            onStartShouldSetResponder={() => true}
+          >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Tarihe Göre Filtrele</Text>
-              <TouchableOpacity onPress={() => setDateModalVisible(false)}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Filtreler</Text>
+              <TouchableOpacity onPress={() => applyAllFilters()}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
 
-            {/* Yıl Seçimi */}
+            {/* Durum Filtreleri */}
             <View style={styles.filterSection}>
-              <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Yıl Seçin</Text>
+              <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Durum Filtreleri</Text>
+              <View style={styles.statusFiltersContainer}>
+                {/* Pasif Etkinlikler Filtresi */}
+                <TouchableOpacity
+                  style={[
+                    styles.statusFilterButton,
+                    { backgroundColor: showPassiveEvents ? theme.colors.accent + '20' : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }
+                  ]}
+                  onPress={() => setShowPassiveEvents(!showPassiveEvents)}
+                >
+                  <Ionicons 
+                    name={showPassiveEvents ? "eye-outline" : "eye-off-outline"} 
+                    size={22} 
+                    color={showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary} 
+                  />
+                  <Text 
+                    style={[
+                      styles.statusFilterText, 
+                      { color: showPassiveEvents ? theme.colors.accent : theme.colors.text }
+                    ]}
+                  >
+                    Pasif Etkinlikler
+                  </Text>
+                </TouchableOpacity>
+            
+                {/* Geçmiş Etkinlikler Filtresi */}
+                <TouchableOpacity
+                  style={[
+                    styles.statusFilterButton,
+                    { backgroundColor: showExpiredEvents ? theme.colors.accent + '20' : theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }
+                  ]}
+                  onPress={() => setShowExpiredEvents(!showExpiredEvents)}
+                >
+                  <Ionicons 
+                    name={showExpiredEvents ? "time-outline" : "calendar-outline"} 
+                    size={22} 
+                    color={showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary} 
+                  />
+                  <Text 
+                    style={[
+                      styles.statusFilterText, 
+                      { color: showExpiredEvents ? theme.colors.accent : theme.colors.text }
+                    ]}
+                  >
+                    Geçmiş Etkinlikler
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Tarih Filtresi Başlığı */}
+            <View style={styles.filterSection}>
+              <View style={styles.filterSectionHeader}>
+                <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Tarih Filtresi</Text>
+                <Text style={[styles.optionalText, { color: theme.colors.textSecondary }]}>(Opsiyonel)</Text>
+              </View>
+
+              {/* Yıl Seçimi */}
+              <Text style={[styles.subSectionTitle, { color: theme.colors.text }]}>Yıl Seçin</Text>
               <View style={styles.yearButtonsContainer}>
                 {availableYears.map(year => (
                   <TouchableOpacity
@@ -463,12 +527,10 @@ export const EventsScreen: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
 
-            {/* Ay Seçimi - Seçilen yıla bağlı olarak gösterilir */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>
-                Ay Seçin ({selectedYear} için) (Birden fazla seçilebilir)
+              {/* Ay Seçimi - Seçilen yıla bağlı olarak gösterilir */}
+              <Text style={[styles.subSectionTitle, { color: theme.colors.text, marginTop: 12 }]}>
+                Ay Seçin ({selectedYear} için)
               </Text>
               <View style={styles.monthsContainer}>
                 {months.map(month => (
@@ -500,21 +562,20 @@ export const EventsScreen: React.FC = () => {
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel, { borderColor: theme.colors.accent }]}
-                onPress={clearSelections}
+                onPress={clearAllFilters}
               >
-                <Text style={[styles.modalButtonText, { color: theme.colors.accent }]}>Filtreyi Temizle</Text>
+                <Text style={[styles.modalButtonText, { color: theme.colors.accent }]}>Tüm Filtreleri Temizle</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm, { backgroundColor: theme.colors.accent }]}
-                onPress={applyDateFilter}
+                onPress={applyAllFilters}
               >
                 <Text style={[styles.modalButtonText, { color: 'white' }]}>Uygula</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableOpacity>
-
       </Modal>
     );
   };
@@ -714,57 +775,6 @@ export const EventsScreen: React.FC = () => {
     );
   };
 
-  // Filtre sekmelerini render et
-  const renderFilterOptions = () => {
-    return (
-      <View style={styles.filterOptionsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterOption,
-            { backgroundColor: showPassiveEvents ? theme.colors.accent + '20' : theme.colors.light }
-          ]}
-          onPress={() => setShowPassiveEvents(!showPassiveEvents)}
-        >
-          <Ionicons 
-            name={showPassiveEvents ? "eye-outline" : "eye-off-outline"} 
-            size={16} 
-            color={showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary} 
-          />
-          <Text 
-            style={[
-              styles.filterOptionText, 
-              { color: showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary }
-            ]}
-          >
-            Pasif Etkinlikler
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.filterOption,
-            { backgroundColor: showExpiredEvents ? theme.colors.accent + '20' : theme.colors.light }
-          ]}
-          onPress={() => setShowExpiredEvents(!showExpiredEvents)}
-        >
-          <Ionicons 
-            name={showExpiredEvents ? "time-outline" : "calendar-outline"} 
-            size={16} 
-            color={showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary} 
-          />
-          <Text 
-            style={[
-              styles.filterOptionText, 
-              { color: showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary }
-            ]}
-          >
-            Geçmiş Etkinlikler
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
@@ -781,24 +791,26 @@ export const EventsScreen: React.FC = () => {
             Etkinlikler
           </Text>
           <View style={styles.headerIconsContainer}>
+            {/* Filtreler Butonu */}
             <TouchableOpacity
               onPress={() => setDateModalVisible(true)}
-              style={styles.filterButton}
+              style={styles.iconFilterButton}
             >
               <Ionicons
-                name="calendar-outline"
-                size={25}
-                color={isDateFilterActive ? theme.colors.accent : theme.colors.textSecondary}
+                name="funnel-outline"
+                size={22}
+                color={isDateFilterActive || !showPassiveEvents || !showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary}
               />
             </TouchableOpacity>
 
+            {/* Harita Görünümü */}
             <TouchableOpacity
               onPress={() => setMapModalVisible(true)}
-              style={styles.filterButton}
+              style={styles.iconFilterButton}
             >
               <Ionicons
                 name="map-outline"
-                size={25}
+                size={22}
                 color={theme.colors.textSecondary}
               />
             </TouchableOpacity>
@@ -856,9 +868,6 @@ export const EventsScreen: React.FC = () => {
           />
         }
       />
-
-      {/* Filtre Seçenekleri */}
-      {renderFilterOptions()}
     </SafeAreaView>
   );
 };
@@ -869,7 +878,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingVertical: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -920,17 +929,17 @@ const styles = StyleSheet.create({
   },
   sportFiltersContainer: {
     paddingHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   sportFiltersScroll: {
-    paddingVertical: 8,
+    paddingVertical: 2,
     paddingRight: 24,
   },
   sportFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 50,
     marginRight: 12,
   },
@@ -1113,5 +1122,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     marginLeft: 4,
+  },
+  iconFilterButton: {
+    padding: 8,
+    marginLeft: 4,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusFiltersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  statusFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  statusFilterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  filterSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center', 
+    marginBottom: 12,
+  },
+  optionalText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginLeft: 8,
+  },
+  subSectionTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 10,
   },
 });

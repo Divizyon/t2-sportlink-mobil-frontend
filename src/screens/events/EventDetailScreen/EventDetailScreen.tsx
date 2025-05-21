@@ -664,11 +664,9 @@ export const EventDetailScreen: React.FC = () => {
             </Text>
           
             <View style={[styles.statusBadge, { 
-              backgroundColor: currentEvent.status === 'active' ? theme.colors.accent + '20' : getStatusColor(currentEvent.status, currentEvent.event_date, theme.colors)
+              backgroundColor: currentEvent.status === 'active' ? theme.colors.accent : getStatusColor(currentEvent.status, currentEvent.event_date, theme.colors)
             }]}>
-              <Text style={[styles.statusText, {
-                color: currentEvent.status === 'active' ? theme.colors.accent : 'white'
-              }]}>
+              <Text style={styles.statusText}>
                 {getStatusText(currentEvent.status, currentEvent.event_date)}
               </Text>
             </View>
@@ -1051,11 +1049,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 16,
     marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statusText: {
     color: 'white',
     fontWeight: '600',
     fontSize: 12,
+    textAlign: 'center',
   },
   sportBadge: {
     paddingVertical: 6,

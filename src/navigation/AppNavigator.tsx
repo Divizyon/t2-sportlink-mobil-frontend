@@ -151,17 +151,21 @@ const TabNavigator = () => {
         tabBarStyle: { 
           backgroundColor: theme.colors.background,
           borderTopColor: theme.colors.border,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 5,
         },
+        tabBarShowLabel: false,
       }}
     >
       <Tab.Screen 
         name="Home" 
         component={HomeScreen} 
         options={{
-          tabBarLabel: 'Ana sayfa',
+          tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
             <View>
-              <Ionicons name="home-outline" size={size} color={color} />
+              <Ionicons name="home" size={28} color={color} />
               {unreadMessagesCount > 0 && (
                 <View style={{
                   position: 'absolute',
@@ -192,9 +196,9 @@ const TabNavigator = () => {
         name="Events" 
         component={EventsStackNavigator} 
         options={{
-          tabBarLabel: 'Etkinlikler',
+          tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+            <Ionicons name="calendar" size={28} color={color} />
           ),
         }}
       />
@@ -210,7 +214,7 @@ const TabNavigator = () => {
             tabBarLabel: '',
             tabBarIcon: ({ color, size }) => (
               // Events sayfasındayken plus, diğerlerinde search ikonu göster
-              <Ionicons name={isEventsScreen ? "add-circle" : "search"} size={size} color={color} />
+              <Ionicons name={isEventsScreen ? "add-circle" : "search"} size={28} color={color} />
             ),
             tabBarButton: (props) => {
               return (
@@ -220,15 +224,19 @@ const TabNavigator = () => {
                 }}>
                   <TouchableOpacity
                     style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: 30,
+                      width: 66,
+                      height: 66,
+                      borderRadius: 33,
                       backgroundColor: theme.colors.accent,
                       justifyContent: 'center',
                       alignItems: 'center',
-                      marginTop: -10,
                       position: 'absolute',
-                      bottom: 5,
+                      bottom: 20,
+                      elevation: 8,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.35,
+                      shadowRadius: 6,
                     }}
                     activeOpacity={0.7}
                     onPress={() => {
@@ -241,11 +249,24 @@ const TabNavigator = () => {
                       }
                     }}
                   >
-                    <Ionicons 
-                      name={isEventsScreen ? "add" : "search"} 
-                      size={30} 
-                      color="white" 
-                    />
+                    <View style={{
+                      width: '100%',
+                      height: '100%',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      borderRadius: 33,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 2,
+                      elevation: 3,
+                    }}>
+                      <Ionicons 
+                        name={isEventsScreen ? "add" : "search"} 
+                        size={32} 
+                        color="white" 
+                      />
+                    </View>
                   </TouchableOpacity>
                 </View>
               );
@@ -257,10 +278,10 @@ const TabNavigator = () => {
         name="Notifications"
         component={NotificationsScreen}
         options={{
-          tabBarLabel: 'Bildirimler',
+          tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
             <View>
-              <Ionicons name="notifications-outline" size={size} color={color} />
+              <Ionicons name="notifications" size={28} color={color} />
               {unreadCount > 0 && (
                 <View style={{
                   position: 'absolute',
@@ -291,9 +312,9 @@ const TabNavigator = () => {
         name="Profile" 
         component={ProfileStack} 
         options={{
-          tabBarLabel: 'Profilim',
+          tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <Ionicons name="person" size={28} color={color} />
           ),
         }}
       />
