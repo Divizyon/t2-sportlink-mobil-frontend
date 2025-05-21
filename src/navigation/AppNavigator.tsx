@@ -201,40 +201,57 @@ const TabNavigator = () => {
       <Tab.Screen 
         name="Discover" 
         component={DiscoverScreen} 
-        options={({ navigation }) => ({
-          tabBarLabel: '',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
-          ),
-          tabBarButton: (props) => {
-            return (
-              <View style={{
-                flex: 1,
-                alignItems: 'center',
-              }}>
-                <TouchableOpacity
-                  style={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: 30,
-                    backgroundColor: theme.colors.accent,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginTop: -10,
-                    position: 'absolute',
-                    bottom: 5,
-                  }}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    navigation.navigate('Discover');
-                  }}
-                >
-                  <Ionicons name="search" size={30} color="white" />
-                </TouchableOpacity>
-              </View>
-            );
-          },
-        })}
+        options={({ navigation, route }) => {
+          // Aktif rotayı al
+          const currentRoute = navigation.getState().routes[navigation.getState().index].name;
+          const isEventsScreen = currentRoute === 'Events';
+          
+          return {
+            tabBarLabel: '',
+            tabBarIcon: ({ color, size }) => (
+              // Events sayfasındayken plus, diğerlerinde search ikonu göster
+              <Ionicons name={isEventsScreen ? "add-circle" : "search"} size={size} color={color} />
+            ),
+            tabBarButton: (props) => {
+              return (
+                <View style={{
+                  flex: 1,
+                  alignItems: 'center',
+                }}>
+                  <TouchableOpacity
+                    style={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: 30,
+                      backgroundColor: theme.colors.accent,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginTop: -10,
+                      position: 'absolute',
+                      bottom: 5,
+                    }}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      // Eğer Events sayfasındaysa CreateEvent'e yönlendir
+                      if (isEventsScreen) {
+                        navigation.navigate('CreateEvent');
+                      } else {
+                        // Diğer sayfalarda normal Discover'a git
+                        navigation.navigate('Discover');
+                      }
+                    }}
+                  >
+                    <Ionicons 
+                      name={isEventsScreen ? "add" : "search"} 
+                      size={30} 
+                      color="white" 
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
+            },
+          };
+        }}
       />
       <Tab.Screen
         name="Notifications"

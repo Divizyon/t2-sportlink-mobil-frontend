@@ -92,7 +92,6 @@ export const EventsScreen: React.FC = () => {
   // Animasyon değerleri
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
-  const scaleFabAnim = useRef(new Animated.Value(0)).current;
 
   // Harita görünümü durumu
   const [mapModalVisible, setMapModalVisible] = useState<boolean>(false);
@@ -179,12 +178,6 @@ export const EventsScreen: React.FC = () => {
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleFabAnim, {
-        toValue: 1,
-        friction: 6,
-        tension: 40,
         useNativeDriver: true,
       })
     ]).start();
@@ -328,13 +321,6 @@ export const EventsScreen: React.FC = () => {
   // Etkinliğe tıklama - detay sayfasına git
   const handleEventPress = (event: Event) => {
     navigation.navigate('EventDetail', { eventId: event.id });
-  };
-
-  // Yeni etkinlik oluşturmaya git
-  const handleCreateEvent = () => {
-    // Prevent current fetches from continuing when navigating away
-    clearError();
-    navigation.navigate('CreateEvent');
   };
 
   // Spor ikonunu belirle
@@ -871,38 +857,6 @@ export const EventsScreen: React.FC = () => {
         }
       />
 
-      {/* Floating Action Button */}
-      <Animated.View
-        style={[
-          styles.fabContainer,
-          {
-            transform: [
-              { scale: scaleFabAnim },
-              {
-                translateY: fadeAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [20, 0]
-                })
-              }
-            ]
-          }
-        ]}
-      >
-        <TouchableOpacity
-          style={[
-            styles.fab,
-            { backgroundColor: theme.colors.accent }
-          ]}
-          onPress={handleCreateEvent}
-          activeOpacity={0.8}
-        >
-          <View style={styles.fabContent}>
-            <Ionicons name="add" size={24} color="white" />
-            <Text style={styles.fabText}>Etkinlik Oluştur</Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-
       {/* Filtre Seçenekleri */}
       {renderFilterOptions()}
     </SafeAreaView>
@@ -983,32 +937,6 @@ const styles = StyleSheet.create({
   sportFilterText: {
     fontWeight: '600',
     fontSize: 14,
-    marginLeft: 8,
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fab: {
-    borderRadius: 30,
-    overflow: 'hidden',
-  },
-  fabContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  fabText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
     marginLeft: 8,
   },
   modalOverlay: {
