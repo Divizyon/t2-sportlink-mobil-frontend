@@ -6,8 +6,6 @@ import { useThemeStore } from '../../../store/appStore/themeStore';
 import { useFriendsStore } from '../../../store/userStore/friendsStore';
 import { FriendshipStatus } from '../../../api/friends/friendsApi';
 import { ConfirmationModal } from '../../../components/common/ConfirmationModal';
-import { getConfigValues } from '../../../store/appStore/configStore';
-import { tokenManager } from '../../../utils/tokenManager';
 
 // Tipler
 type FriendProfileParams = {
@@ -787,21 +785,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 16,
   },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 16,
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'white',
-    marginLeft: 8,
-  },
+
 });
 
 export default FriendProfileScreen; 

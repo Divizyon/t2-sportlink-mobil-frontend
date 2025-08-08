@@ -256,4 +256,5 @@
 - [x] Öncelik seviyeleri belirlendi (Yüksek, Orta, Düşük)
 - [x] Her task için detaylı açıklama ve çözüm gereksinimleri eklendi
 - [x] İlk yüksek öncelikli iş tamamlandı: Divizyon ve Konya Logo/Tanıtım Eksik
-- [x] İkinci yüksek öncelikli iş tamamlandı: Profil Görüntüleme Endpoint Hatası 
+- [x] İkinci yüksek öncelikli iş tamamlandı: Profil Görüntüleme Endpoint Hatası
+- [x] Üçüncü yüksek öncelikli iş tamamlandı: Etkinlik Kartları Tasarımı 

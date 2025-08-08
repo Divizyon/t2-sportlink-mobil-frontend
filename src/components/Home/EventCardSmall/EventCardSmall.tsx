@@ -109,8 +109,8 @@ const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.accent + '20' }]}>
-            <Ionicons name="basketball-outline" size={24} color={theme.colors.accent} />
+          <View style={[styles.imagePlaceholder, { backgroundColor: '#FF6B35' + '20' }]}>
+            <Ionicons name="basketball-outline" size={28} color="#FF6B35" />
           </View>
         )}
       </View>
@@ -126,26 +126,39 @@ const EventCardSmall: React.FC<EventCardSmallProps> = ({ event, onPress }) => {
         </Text>
         
         <View style={styles.detailRow}>
-          <Ionicons name="calendar-outline" size={12} color={theme.colors.accent} />
-          <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+          <Ionicons name="calendar-outline" size={12} color="#FF6B35" />
+          <Text style={[styles.detailText, { color: theme.colors.text, fontWeight: '600' }]}>
             {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
           </Text>
-          <Ionicons name="time-outline" size={12} color={theme.colors.accent} style={{ marginLeft: 8 }} />
-          <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+          <Ionicons name="time-outline" size={12} color="#FF6B35" style={{ marginLeft: 8 }} />
+          <Text style={[styles.detailText, { color: theme.colors.text, fontWeight: '600' }]}>
             {event.start_time}
           </Text>
         </View>
         
         <View style={styles.locationRow}>
-          <Ionicons name="location-outline" size={12} color={theme.colors.accent} />
+          <Ionicons name="location-outline" size={12} color="#FF6B35" />
           <Text 
-            style={[styles.locationText, { color: theme.colors.textSecondary }]}
+            style={[styles.locationText, { color: theme.colors.text, fontWeight: '600' }]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
             {event.location_name}
           </Text>
         </View>
+        
+        {/* Katıl Butonu */}
+        <TouchableOpacity 
+          style={[styles.joinButton, { backgroundColor: '#FF6B35' }]}
+          onPress={() => {
+            // Katıl işlemi burada yapılacak
+            console.log('Katıl butonuna tıklandı:', event.id);
+          }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add-circle-outline" size={12} color="white" style={{ marginRight: 4 }} />
+          <Text style={styles.joinButtonText}>Katıl</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -223,7 +236,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
     flex: 1,
-  }
+  },
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginTop: 6,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  joinButtonText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
 });
 
 export default EventCardSmall;
