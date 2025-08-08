@@ -924,7 +924,7 @@ export const SessionSettings: React.FC = () => {
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['right', 'left']}
+      edges={['top', 'right', 'left']}
     >
       <View style={styles.header}>
         <TouchableOpacity 

@@ -161,6 +161,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    paddingVertical: 20,
+    paddingTop: 40,
   },
   headerContainer: {
     marginBottom: 30,

@@ -17,6 +17,8 @@ interface ProfileActionsProps {
   onPrivacySettings: () => void;
   onSessionHistory: () => void;
   onHelp: () => void;
+  onTermsOfService: () => void;
+  onPrivacyPolicy: () => void;
   onLogout: () => void;
 }
 
@@ -29,6 +31,8 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   onPrivacySettings,
   onSessionHistory,
   onHelp,
+  onTermsOfService,
+  onPrivacyPolicy,
   onLogout
 }) => {
   return (
@@ -96,6 +100,28 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <View style={[styles.toggleSwitch, { backgroundColor: isDarkMode ? themeColors.accent : '#e4e4e4' }]}>
             <View style={[styles.toggleKnob, { transform: [{ translateX: isDarkMode ? 22 : 2 }] }]} />
           </View>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.actionItem} 
+          onPress={onTermsOfService}
+        >
+          <View style={styles.actionLeft}>
+            <Ionicons name="document-text-outline" size={22} color={themeColors.accent} />
+            <Text style={[styles.actionText, { color: themeColors.text }]}>Kullanım Şartları</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.actionItem} 
+          onPress={onPrivacyPolicy}
+        >
+          <View style={styles.actionLeft}>
+            <Ionicons name="shield-checkmark-outline" size={22} color={themeColors.accent} />
+            <Text style={[styles.actionText, { color: themeColors.text }]}>Gizlilik Politikası</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
         </TouchableOpacity>
         
         <TouchableOpacity 

@@ -294,6 +294,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     marginBottom: 20,
+    paddingVertical: 20,
+    paddingTop: 40,
   },
   backButton: {
     width: 40,

@@ -144,7 +144,7 @@ export const HelpScreen: React.FC = () => {
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['right', 'left']}
+      edges={['top', 'right', 'left']}
     >
       <View style={styles.header}>
         <TouchableOpacity 
@@ -240,7 +240,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 20,
+    paddingTop: 40,
   },
   backButton: {
     padding: 8,

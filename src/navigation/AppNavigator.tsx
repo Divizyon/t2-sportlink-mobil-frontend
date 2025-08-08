@@ -20,6 +20,10 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 
+// Screens - Legal
+import { TermsOfServiceScreen } from '../screens/profile/settings/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/profile/settings/PrivacyPolicyScreen';
+
 // Screens - Onboarding
 import WelcomeScreen from '../screens/welcome/WelcomeScreen';
 
@@ -60,6 +64,8 @@ type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
 };
 
 type AppStackParamList = {
@@ -460,6 +466,22 @@ export const AppNavigator = () => {
           <AuthStack.Screen name="Login" component={LoginScreen} />
           <AuthStack.Screen name="Register" component={RegisterScreen} />
           <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <AuthStack.Screen 
+            name="TermsOfService" 
+            component={TermsOfServiceScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right'
+            }}
+          />
+          <AuthStack.Screen 
+            name="PrivacyPolicy" 
+            component={PrivacyPolicyScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right'
+            }}
+          />
         </AuthStack.Navigator>
       )}
     </NavigationContainer>

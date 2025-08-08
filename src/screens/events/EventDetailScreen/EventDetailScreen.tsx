@@ -1011,6 +1011,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingTop: 40,
     paddingBottom: 8,
     zIndex: 10,
   },

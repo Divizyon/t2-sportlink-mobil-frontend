@@ -327,6 +327,14 @@ export const RegisterScreen: React.FC = () => {
     setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
   };
 
+  const handleTermsOfService = () => {
+    navigation.navigate('TermsOfService');
+  };
+
+  const handlePrivacyPolicy = () => {
+    navigation.navigate('PrivacyPolicy');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -533,9 +541,8 @@ export const RegisterScreen: React.FC = () => {
             
             <View style={styles.termsContainer}>
               <Text style={styles.termsText}>
-                Kayıt olarak{' '}
-                <Text style={styles.termsLink}>Kullanım Şartları</Text>{' '}
-                ve <Text style={styles.termsLink}>Gizlilik Politikası</Text>'nı kabul etmiş olursunuz
+                Kayıt olarak <Text style={styles.termsLink} onPress={handleTermsOfService}>Kullanım Şartları</Text>{' '}
+                ve <Text style={styles.termsLink} onPress={handlePrivacyPolicy}>Gizlilik Politikası</Text>'nı kabul etmiş olursunuz
               </Text>
             </View>
             
@@ -584,6 +591,8 @@ const styles = StyleSheet.create({
   headerBackButton: {
     marginTop: 10,
     alignItems: 'flex-start',
+    paddingVertical: 20,
+    paddingTop: 40,
   },
   backButton: {
     width: 40,
@@ -670,11 +679,13 @@ const styles = StyleSheet.create({
   },
   termsContainer: {
     marginVertical: 16,
+    alignItems: 'center',
   },
   termsText: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+    lineHeight: 20,
   },
   termsLink: {
     color: colors.accent,

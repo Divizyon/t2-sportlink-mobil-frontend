@@ -7,6 +7,8 @@ import { HelpScreen } from '../screens/profile/settings/HelpScreen';
 import { SecuritySettingsScreen } from '../screens/profile/settings/SecuritySettingsScreen';
 import { SessionSettings } from '../screens/profile/settings/SessionSettings';
 import { NotificationSettingsScreen } from '../screens/profile/settings/NotificationSettingsScreen';
+import { TermsOfServiceScreen } from '../screens/profile/settings/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/profile/settings/PrivacyPolicyScreen';
 import { FriendsListScreen } from '../screens/profile/FriendsListScreen';
 import { UserEventsScreen } from '../screens/profile/UserEventsScreen';
 import { EditSportPreferencesScreen } from '../screens/profile/EditSportPreferencesScreen';
@@ -19,6 +21,8 @@ export type ProfileStackParamList = {
   SecuritySettings: undefined;
   SessionHistory: undefined;
   NotificationSettings: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
   FriendsList: undefined;
   UserEvents: {
     filter: 'created' | 'participated';
@@ -100,6 +104,22 @@ export const ProfileStack = () => {
       <Stack.Screen 
         name="NotificationSettings" 
         component={NotificationSettingsScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="TermsOfService" 
+        component={TermsOfServiceScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="PrivacyPolicy" 
+        component={PrivacyPolicyScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right'

@@ -66,10 +66,18 @@ export const SettingsScreen = () => {
     navigation.navigate('SessionHistory');
   };
 
+  const handleTermsOfService = () => {
+    navigation.navigate('TermsOfService');
+  };
+
+  const handlePrivacyPolicy = () => {
+    navigation.navigate('PrivacyPolicy');
+  };
+
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['right', 'left']}
+      edges={['top', 'right', 'left']}
     >
       <View style={styles.content}>
         <ProfileActions 
@@ -87,6 +95,8 @@ export const SettingsScreen = () => {
           onPrivacySettings={handlePrivacySettings}
           onSessionHistory={handleSessionHistory}
           onHelp={handleHelp}
+          onTermsOfService={handleTermsOfService}
+          onPrivacyPolicy={handlePrivacyPolicy}
           onLogout={handleLogout}
         />
       </View>
