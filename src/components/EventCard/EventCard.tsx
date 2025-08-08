@@ -182,12 +182,12 @@ export const EventCard: React.FC<EventCardProps> = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Kategori/Spor Türü İkonu */}
-      <View style={[styles.sportIconContainer, { backgroundColor: theme.colors.accent + '20' }]}>
+      {/* Kategori/Spor Türü İkonu - Daha Belirgin */}
+      <View style={[styles.sportIconContainer, { backgroundColor: '#FF6B35' + '20' }]}>
         <Ionicons 
           name={getSportIcon(safeEvent.sport)} 
-          size={20} 
-          color={theme.colors.accent} 
+          size={24} 
+          color="#FF6B35" 
         />
       </View>
       
@@ -258,32 +258,32 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* Divider */}
       <View style={[styles.divider, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]} />
       
-      {/* Details */}
+      {/* Details - Daha Net Bilgiler */}
       <View style={styles.details}>
         <View style={styles.infoItem}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
+          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
+            <Ionicons name="calendar-outline" size={16} color="#FF6B35" />
           </View>
-          <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}>
             {formatDate(safeEvent.event_date)}
           </Text>
         </View>
         
         <View style={styles.infoItem}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
+          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
+            <Ionicons name="time-outline" size={16} color="#FF6B35" />
           </View>
-          <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}>
             {formatTimeRange(safeEvent.start_time, safeEvent.end_time)}
           </Text>
         </View>
         
         <View style={styles.infoItem}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
+          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
+            <Ionicons name="location-outline" size={16} color="#FF6B35" />
           </View>
           <Text 
-            style={[styles.infoText, { color: theme.colors.textSecondary }]}
+            style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}
             numberOfLines={1}
           >
             {safeEvent.location_name}
@@ -302,23 +302,41 @@ export const EventCard: React.FC<EventCardProps> = ({
           </Text>
         </View>
         
+        {/* Katıl Butonu */}
+        {!isUserParticipant && !isUserCreator && !isEventFull && (
+          <TouchableOpacity 
+            style={[styles.joinButton, { backgroundColor: '#FF6B35' }]}
+            onPress={() => {
+              // Katıl işlemi burada yapılacak
+              console.log('Katıl butonuna tıklandı:', safeEvent.id);
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add-circle-outline" size={16} color="white" style={{ marginRight: 6 }} />
+            <Text style={styles.joinButtonText}>Katıl</Text>
+          </TouchableOpacity>
+        )}
+        
         {/* Join status badges */}
         {showJoinStatus && (
           <View style={styles.joinStatusContainer}>
             {isUserParticipant && (
-              <View style={[styles.joinBadge, { backgroundColor: theme.colors.accent + '15' }]}>
-                <Text style={[styles.joinBadgeText, { color: theme.colors.accent }]}>Katıldınız</Text>
+              <View style={[styles.joinBadge, { backgroundColor: '#4CAF50' + '15' }]}>
+                <Ionicons name="checkmark-circle" size={14} color="#4CAF50" style={{ marginRight: 4 }} />
+                <Text style={[styles.joinBadgeText, { color: '#4CAF50' }]}>Katıldınız</Text>
               </View>
             )}
             
             {isUserCreator && (
               <View style={[styles.joinBadge, { backgroundColor: theme.colors.primary + '15' }]}>
+                <Ionicons name="create" size={14} color={theme.colors.primary} style={{ marginRight: 4 }} />
                 <Text style={[styles.joinBadgeText, { color: theme.colors.primary }]}>Düzenleyiciniz</Text>
               </View>
             )}
             
             {isEventFull && !isUserParticipant && !isUserCreator && (
               <View style={[styles.joinBadge, { backgroundColor: theme.colors.error + '15' }]}>
+                <Ionicons name="close-circle" size={14} color={theme.colors.error} style={{ marginRight: 4 }} />
                 <Text style={[styles.joinBadgeText, { color: theme.colors.error }]}>Dolu</Text>
               </View>
             )}
@@ -514,6 +532,10 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoText: {
     fontSize: 14,
@@ -617,5 +639,23 @@ const styles = StyleSheet.create({
     zIndex: 10,
     borderWidth: 2,
     borderColor: 'white',
+  },
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  joinButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

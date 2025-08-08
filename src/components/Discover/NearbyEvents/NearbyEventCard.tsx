@@ -59,8 +59,8 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.imagePlaceholder, { backgroundColor: theme.colors.accent + '20' }]}>
-            <Ionicons name="basketball-outline" size={28} color={theme.colors.accent} />
+          <View style={[styles.imagePlaceholder, { backgroundColor: '#FF6B35' + '20' }]}>
+            <Ionicons name="basketball-outline" size={32} color="#FF6B35" />
           </View>
         )}
       </View>
@@ -86,20 +86,20 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
         
         <View style={styles.detailsContainer}>
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={14} color={theme.colors.accent} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+            <Ionicons name="calendar-outline" size={14} color="#FF6B35" />
+            <Text style={[styles.detailText, { color: theme.colors.text, fontWeight: '600' }]}>
               {new Date(event.event_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
             </Text>
-            <Ionicons name="time-outline" size={14} color={theme.colors.accent} style={{ marginLeft: 8 }} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+            <Ionicons name="time-outline" size={14} color="#FF6B35" style={{ marginLeft: 8 }} />
+            <Text style={[styles.detailText, { color: theme.colors.text, fontWeight: '600' }]}>
               {event.start_time}
             </Text>
           </View>
           
           <View style={styles.detailRow}>
-            <Ionicons name="location-outline" size={14} color={theme.colors.accent} />
+            <Ionicons name="location-outline" size={14} color="#FF6B35" />
             <Text 
-              style={[styles.detailText, { color: theme.colors.textSecondary }]}
+              style={[styles.detailText, { color: theme.colors.text, fontWeight: '600' }]}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
@@ -117,7 +117,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             
             {event.is_joined ? (
               <View 
-                style={[styles.joinedButton, { backgroundColor: theme.colors.success }]}
+                style={[styles.joinedButton, { backgroundColor: '#4CAF50' }]}
               >
                 <Ionicons name="checkmark-circle" size={14} color="white" style={{ marginRight: 4 }} />
                 <Text style={styles.joinButtonText}>Katıldınız</Text>
@@ -130,9 +130,11 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
               </View>
             ) : (
               <TouchableOpacity 
-                style={[styles.joinButton, { backgroundColor: theme.colors.accent }]}
+                style={[styles.joinButton, { backgroundColor: '#FF6B35' }]}
                 onPress={() => onPress(event)}
+                activeOpacity={0.8}
               >
+                <Ionicons name="add-circle-outline" size={14} color="white" style={{ marginRight: 4 }} />
                 <Text style={styles.joinButtonText}>Katıl</Text>
               </TouchableOpacity>
             )}

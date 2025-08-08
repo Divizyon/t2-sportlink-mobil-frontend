@@ -6,8 +6,6 @@ import { useThemeStore } from '../../../store/appStore/themeStore';
 import { useFriendsStore } from '../../../store/userStore/friendsStore';
 import { FriendshipStatus } from '../../../api/friends/friendsApi';
 import { ConfirmationModal } from '../../../components/common/ConfirmationModal';
-import { getConfigValues } from '../../../store/appStore/configStore';
-import { tokenManager } from '../../../utils/tokenManager';
 
 // Tipler
 type FriendProfileParams = {
@@ -65,38 +63,73 @@ export const FriendProfileScreen: React.FC = () => {
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState<'cancel' | 'remove'>('cancel');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Profil yükleme fonksiyonu
+  const loadProfileData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Arkadaşlık durumunu kontrol et
+      const status = await checkFriendshipStatus(userId);
+      if (status) {
+        setFriendshipStatus(status);
+      }
+      
+      // Zustand store ile kullanıcı profilini al
+      const userProfile = await getUserProfile(userId);
+      if (userProfile) {
+        setProfile(userProfile);
+        setError(null);
+      } else {
+        // userProfileError kontrolü
+        if (userProfileError) {
+          setError(userProfileError);
+        } else {
+          setError('Kullanıcı profili bulunamadı.');
+        }
+      }
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Profil yükleme hatası:', error);
+      
+      // Detaylı hata mesajı
+      let errorMessage = 'Profil bilgileri yüklenirken bir hata oluştu.';
+      if (error instanceof Error) {
+        if (error.message.includes('Network Error')) {
+          errorMessage = 'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Kullanıcı profili bulunamadı.';
+        } else if (error.message.includes('401')) {
+          errorMessage = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  };
 
   // Profil bilgisini ve arkadaşlık durumunu yükle
   useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Arkadaşlık durumunu kontrol et
-        const status = await checkFriendshipStatus(userId);
-        if (status) {
-          setFriendshipStatus(status);
-        }
-        
-        // Zustand store ile kullanıcı profilini al
-        const userProfile = await getUserProfile(userId);
-        if (userProfile) {
-          setProfile(userProfile);
-          setError(null);
-        } else if (userProfileError) {
-          setError(userProfileError);
-        }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Profil yükleme hatası:', error);
-        setError('Profil bilgileri yüklenirken bir hata oluştu.');
-        setIsLoading(false);
-      }
-    };
-    
     loadProfileData();
-  }, [userId]);
+  }, [userId, userProfileError]);
+
+  // Retry fonksiyonu
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    setIsLoading(true);
+    
+    // Kısa bir gecikme ile yeniden dene
+    setTimeout(() => {
+      loadProfileData();
+    }, 1000);
+  };
 
   // Arkadaşlık isteği gönder
   const handleSendRequest = async () => {
@@ -362,6 +395,39 @@ export const FriendProfileScreen: React.FC = () => {
           >
             <Text style={[styles.retryButtonText, { color: 'white' }]}>
               Tekrar Dene
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Hata durumu
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.colors.accent} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Profil</Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="warning-outline" size={48} color={theme.colors.textSecondary} />
+          <Text style={[styles.errorText, { color: theme.colors.textSecondary }]}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: theme.colors.accent }]}
+            onPress={handleRetry}
+            disabled={isLoading}
+          >
+            <Ionicons name="refresh" size={16} color="white" />
+            <Text style={styles.retryButtonText}>
+              {isLoading ? 'Yükleniyor...' : 'Tekrar Dene'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -719,6 +785,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 16,
   },
+
 });
 
 export default FriendProfileScreen; 

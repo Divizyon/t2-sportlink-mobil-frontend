@@ -99,6 +99,58 @@ export const userProfileService = {
   },
 
   /**
+   * Belirli bir kullanıcının profil bilgilerini getirir
+   */
+  getUserProfile: async (userId: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.get(`/users/${userId}`);
+      //GET /api/users/123e4567-e89b-12d3-a456-426614174000
+      const apiData = response.data;
+      
+      if (apiData.success && apiData.data) {
+        const userData = apiData.data;
+        
+        // Kullanıcı profil verisini dönüştür
+        const userProfile = {
+          id: userData.id,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          username: userData.username || '',
+          profile_picture: userData.profile_picture || undefined,
+          user_sports: Array.isArray(userData.user_sports) 
+            ? userData.user_sports.map((sport: any) => ({
+                id: sport.id || sport.sport_id || '',
+                name: sport.name || sport.sport_name || '',
+                icon: sport.icon || 'fitness-outline',
+                skill_level: sport.skill_level || 'beginner'
+              }))
+            : [],
+          stats: {
+            createdEventsCount: userData.stats?.createdEventsCount || userData.created_events_count || 0,
+            participatedEventsCount: userData.stats?.participatedEventsCount || userData.participated_events_count || 0,
+            averageRating: userData.stats?.averageRating || userData.average_rating || 0,
+            friendsCount: userData.stats?.friendsCount || userData.friends_count || 0
+          }
+        };
+        
+        return {
+          success: true,
+          data: userProfile,
+          message: apiData.message || 'Kullanıcı profil bilgileri başarıyla getirildi.'
+        };
+      }
+      
+      return apiData;
+    } catch (error) {
+      console.error('Kullanıcı profil bilgisi getirme hatası:', error);
+      return {
+        success: false,
+        error: 'Kullanıcı profil bilgileri alınamadı. Lütfen daha sonra tekrar deneyin.'
+      };
+    }
+  },
+
+  /**
    * Profil bilgilerini günceller
    */
   updateProfile: async (data: UpdateProfileInfoRequest): Promise<ApiResponse<{ userInfo: ProfileResponse['userInfo'] }>> => {
