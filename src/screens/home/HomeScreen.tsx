@@ -529,14 +529,8 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="megaphone-outline" size={20} color={colors.accentDark} />
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="megaphone-outline" size={22} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Duyurular</Text>
             </View>
@@ -689,7 +683,7 @@ export const HomeScreen: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Ionicons name="star-outline" size={20} color={colors.accentDark} />
+                <Ionicons name="star-outline" size={22} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Sana Özel</Text>
             </View>
@@ -831,14 +825,8 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="newspaper-outline" size={20} color={colors.accentDark} />
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="newspaper-outline" size={22} color={colors.accentDark} />
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Spor Haberleri</Text>
             </View>
@@ -887,8 +875,13 @@ export const HomeScreen: React.FC = () => {
                         <Ionicons name="newspaper" size={30} color={colors.accentDark} />
                       </View>
                     )}
-                    <View style={[styles.newsCategory, { backgroundColor: theme.colors.primary + '20' }]}>
-                      <Text style={[styles.newsCategoryText, { color: theme.colors.primary }]}>
+                    <View style={[styles.newsCategory, { 
+                      backgroundColor: colors.accentDark,
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0
+                    }]}>
+                      <Ionicons name="basketball-outline" size={12} color="white" style={{ marginRight: 4 }} />
+                      <Text style={[styles.newsCategoryText, { color: 'white' }]}>
                         {newsItem.sport?.name || 'Genel'}
                       </Text>
                     </View>
@@ -1660,16 +1653,23 @@ const styles = StyleSheet.create({
   },
   newsCategory: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    bottom: 0,
+    left: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderTopRightRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
     zIndex: 10,
   },
   newsCategoryText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   eventCategoryBadge: {
     position: 'absolute',
@@ -1787,6 +1787,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
+  },
+  sectionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
 });
 

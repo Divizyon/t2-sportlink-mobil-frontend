@@ -14,7 +14,7 @@ export interface ConfigValues {
 
 // Ortam tabanlı yapılandırma değerleri
 const developmentConfig: ConfigValues = {
-  apiBaseUrl: 't2-sportlink-mobil-backend-eo76-d5tpq74jz-ebrar-tamers-projects.vercel.app',
+  apiBaseUrl: 'https://t2-sportlink-mobil-backend-eo76-d5tpq74jz-ebrar-tamers-projects.vercel.app',
   apiTimeout: 10000,
   appName: 'SportVision',
   appVersion: '1.0.0',
@@ -22,7 +22,7 @@ const developmentConfig: ConfigValues = {
 };
 
 const productionConfig: ConfigValues = {
-  apiBaseUrl: 't2-sportlink-mobil-backend-eo76-d5tpq74jz-ebrar-tamers-projects.vercel.app',
+  apiBaseUrl: 'https://t2-sportlink-mobil-backend-eo76-d5tpq74jz-ebrar-tamers-projects.vercel.app',
   
   apiTimeout: 30000,
   appName: 'SportVision',
