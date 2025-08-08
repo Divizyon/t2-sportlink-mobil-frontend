@@ -1003,6 +1003,20 @@ export const HomeScreen: React.FC = () => {
           }}>
             SportLink v{Constants.expoConfig?.version || '1.0.0'}
           </Text>
+          <View style={{ 
+            height: 10, 
+            width: 1, 
+            backgroundColor: theme.colors.textSecondary + '40',
+            marginHorizontal: 8
+          }} />
+          <Text style={{
+            fontSize: 11,
+            color: theme.colors.textSecondary + '80',
+            fontWeight: '300',
+            fontStyle: 'italic',
+          }}>
+            Developed by Divizyon
+          </Text>
         </Animated.View>
       </ScrollView>
       

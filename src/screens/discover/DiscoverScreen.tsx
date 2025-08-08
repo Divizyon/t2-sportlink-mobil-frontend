@@ -9,6 +9,8 @@ import {
   Text,
   Alert
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../constants/colors/colors';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import * as Location from 'expo-location';
 import { useProfileStore } from '../../store/userStore/profileStore';
@@ -250,6 +252,40 @@ export const DiscoverScreen: React.FC = () => {
         
         {/* Yakınımdaki Tesisler */}
         <NearbyFacilities onSeeAll={handleSeeAllFacilities} />
+        
+        {/* Konya Tanıtım Bölümü */}
+        <View style={[styles.konyaSection, { backgroundColor: theme.colors.card }]}>
+          <View style={styles.konyaHeader}>
+            <Ionicons name="location" size={24} color={colors.accent} />
+            <Text style={[styles.konyaTitle, { color: theme.colors.text }]}>
+              Konya Spor Kültürü
+            </Text>
+          </View>
+          <Text style={[styles.konyaDescription, { color: theme.colors.textSecondary }]}>
+            Türkiye'nin spor şehri Konya'da, geleneksel spor kültürü ile modern spor anlayışı buluşuyor. 
+            Mevlana'nın şehrinde, spor tutkunları bir araya geliyor.
+          </Text>
+          <View style={styles.konyaFeatures}>
+            <View style={styles.konyaFeature}>
+              <Ionicons name="football" size={16} color={colors.accent} />
+              <Text style={[styles.konyaFeatureText, { color: theme.colors.textSecondary }]}>
+                Futbol Sahaları
+              </Text>
+            </View>
+            <View style={styles.konyaFeature}>
+              <Ionicons name="basketball" size={16} color={colors.accent} />
+              <Text style={[styles.konyaFeatureText, { color: theme.colors.textSecondary }]}>
+                Basketbol Kortları
+              </Text>
+            </View>
+            <View style={styles.konyaFeature}>
+              <Ionicons name="fitness" size={16} color={colors.accent} />
+              <Text style={[styles.konyaFeatureText, { color: theme.colors.textSecondary }]}>
+                Spor Salonları
+              </Text>
+            </View>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -265,5 +301,44 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 20,
+  },
+  konyaSection: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  konyaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  konyaTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  konyaDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  konyaFeatures: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  konyaFeature: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  konyaFeatureText: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
   },
 }); 

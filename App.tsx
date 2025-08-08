@@ -207,6 +207,21 @@ const SplashScreen = () => {
       >
         versiyon 0.0.1
       </Animated.Text>
+      
+      {/* Developed by Divizyon */}
+      <Animated.Text 
+        style={[
+          styles.developedByText, 
+          { 
+            opacity: sloganFadeAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 0.5]
+            })
+          }
+        ]}
+      >
+        Developed by Divizyon
+      </Animated.Text>
     </View>
   );
 };
@@ -385,5 +400,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     letterSpacing: 0.5,
+  },
+  developedByText: {
+    position: 'absolute',
+    bottom: 20,
+    fontSize: 10,
+    color: '#999',
+    letterSpacing: 0.3,
+    fontStyle: 'italic',
   },
 });
