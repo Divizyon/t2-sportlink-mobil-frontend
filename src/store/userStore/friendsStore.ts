@@ -567,77 +567,28 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
         method: 'GET'
       });
       
-      // API çağrısı yaparak kullanıcı verisini al
-      const response = await fetch(`${getConfigValues().apiBaseUrl}/users/${userId}/profile`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${await tokenManager.getToken()}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // userProfileService kullanarak API çağrısı yap
+      const { userProfileService } = require('../../api/user/userProfileService');
+      const response = await userProfileService.getUserProfile(userId);
       
       // API isteği tamamlandı
-      useApiStore.getState().completeRequest(apiRequestId, response.status);
+      useApiStore.getState().completeRequest(apiRequestId, response.success ? 200 : 400);
       
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        // Farklı API yanıt formatlarını destekleyecek şekilde verileri hazırla
-        const statsData = {
-          createdEventsCount: 0,
-          participatedEventsCount: 0,
-          averageRating: 0,
-          friendsCount: 0
-        };
-        
-        // data.data.stats nesnesi varsa
-        if (data.data.stats) {
-          statsData.createdEventsCount = 
-            typeof data.data.stats.createdEventsCount === 'number' 
-              ? data.data.stats.createdEventsCount 
-              : (data.data.stats.created_events_count || 0);
-          
-          statsData.participatedEventsCount = 
-            typeof data.data.stats.participatedEventsCount === 'number'
-              ? data.data.stats.participatedEventsCount
-              : (data.data.stats.participated_events_count || 0);
-          
-          statsData.averageRating = 
-            typeof data.data.stats.averageRating === 'number'
-              ? data.data.stats.averageRating
-              : (data.data.stats.average_rating || 0);
-          
-          statsData.friendsCount = 
-            typeof data.data.stats.friendsCount === 'number'
-              ? data.data.stats.friendsCount
-              : (data.data.stats.friends_count || 0);
-        } 
-        // Alternatif format - düz veri
-        else {
-          statsData.createdEventsCount = data.data.created_events_count || 0;
-          statsData.participatedEventsCount = data.data.participated_events_count || 0;
-          statsData.averageRating = data.data.average_rating || 0;
-          statsData.friendsCount = data.data.friends_count || 0;
-        }
-        
+      if (response.success && response.data) {
         // API yanıtını uygun profile yapısına dönüştür
         const userProfile: UserProfile = {
-          id: data.data.id,
-          first_name: data.data.first_name || '',
-          last_name: data.data.last_name || '',
-          username: data.data.username || '',
-          profile_picture: data.data.profile_picture || undefined,
-          // Backend'den gelen user_sports verisini dönüştür ve kontrol et
-          user_sports: Array.isArray(data.data.user_sports) 
-            ? data.data.user_sports.map((sport: any) => ({
-                id: sport.id || sport.sport_id || '',
-                name: sport.name || sport.sport_name || '',
-                icon: sport.icon || 'fitness-outline', // Varsayılan ikon
-                skill_level: sport.skill_level || 'beginner'
-              }))
-            : [],
-          // Stats verilerini doğrula ve işle
-          stats: statsData
+          id: response.data.id,
+          first_name: response.data.first_name || '',
+          last_name: response.data.last_name || '',
+          username: response.data.username || '',
+          profile_picture: response.data.profile_picture || undefined,
+          user_sports: response.data.user_sports || [],
+          stats: response.data.stats || {
+            createdEventsCount: 0,
+            participatedEventsCount: 0,
+            averageRating: 0,
+            friendsCount: 0
+          }
         };
         
         set({ 
@@ -648,11 +599,27 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
         
         return userProfile;
       } else {
-        throw new Error(data.message || 'Kullanıcı profil bilgileri alınamadı');
+        throw new Error(response.error || 'Kullanıcı profil bilgileri alınamadı');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Kullanıcı profil bilgileri alınamadı';
-      console.error('Kullanıcı profil getirme hatası:', errorMessage);
+      let errorMessage = 'Kullanıcı profil bilgileri alınamadı';
+      
+      // Detaylı hata analizi
+      if (error instanceof Error) {
+        if (error.message.includes('Network Error') || error.message.includes('timeout')) {
+          errorMessage = 'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+        } else if (error.message.includes('404') || error.message.includes('Not Found')) {
+          errorMessage = 'Kullanıcı profili bulunamadı.';
+        } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          errorMessage = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
+        } else if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+          errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      console.error('Kullanıcı profil getirme hatası:', error);
       
       set({ 
         userProfileError: errorMessage, 
