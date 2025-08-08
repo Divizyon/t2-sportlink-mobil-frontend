@@ -137,6 +137,9 @@ export const RegisterScreen: React.FC = () => {
   
   // Şifre gücünü kontrol et
   const checkPasswordStrength = (pass: string) => {
+    // Şifre değerini her zaman güncelle
+    setPassword(pass);
+    
     // Şifre boşsa gösterme
     if (!pass) {
       setPasswordStrength({ score: 0, message: '', color: '#ccc' });

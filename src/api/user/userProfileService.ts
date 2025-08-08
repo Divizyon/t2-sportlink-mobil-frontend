@@ -103,7 +103,8 @@ export const userProfileService = {
    */
   getUserProfile: async (userId: string): Promise<ApiResponse<any>> => {
     try {
-      const response = await apiClient.get(`/users/${userId}/profile`);
+      const response = await apiClient.get(`/users/${userId}`);
+      //GET /api/users/123e4567-e89b-12d3-a456-426614174000
       const apiData = response.data;
       
       if (apiData.success && apiData.data) {
