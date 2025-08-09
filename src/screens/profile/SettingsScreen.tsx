@@ -54,10 +54,6 @@ export const SettingsScreen = () => {
     navigation.navigate('NotificationSettings');
   };
 
-  const handlePrivacySettings = () => {
-    navigation.navigate('SecuritySettings');
-  };
-
   const handleHelp = () => {
     navigation.navigate('Help');
   };
@@ -92,7 +88,6 @@ export const SettingsScreen = () => {
           onToggleTheme={toggleTheme}
           onEditProfile={handleEditProfile}
           onManageNotifications={handleManageNotifications}
-          onPrivacySettings={handlePrivacySettings}
           onSessionHistory={handleSessionHistory}
           onHelp={handleHelp}
           onTermsOfService={handleTermsOfService}

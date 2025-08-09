@@ -4,7 +4,6 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import { HelpScreen } from '../screens/profile/settings/HelpScreen';
-import { SecuritySettingsScreen } from '../screens/profile/settings/SecuritySettingsScreen';
 import { SessionSettings } from '../screens/profile/settings/SessionSettings';
 import { NotificationSettingsScreen } from '../screens/profile/settings/NotificationSettingsScreen';
 import { TermsOfServiceScreen } from '../screens/profile/settings/TermsOfServiceScreen';
@@ -18,7 +17,6 @@ export type ProfileStackParamList = {
   Settings: undefined;
   EditProfile: undefined;
   Help: undefined;
-  SecuritySettings: undefined;
   SessionHistory: undefined;
   NotificationSettings: undefined;
   TermsOfService: undefined;
@@ -59,7 +57,12 @@ export const ProfileStack = () => {
           headerStyle: {
             backgroundColor: '#fff',
           },
-          headerShadowVisible: false,
+          headerTitleStyle: {
+            fontSize: 22,
+            fontWeight: '700',
+            color: '#1a1a1a',
+          },
+          headerShadowVisible: true,
           animation: 'slide_from_right'
         }}
       />
@@ -67,27 +70,13 @@ export const ProfileStack = () => {
         name="EditProfile" 
         component={EditProfileScreen}
         options={{
-          headerShown: true,
-          title: 'Profili Düzenle',
-          headerTintColor: '#338626',
-          headerStyle: {
-            backgroundColor: '#fff',
-          },
-          headerShadowVisible: false,
+          headerShown: false,
           animation: 'slide_from_right'
         }}
       />
       <Stack.Screen 
         name="Help" 
         component={HelpScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right'
-        }}
-      />
-      <Stack.Screen 
-        name="SecuritySettings" 
-        component={SecuritySettingsScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right'

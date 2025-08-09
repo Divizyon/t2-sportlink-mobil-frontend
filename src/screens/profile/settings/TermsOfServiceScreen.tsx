@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   ScrollView, 
   SafeAreaView,
-  TouchableOpacity
+  TouchableOpacity,
+  Linking
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,10 +21,13 @@ export const TermsOfServiceScreen: React.FC = () => {
     navigation.goBack();
   };
 
+  const openDivizyonWebsite = () => {
+    Linking.openURL('https://www.divizyon.org');
+  };
+
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'right', 'left']}
     >
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
@@ -59,8 +63,23 @@ export const TermsOfServiceScreen: React.FC = () => {
               1. Genel Hükümler
             </Text>
             <Text style={[styles.paragraph, { color: theme.colors.textSecondary }]}>
-              SportLink uygulamasını kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. 
+              SportLink uygulaması, Divizyon çatısı altında geliştirilen yenilikçi bir spor platformudur. 
+              Divizyon, kolektif öğrenmeyi ve üretmeyi teşvik eden, işbirlikçi ve disiplinler ötesi 
+              gençlerin, girişimcilerin ve profesyonellerin yüksek teknoloji olanaklarına sahip 
+              ortak çalışma alanında bir araya geldiği yazılım ve dijital sanatlar açık inovasyon platformudur.
+            </Text>
+            <Text style={[styles.paragraph, { color: theme.colors.textSecondary }]}>
+              Bu uygulamayı kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. 
               Bu şartlar, uygulamanın kullanımı ile ilgili tüm hak ve yükümlülükleri düzenler.
+            </Text>
+            <Text style={[styles.paragraph, { color: theme.colors.textSecondary }]}>
+              Divizyon hakkında daha fazla bilgi için:{' '}
+              <Text 
+                style={[styles.link, { color: theme.colors.primary }]}
+                onPress={openDivizyonWebsite}
+              >
+                https://www.divizyon.org
+              </Text>
             </Text>
           </View>
 
@@ -201,6 +220,27 @@ export const TermsOfServiceScreen: React.FC = () => {
             </Text>
           </View>
 
+          {/* Geliştirici Bilgisi */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              10. Geliştirici
+            </Text>
+            <Text style={[styles.paragraph, { color: theme.colors.textSecondary }]}>
+              SportLink uygulaması Divizyon inovasyon platformu çatısı altında geliştirilmiştir. 
+              Divizyon, teknoloji alanında çalışan girişimciler ve profesyoneller için 
+              işbirliği ve inovasyon ortamı sağlayan bir platformdur.
+            </Text>
+            <Text style={[styles.paragraph, { color: theme.colors.textSecondary }]}>
+              Divizyon hakkında detaylı bilgi için:{' '}
+              <Text 
+                style={[styles.link, { color: theme.colors.primary }]}
+                onPress={openDivizyonWebsite}
+              >
+                https://www.divizyon.org
+              </Text>
+            </Text>
+          </View>
+
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -216,16 +256,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingTop: 40,
+    paddingVertical: 16,
+    paddingTop: 20,
     borderBottomWidth: 1,
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
   },
   placeholder: {
     width: 40,
@@ -273,5 +313,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 8,
+  },
+  link: {
+    textDecorationLine: 'underline',
+    fontWeight: '500',
   },
 });

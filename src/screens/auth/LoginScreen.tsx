@@ -11,7 +11,8 @@ import {
   ScrollView,
   Alert,
   Dimensions,
-  ImageBackground
+  ImageBackground,
+  Image
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAuthStore } from '../../store/userStore/authStore';
@@ -270,6 +271,14 @@ export const LoginScreen: React.FC = () => {
                 <Text style={styles.registerLink}>Kayıt Ol</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={styles.bannerContainer}>
+              <Image 
+                source={require('../../../assets/images/banner.png')} 
+                style={styles.bannerImage}
+                resizeMode="contain"
+              />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -405,5 +414,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.accent,
     marginLeft: 5,
+  },
+  bannerContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  bannerImage: {
+    width: 120,
+    height: 60,
+    marginBottom: 8,
   },
 }); 

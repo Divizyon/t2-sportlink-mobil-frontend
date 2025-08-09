@@ -107,7 +107,7 @@ export const HelpScreen: React.FC = () => {
     {
       id: 'account',
       title: 'Hesap Ayarları',
-      content: 'Profil bilgilerinizi güncellemek için "Profilim" sayfasında düzenle butonuna tıklayabilirsiniz. Şifrenizi değiştirmek için "Ayarlar > Güvenlik Ayarları" bölümüne gidin ve "Şifremi Değiştir" seçeneğini kullanın. Hesabınızı silmek isterseniz, "Ayarlar > Güvenlik Ayarları > Hesabımı Sil" adımlarını izleyin.'
+      content: 'Profil bilgilerinizi güncellemek için "Profilim" sayfasında düzenle butonuna tıklayabilirsiniz. Şifrenizi değiştirmek için ayarlar bölümünden yapabilirsiniz. Hesabınızla ilgili tüm işlemleri profile sayfasından gerçekleştirebilirsiniz.'
     },
     {
       id: 'events',
@@ -144,9 +144,8 @@ export const HelpScreen: React.FC = () => {
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'right', 'left']}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -240,15 +239,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingTop: 40,
+    paddingVertical: 16,
+    paddingTop: 20,
+    borderBottomWidth: 1,
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
   },
   placeholder: {
     width: 40,

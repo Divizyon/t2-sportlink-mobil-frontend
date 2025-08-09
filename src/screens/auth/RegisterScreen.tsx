@@ -10,6 +10,7 @@ import {
   Platform, 
   TouchableOpacity,
   ImageBackground,
+  Image,
   Dimensions,
   ActivityIndicator,
   TextInput
@@ -351,6 +352,15 @@ export const RegisterScreen: React.FC = () => {
           >
             <Ionicons name="chevron-back" size={24} color="#333" />
           </TouchableOpacity>
+          
+          <View style={styles.divizyonContainer}>
+            <Image 
+              source={require('../../../assets/images/divizyon.png')} 
+              style={styles.divizyonLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.divizyonText}>Powered by Divizyon</Text>
+          </View>
         </View>
         
         <View style={styles.registerHeader}>
@@ -369,91 +379,97 @@ export const RegisterScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Ad</Text>
-              <View style={[
-                styles.inputContainer, 
-                (formErrors.firstName || validationErrors.firstName) ? styles.inputError : null
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Adınız"
-                  value={firstName}
-                  onChangeText={(text) => validateName(text, 'firstName')}
-                  placeholderTextColor="#A0A0A0"
-                />
+            {/* Ad ve Soyad yan yana */}
+            <View style={styles.rowContainer}>
+              <View style={styles.largerInputGroup}>
+                <Text style={styles.inputLabel}>Ad</Text>
+                <View style={[
+                  styles.inputContainer, 
+                  (formErrors.firstName || validationErrors.firstName) ? styles.inputError : null
+                ]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Adın"
+                    value={firstName}
+                    onChangeText={(text) => validateName(text, 'firstName')}
+                    placeholderTextColor="#A0A0A0"
+                  />
+                </View>
+                {formErrors.firstName ? (
+                  <Text style={styles.errorText}>{formErrors.firstName}</Text>
+                ) : validationErrors.firstName ? (
+                  <Text style={styles.errorText}>{validationErrors.firstName}</Text>
+                ) : null}
               </View>
-              {formErrors.firstName ? (
-                <Text style={styles.errorText}>{formErrors.firstName}</Text>
-              ) : validationErrors.firstName ? (
-                <Text style={styles.errorText}>{validationErrors.firstName}</Text>
-              ) : null}
+              
+              <View style={styles.smallerInputGroup}>
+                <Text style={styles.inputLabel}>Soyad</Text>
+                <View style={[
+                  styles.inputContainer, 
+                  (formErrors.lastName || validationErrors.lastName) ? styles.inputError : null
+                ]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Soyadın"
+                    value={lastName}
+                    onChangeText={(text) => validateName(text, 'lastName')}
+                    placeholderTextColor="#A0A0A0"
+                  />
+                </View>
+                {formErrors.lastName ? (
+                  <Text style={styles.errorText}>{formErrors.lastName}</Text>
+                ) : validationErrors.lastName ? (
+                  <Text style={styles.errorText}>{validationErrors.lastName}</Text>
+                ) : null}
+              </View>
             </View>
             
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Soyad</Text>
-              <View style={[
-                styles.inputContainer, 
-                (formErrors.lastName || validationErrors.lastName) ? styles.inputError : null
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Soyadınız"
-                  value={lastName}
-                  onChangeText={(text) => validateName(text, 'lastName')}
-                  placeholderTextColor="#A0A0A0"
-                />
+            {/* Kullanıcı Adı ve Telefon yan yana */}
+            <View style={styles.rowContainer}>
+              <View style={styles.smallerInputGroup}>
+                <Text style={styles.smallInputLabel}>Kullanıcı Adı</Text>
+                <View style={[
+                  styles.inputContainer, 
+                  (formErrors.username || validationErrors.username) ? styles.inputError : null
+                ]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Kullanıcı adın"
+                    value={username}
+                    onChangeText={validateUsername}
+                    autoCapitalize="none"
+                    placeholderTextColor="#A0A0A0"
+                  />
+                </View>
+                {formErrors.username ? (
+                  <Text style={styles.errorText}>{formErrors.username}</Text>
+                ) : validationErrors.username ? (
+                  <Text style={styles.errorText}>{validationErrors.username}</Text>
+                ) : null}
               </View>
-              {formErrors.lastName ? (
-                <Text style={styles.errorText}>{formErrors.lastName}</Text>
-              ) : validationErrors.lastName ? (
-                <Text style={styles.errorText}>{validationErrors.lastName}</Text>
-              ) : null}
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Kullanıcı Adı</Text>
-              <View style={[
-                styles.inputContainer, 
-                (formErrors.username || validationErrors.username) ? styles.inputError : null
-              ]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Kullanıcı adınız"
-                  value={username}
-                  onChangeText={validateUsername}
-                  autoCapitalize="none"
-                  placeholderTextColor="#A0A0A0"
-                />
+              
+              <View style={styles.largerInputGroup}>
+                <Text style={styles.inputLabel}>Telefon</Text>
+                <View style={[
+                  styles.inputContainer, 
+                  (formErrors.phone || validationErrors.phone) ? styles.inputError : null
+                ]}>
+                  <Text style={styles.phonePrefix}>+90</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Telefon numaran"
+                    value={phone}
+                    onChangeText={validatePhone}
+                    keyboardType="phone-pad"
+                    placeholderTextColor="#A0A0A0"
+                  />
+                </View>
+                {formErrors.phone ? (
+                  <Text style={styles.errorText}>{formErrors.phone}</Text>
+                ) : validationErrors.phone ? (
+                  <Text style={styles.errorText}>{validationErrors.phone}</Text>
+                ) : null}
               </View>
-              {formErrors.username ? (
-                <Text style={styles.errorText}>{formErrors.username}</Text>
-              ) : validationErrors.username ? (
-                <Text style={styles.errorText}>{validationErrors.username}</Text>
-              ) : null}
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Telefon</Text>
-              <View style={[
-                styles.inputContainer, 
-                (formErrors.phone || validationErrors.phone) ? styles.inputError : null
-              ]}>
-                <Text style={styles.phonePrefix}>+90</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Telefon numaranız"
-                  value={phone}
-                  onChangeText={validatePhone}
-                  keyboardType="phone-pad"
-                  placeholderTextColor="#A0A0A0"
-                />
-              </View>
-              {formErrors.phone ? (
-                <Text style={styles.errorText}>{formErrors.phone}</Text>
-              ) : validationErrors.phone ? (
-                <Text style={styles.errorText}>{validationErrors.phone}</Text>
-              ) : null}
             </View>
             
             <View style={styles.inputGroup}>
@@ -464,7 +480,7 @@ export const RegisterScreen: React.FC = () => {
               ]}>
                 <TextInput
                   style={styles.input}
-                  placeholder="E-posta adresiniz"
+                  placeholder="E-posta adresin"
                   value={email}
                   onChangeText={validateEmail}
                   autoCapitalize="none"
@@ -487,7 +503,7 @@ export const RegisterScreen: React.FC = () => {
               ]}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Şifreniz"
+                  placeholder="Şifren"
                   value={password}
                   onChangeText={checkPasswordStrength}
                   secureTextEntry={!isPasswordVisible}
@@ -521,7 +537,7 @@ export const RegisterScreen: React.FC = () => {
               ]}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Şifrenizi tekrar girin"
+                  placeholder="Şifreni tekrar gir"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!isConfirmPasswordVisible}
@@ -593,9 +609,11 @@ const styles = StyleSheet.create({
   },
   headerBackButton: {
     marginTop: 10,
-    alignItems: 'flex-start',
-    paddingVertical: 20,
-    paddingTop: 40,
+    paddingVertical: 15,
+    paddingTop: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   backButton: {
     width: 40,
@@ -606,7 +624,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerHeader: {
-    marginVertical: 20,
+    marginVertical: 5,
     position: 'relative',
   },
   registerTitle: {
@@ -650,6 +668,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     height: 50,
+    justifyContent: 'flex-start',
   },
   inputError: {
     borderWidth: 1,
@@ -657,9 +676,11 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
     height: '100%',
+    textAlignVertical: 'center',
+    paddingVertical: 0,
   },
   eyeIcon: {
     padding: 8,
@@ -741,7 +762,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   phonePrefix: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
     marginRight: 4,
   },
@@ -749,5 +770,44 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: 14,
     fontWeight: '600',
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  largerInputGroup: {
+    flex: 0.58,
+  },
+  smallerInputGroup: {
+    flex: 0.41,
+  },
+  smallInputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 8,
+  },
+  divizyonContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingRight: 10,
+    paddingTop: 8,
+  },
+  divizyonLogo: {
+    width: 28,
+    height: 28,
+    marginBottom: 4,
+  },
+  divizyonText: {
+    fontSize: 10,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'right',
+    maxWidth: 120,
+    lineHeight: 12,
   },
 }); 

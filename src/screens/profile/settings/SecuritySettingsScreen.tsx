@@ -218,50 +218,6 @@ export const SecuritySettingsScreen: React.FC = () => {
     }
   };
   
-  // Hesap silme
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Hesabı Sil',
-      'Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve tüm verileriniz kalıcı olarak silinecektir.',
-      [
-        {
-          text: 'İptal',
-          style: 'cancel'
-        },
-        {
-          text: 'Hesabımı Sil',
-          style: 'destructive',
-          onPress: () => {
-            // Hesap silme doğrulama ekranı
-            Alert.prompt(
-              'Hesabınızı Silmeyi Onaylayın',
-              'Bu işlemi onaylamak için şifrenizi girin:',
-              [
-                {
-                  text: 'İptal',
-                  style: 'cancel'
-                },
-                {
-                  text: 'Sil',
-                  style: 'destructive',
-                  onPress: (password) => {
-                    if (password && password.length > 0) {
-                      console.log('Hesap silme işlemi başlatıldı');
-                      // Burada hesap silme işlemi için API çağrısı yapılabilir
-                    } else {
-                      Alert.alert('Hata', 'Lütfen şifrenizi girin');
-                    }
-                  }
-                }
-              ],
-              'secure-text'
-            );
-          }
-        }
-      ]
-    );
-  };
-  
   return (
     <SafeAreaView 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -362,63 +318,6 @@ export const SecuritySettingsScreen: React.FC = () => {
           isLoading={isLoading['activityVisibility']}
           onValueChange={() => toggleSetting('activityVisibility', isActivityVisible, setIsActivityVisible)}
         />
-        
-        {/* Veri ve Gizlilik Bölümü */}
-        <SectionTitle title="VERİ VE GİZLİLİK" theme={theme} />
-        
-        <SecuritySettingItem 
-          title="Gizlilik Politikası"
-          subtitle="Verilerinizi nasıl koruduğumuzu öğrenin"
-          icon="document-text-outline"
-          type="navigation"
-          theme={theme}
-          onPress={() => {
-            // Buraya gizlilik politikası sayfasına yönlendirme eklenebilir
-            console.log('Gizlilik politikası sayfasına yönlendiriliyor');
-          }}
-        />
-        
-        <SecuritySettingItem 
-          title="Veri İndirme İsteği"
-          subtitle="Tüm verilerinizi indirin"
-          icon="download-outline"
-          type="navigation"
-          theme={theme}
-          onPress={() => {
-            // Buraya veri indirme isteği sayfasına yönlendirme eklenebilir
-            console.log('Veri indirme isteği sayfasına yönlendiriliyor');
-          }}
-        />
-        
-        {/* Tehlikeli Bölge */}
-        <SectionTitle title="HESAP İŞLEMLERİ" theme={theme} />
-        
-        <TouchableOpacity 
-          style={[
-            styles.dangerButton, 
-            { 
-              backgroundColor: theme.colors.cardBackground,
-              borderColor: theme.colors.error || '#FF3B30',
-              borderWidth: 1 
-            }
-          ]}
-          onPress={handleDeleteAccount}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name="trash-outline" 
-            size={22} 
-            color={theme.colors.error || '#FF3B30'} 
-            style={styles.dangerIcon}
-          />
-          <Text style={[styles.dangerButtonText, { color: theme.colors.error || '#FF3B30' }]}>
-            Hesabımı Sil
-          </Text>
-        </TouchableOpacity>
-        
-        <Text style={[styles.disclaimer, { color: theme.colors.textSecondary }]}>
-          Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinecektir ve bu işlem geri alınamaz.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -433,15 +332,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingTop: 40,
+    paddingVertical: 16,
+    paddingTop: 20,
+    borderBottomWidth: 1,
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
   },
   placeholder: {
     width: 40,
@@ -501,26 +401,5 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: '500',
-  },
-  dangerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  dangerIcon: {
-    marginRight: 8,
-  },
-  dangerButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  disclaimer: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-    marginHorizontal: 24,
   }
 });

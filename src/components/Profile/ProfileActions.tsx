@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ProfileActionsProps {
@@ -14,7 +14,6 @@ interface ProfileActionsProps {
   onToggleTheme: () => void;
   onEditProfile: () => void;
   onManageNotifications: () => void;
-  onPrivacySettings: () => void;
   onSessionHistory: () => void;
   onHelp: () => void;
   onTermsOfService: () => void;
@@ -28,7 +27,6 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   onToggleTheme,
   onEditProfile,
   onManageNotifications,
-  onPrivacySettings,
   onSessionHistory,
   onHelp,
   onTermsOfService,
@@ -63,17 +61,6 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
         
         <TouchableOpacity 
           style={styles.actionItem} 
-          onPress={onPrivacySettings}
-        >
-          <View style={styles.actionLeft}>
-            <Ionicons name="shield-outline" size={22} color={themeColors.accent} />
-            <Text style={[styles.actionText, { color: themeColors.text }]}>Gizlilik Ayarları</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionItem} 
           onPress={onSessionHistory}
         >
           <View style={styles.actionLeft}>
@@ -83,24 +70,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={styles.actionItem} 
-          onPress={onToggleTheme}
-        >
-          <View style={styles.actionLeft}>
-            <Ionicons 
-              name={isDarkMode ? "sunny-outline" : "moon-outline"} 
-              size={22} 
-              color={themeColors.accent} 
-            />
-            <Text style={[styles.actionText, { color: themeColors.text }]}>
-              Koyu Tema
-            </Text>
-          </View>
-          <View style={[styles.toggleSwitch, { backgroundColor: isDarkMode ? themeColors.accent : '#e4e4e4' }]}>
-            <View style={[styles.toggleKnob, { transform: [{ translateX: isDarkMode ? 22 : 2 }] }]} />
-          </View>
-        </TouchableOpacity>
+        {/* Koyu tema yakında aktif olacak */}
         
         <TouchableOpacity 
           style={styles.actionItem} 
@@ -143,6 +113,15 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
         <Ionicons name="log-out-outline" size={22} color={themeColors.error} />
         <Text style={[styles.logoutText, { color: themeColors.error }]}>Çıkış Yap</Text>
       </TouchableOpacity>
+
+      {/* Banner image below logout */}
+      <View style={styles.bannerContainer}>
+        <Image 
+          source={require('../../../assets/images/banner.png')} 
+          style={styles.bannerImage}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 };
@@ -179,6 +158,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 12,
   },
+  actionTextContainer: {
+    marginLeft: 12,
+  },
+  actionSubtext: {
+    fontSize: 12,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
   toggleSwitch: {
     width: 44,
     height: 26,
@@ -201,5 +188,14 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     marginLeft: 12,
+  },
+  bannerContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  bannerImage: {
+    width: 120,
+    height: 60,
   },
 });

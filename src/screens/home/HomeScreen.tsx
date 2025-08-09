@@ -452,11 +452,20 @@ export const HomeScreen: React.FC = () => {
         }
       ]}>
        
+        {/* Divizyon icon on the left */}
+        <Image 
+          source={require('../../../assets/images/divizyon.png')} 
+          style={styles.divizyonIcon}
+          resizeMode="contain"
+        />
         
-        <Text style={[styles.logoText, { color: theme.colors.text }]}>
-          <Text style={{color: '#4CAF50'}}>Sport</Text>
-          <Text style={{color: '#2F4F4F'}}>Link</Text>
-        </Text>
+        {/* Centered SportLink text */}
+        <View style={styles.centerLogoContainer}>
+          <Text style={[styles.logoText, { color: theme.colors.text }]}>
+            <Text style={{color: '#4CAF50'}}>Sport</Text>
+            <Text style={{color: '#2F4F4F'}}>Link</Text>
+          </Text>
+        </View>
         
         <View style={styles.headerButtons}>
          {/* Arkadaşlık İstekleri Butonu */}
@@ -1151,12 +1160,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 3,
     zIndex: 10,
+    position: 'relative',
   },
   menuButton: {
     padding: 8,
   },
   logoText: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: 'bold',
   },
   headerButtons: {
@@ -1808,6 +1818,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  centerLogoContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  divizyonIcon: {
+    width: 27,
+    height: 27,
+    zIndex: 2,
   },
 });
 
