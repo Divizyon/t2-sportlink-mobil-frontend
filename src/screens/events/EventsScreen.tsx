@@ -48,10 +48,6 @@ export const EventsScreen: React.FC = () => {
 
   // Filtre durumu
   const [activeSportId, setActiveSportId] = useState<string | null>(null);
-  
-  // Status filtresi (pasif etkinlikleri de gösterme seçeneği)
-  const [showPassiveEvents, setShowPassiveEvents] = useState<boolean>(true);
-  const [showExpiredEvents, setShowExpiredEvents] = useState<boolean>(true);
 
   // Arama durumu
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -112,22 +108,7 @@ export const EventsScreen: React.FC = () => {
     // Önce spor filtresi
     let filteredEvents = eventsToFilter;
     
-    // Pasif etkinlikleri gösterme filtreleri
-    if (!showPassiveEvents) {
-      filteredEvents = filteredEvents.filter(event => event.status !== 'passive' as any);
-    }
-    
-    // Tarihi geçmiş etkinlikleri gösterme
-    if (!showExpiredEvents) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      filteredEvents = filteredEvents.filter(event => {
-        const eventDate = new Date(event.event_date);
-        return eventDate >= today || event.status !== 'active';
-      });
-    }
-    
+    // Artık herhangi bir status filtresi yok - tüm etkinlikleri göster
     return filteredEvents;
   };
   
@@ -154,13 +135,38 @@ export const EventsScreen: React.FC = () => {
     // Filtrelemeleri uygula
     filteredEvents = applyFilters(filteredEvents);
     
-    // Tarihe göre sırala - Yaklaşan etkinlikler önce
+    // Status'a göre öncelik sırası: active > completed > canceled > draft
+    const statusPriority = {
+      'active': 1,
+      'completed': 2, 
+      'canceled': 3,
+      'draft': 4
+    };
+    
+    // Önce status'a göre, sonra tarihe göre sırala
     return filteredEvents.sort((a, b) => {
-      const dateA = new Date(a.created_at).getTime();
-      const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA;
+      // Önce status'a göre sırala
+      const statusA = statusPriority[a.status] || 5;
+      const statusB = statusPriority[b.status] || 5;
+      
+      if (statusA !== statusB) {
+        return statusA - statusB;
+      }
+      
+      // Aynı status'ta olanları tarihe göre sırala (yaklaşan etkinlikler önce)
+      if (a.status === 'active' || a.status === 'draft') {
+        // Aktif ve taslak etkinlikleri yaklaşan tarihe göre sırala
+        const dateA = new Date(a.event_date).getTime();
+        const dateB = new Date(b.event_date).getTime();
+        return dateA - dateB;
+      } else {
+        // Tamamlanan ve iptal edilen etkinlikleri oluşturulma tarihine göre sırala (yeni olanlar önce)
+        const createdA = new Date(a.created_at).getTime();
+        const createdB = new Date(b.created_at).getTime();
+        return createdB - createdA;
+      }
     });
-  }, [events, activeSportId, searchResults, isSearchActive, showPassiveEvents, showExpiredEvents]);
+  }, [events, activeSportId, searchResults, isSearchActive]);
 
   // Component mount edildiğinde etkinlikleri ve spor kategorilerini getir
   useEffect(() => {
@@ -728,57 +734,6 @@ export const EventsScreen: React.FC = () => {
     );
   };
 
-  // Filtre sekmelerini render et
-  const renderFilterOptions = () => {
-    return (
-      <View style={styles.filterOptionsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterOption,
-            { backgroundColor: showPassiveEvents ? theme.colors.accent + '20' : theme.colors.light }
-          ]}
-          onPress={() => setShowPassiveEvents(!showPassiveEvents)}
-        >
-          <Ionicons 
-            name={showPassiveEvents ? "eye-outline" : "eye-off-outline"} 
-            size={16} 
-            color={showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary} 
-          />
-          <Text 
-            style={[
-              styles.filterOptionText, 
-              { color: showPassiveEvents ? theme.colors.accent : theme.colors.textSecondary }
-            ]}
-          >
-            Pasif Etkinlikler
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.filterOption,
-            { backgroundColor: showExpiredEvents ? theme.colors.accent + '20' : theme.colors.light }
-          ]}
-          onPress={() => setShowExpiredEvents(!showExpiredEvents)}
-        >
-          <Ionicons 
-            name={showExpiredEvents ? "time-outline" : "calendar-outline"} 
-            size={16} 
-            color={showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary} 
-          />
-          <Text 
-            style={[
-              styles.filterOptionText, 
-              { color: showExpiredEvents ? theme.colors.accent : theme.colors.textSecondary }
-            ]}
-          >
-            Geçmiş Etkinlikler
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
@@ -902,9 +857,6 @@ export const EventsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
       </Animated.View>
-
-      {/* Filtre Seçenekleri */}
-      {renderFilterOptions()}
     </SafeAreaView>
   );
 };

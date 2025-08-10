@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,10 +6,14 @@ import {
   TouchableOpacity, 
   Image, 
   ViewStyle,
-  Dimensions
+  Dimensions,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/appStore/themeStore';
+import { useEventStore } from '../../store/eventStore/eventStore';
+import { useAuthStore } from '../../store/userStore/authStore';
 import { Event } from '../../types/eventTypes/event.types';
 import { formatDate, formatTimeRange, isDatePassed } from '../../utils/dateUtils';
 
@@ -29,6 +33,11 @@ export const EventCard: React.FC<EventCardProps> = ({
   showJoinStatus = true,
 }) => {
   const { theme } = useThemeStore();
+  const { joinEvent } = useEventStore();
+  const { user } = useAuthStore();
+  
+  // Katılım işlemi için loading state
+  const [isJoining, setIsJoining] = useState(false);
   
   // Güvenlik kontrolleri ve API yanıtına uygun değerleri ayarla
   const safeEvent = {
@@ -45,9 +54,41 @@ export const EventCard: React.FC<EventCardProps> = ({
   const isEventFull = safeEvent.participant_count >= safeEvent.max_participants;
   
   // API yapısına göre kullanıcının katılma durumunu belirle
-  // API yanıtında kullanıcının katılma durumunu kontrol et
-  const isUserParticipant = false; // API'den gelecek
-  const isUserCreator = event.creator_id === "currentUserId"; // API'den gelecek
+  const isUserParticipant = safeEvent.is_joined || false;
+  const isUserCreator = safeEvent.creator_id === user?.id;
+
+  // Etkinliğe katılma fonksiyonu
+  const handleJoinEvent = async () => {
+    if (!user) {
+      Alert.alert('Hata', 'Etkinliğe katılmak için giriş yapmalısınız.');
+      return;
+    }
+    
+    if (safeEvent.is_private) {
+      Alert.alert(
+        'Özel Etkinlik', 
+        'Bu özel bir etkinliktir. Etkinlik detayına giderek davet kodu ile katılabilirsiniz.',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Detaya Git', onPress: () => onPress && onPress() }
+        ]
+      );
+      return;
+    }
+    
+    try {
+      setIsJoining(true);
+      const success = await joinEvent(safeEvent.id);
+      if (success) {
+        Alert.alert('Başarılı', 'Etkinliğe başarıyla katıldınız!');
+      }
+    } catch (error) {
+      console.error('Katılım hatası:', error);
+      Alert.alert('Hata', 'Etkinliğe katılırken bir hata oluştu.');
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   // Spor etkinliği için uygun ikonu belirle
   const getSportIcon = (sport: any) => {
@@ -157,10 +198,56 @@ export const EventCard: React.FC<EventCardProps> = ({
     return fullName || username || 'Kullanıcı';
   };
   
-  // Tarihi geçmiş veya pasif etkinlik mi kontrol et
+  // Tarihi geçmiş etkinlik mi kontrol et  
   const isExpiredEvent = safeEvent.event_date && isDatePassed(safeEvent.event_date) && safeEvent.status === 'active';
-  const isPassiveEvent = safeEvent.status === 'passive';
-  const shouldHighlight = isExpiredEvent || isPassiveEvent;
+  const shouldHighlight = isExpiredEvent;
+  
+  // Status badge için ikon ve renk belirle
+  const getStatusBadge = () => {
+    // Kullanıcının bu etkinlikle ilgili durumu
+    if (isUserCreator) {
+      return {
+        icon: 'star',
+        color: '#FFD700', // Altın rengi
+        bgColor: '#FFD700',
+        show: true
+      };
+    }
+    
+    if (isUserParticipant) {
+      return {
+        icon: 'checkmark',
+        color: '#4CAF50', // Yeşil
+        bgColor: '#4CAF50',
+        show: true
+      };
+    }
+    
+    // Etkinlik durumuna göre
+    switch (safeEvent.status) {
+      case 'active':
+        if (!isEventFull) {
+          return {
+            icon: 'add',
+            color: '#4CAF50', // Yeşil - pozitif mesaj için
+            bgColor: '#4CAF50',
+            show: true
+          };
+        }
+        return { show: false };
+      case 'completed':
+        return {
+          icon: 'trophy',
+          color: '#4CAF50', // Yeşil
+          bgColor: '#4CAF50',
+          show: true
+        };
+      default:
+        return { show: false };
+    }
+  };
+  
+  const statusBadge = getStatusBadge();
   
   return (
     <TouchableOpacity 
@@ -168,12 +255,10 @@ export const EventCard: React.FC<EventCardProps> = ({
         styles.container, 
         { 
           backgroundColor: theme.colors.cardBackground || theme.colors.background,
-          borderColor: safeEvent.is_private 
-            ? theme.colors.accent 
-            : getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) + '40',
-          borderWidth: safeEvent.is_private ? 2 : 1,
-          shadowColor: safeEvent.is_private ? theme.colors.accent : '#000',
-          shadowOpacity: safeEvent.is_private ? 0.1 : 0.05,
+          borderColor: getBorderColor(safeEvent.status, safeEvent.event_date, safeEvent.is_private, theme.colors),
+          borderWidth: 2, // Çerçeveyi daha belirgin yapmak için 2 yaptık
+          shadowColor: safeEvent.is_private ? '#000000' : getBorderColor(safeEvent.status, safeEvent.event_date, safeEvent.is_private, theme.colors),
+          shadowOpacity: safeEvent.is_private ? 0.15 : 0.1,
           // Pasif veya tarihi geçmiş etkinlikler için opaklığı azalt
           opacity: shouldHighlight ? 0.8 : 1,
         },
@@ -182,6 +267,20 @@ export const EventCard: React.FC<EventCardProps> = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
+      {/* Status Badge - Sol üst köşe */}
+      {statusBadge.show && (
+        <View style={[
+          styles.statusBadgeTopLeft,
+          { backgroundColor: statusBadge.bgColor }
+        ]}>
+          <Ionicons 
+            name={statusBadge.icon as any} 
+            size={16} 
+            color="white" 
+          />
+        </View>
+      )}
+      
       {/* Kategori/Spor Türü İkonu - Daha Belirgin */}
       <View style={[styles.sportIconContainer, { backgroundColor: '#FF6B35' + '20' }]}>
         <Ionicons 
@@ -191,8 +290,8 @@ export const EventCard: React.FC<EventCardProps> = ({
         />
       </View>
       
-      {/* Pasif veya Tarihi Geçmiş Badge */}
-      {shouldHighlight && (
+      {/* Status Badge - Aktif olmayan etkinlikler için */}
+      {(safeEvent.status !== 'active' || shouldHighlight) && (
         <View style={[
           styles.expiredBadge, 
           { 
@@ -293,7 +392,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       
       {/* Footer */}
       <View style={styles.footer}>
-        {/* Participants */}
+        {/* Participants - Sol taraf */}
         <View style={styles.participantsContainer}>
           {renderParticipantAvatars()}
           
@@ -302,24 +401,35 @@ export const EventCard: React.FC<EventCardProps> = ({
           </Text>
         </View>
         
-        {/* Katıl Butonu */}
-        {!isUserParticipant && !isUserCreator && !isEventFull && (
+        {/* Katıl Butonu - Sağ taraf */}
+        {!isUserParticipant && !isUserCreator && !isEventFull && safeEvent.status === 'active' && (
           <TouchableOpacity 
-            style={[styles.joinButton, { backgroundColor: '#FF6B35' }]}
-            onPress={() => {
-              // Katıl işlemi burada yapılacak
-              console.log('Katıl butonuna tıklandı:', safeEvent.id);
-            }}
+            style={[
+              styles.joinButton, 
+              { 
+                backgroundColor: isJoining ? '#ccc' : '#FF6B35',
+                opacity: isJoining ? 0.7 : 1
+              }
+            ]}
+            onPress={handleJoinEvent}
             activeOpacity={0.8}
+            disabled={isJoining}
           >
-            <Ionicons name="add-circle-outline" size={16} color="white" style={{ marginRight: 6 }} />
-            <Text style={styles.joinButtonText}>Katıl</Text>
+            {isJoining ? (
+              <ActivityIndicator size="small" color="white" style={{ marginRight: 6 }} />
+            ) : (
+              <Ionicons name="add-circle-outline" size={16} color="white" style={{ marginRight: 6 }} />
+            )}
+            <Text style={styles.joinButtonText}>
+              {isJoining ? 'Katılıyor...' : 'Katıl'}
+            </Text>
           </TouchableOpacity>
         )}
-        
-        {/* Join status badges */}
-        {showJoinStatus && (
-          <View style={styles.joinStatusContainer}>
+      </View>
+      
+      {/* Join status badges */}
+      {showJoinStatus && (
+        <View style={styles.joinStatusContainer}>
             {isUserParticipant && (
               <View style={[styles.joinBadge, { backgroundColor: '#4CAF50' + '15' }]}>
                 <Ionicons name="checkmark-circle" size={14} color="#4CAF50" style={{ marginRight: 4 }} />
@@ -342,7 +452,6 @@ export const EventCard: React.FC<EventCardProps> = ({
             )}
           </View>
         )}
-      </View>
       
       {/* Creator info */}
       {safeEvent.creator && (
@@ -361,6 +470,32 @@ export const EventCard: React.FC<EventCardProps> = ({
   );
 };
 
+// Etkinlik durumuna göre çerçeve rengi belirle
+const getBorderColor = (status: string, eventDate: string | undefined, isPrivate: boolean, colors: any) => {
+  // Özel etkinlikler siyah çerçeve
+  if (isPrivate) {
+    return '#000000';
+  }
+  
+  // Etkinlik tarihi geçmiş ama hala aktifse gri
+  if (eventDate && isDatePassed(eventDate) && status === 'active') {
+    return '#9E9E9E'; // Gri
+  }
+  
+  switch (status) {
+    case 'active':
+      return colors.accent; // Turuncu (varsayılan tema rengi)
+    case 'canceled':
+      return '#F44336'; // Kırmızı
+    case 'completed':
+      return colors.success; // Yeşil
+    case 'draft':
+      return '#9E9E9E'; // Gri
+    default:
+      return colors.textSecondary;
+  }
+};
+
 // Etkinlik durumuna göre renk belirle
 const getStatusColor = (status: string, eventDate: string | undefined, colors: any) => {
   // Etkinlik tarihi geçmiş mi kontrol et
@@ -371,8 +506,6 @@ const getStatusColor = (status: string, eventDate: string | undefined, colors: a
   switch (status) {
     case 'active':
       return colors.accent;
-    case 'passive':
-      return colors.textSecondary; // Pasif rengi (gri gibi)
     case 'canceled':
       return colors.error;
     case 'completed':
@@ -394,8 +527,6 @@ const getStatusText = (status: string, eventDate?: string) => {
   switch (status) {
     case 'active':
       return 'Aktif';
-    case 'passive':
-      return 'Pasif';
     case 'canceled':
       return 'İptal Edildi';
     case 'completed':
@@ -417,8 +548,6 @@ const getStatusIcon = (status: string, eventDate?: string) => {
   switch (status) {
     case 'active':
       return 'checkmark-circle-outline';
-    case 'passive':
-      return 'eye-off-outline';
     case 'canceled':
       return 'close-circle-outline';
     case 'completed':
@@ -442,6 +571,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
+  },
+  statusBadgeTopLeft: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    borderWidth: 3,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
   },
   sportIconContainer: {
     position: 'absolute',
@@ -550,6 +697,7 @@ const styles = StyleSheet.create({
   participantsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   participantsIconContainer: {
     flexDirection: 'row',

@@ -37,7 +37,6 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 // App Screens
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import FriendProfileScreen from '../screens/profile/friends/FriendProfileScreen';
-import { AllSportsFriendsScreen } from '../screens/discover/AllSportsFriendsScreen';
 
 // Screens - Events
 import { EventDetailScreen } from '../screens/events/EventDetailScreen/EventDetailScreen';
@@ -52,6 +51,7 @@ import AllNewsScreen from '../screens/news/AllNewsScreen';
 
 // Navigation
 import { ProfileStack } from './ProfileStack';
+import { DiscoverStack } from './DiscoverStack';
 
 // Message Screens
 import MessagesScreen from '../screens/messages/MessagesScreen';
@@ -77,7 +77,6 @@ type AppStackParamList = {
   NewsDetail: { newsId: string };
   AnnouncementDetail: { announcementId: string };
   FriendProfile: { userId: string };
-  AllSportsFriends: undefined;
   Messages: undefined;
   ConversationDetail: { conversationId: string };
   NewConversation: undefined;
@@ -206,7 +205,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen 
         name="Discover" 
-        component={DiscoverScreen} 
+        component={DiscoverStack} 
         options={({ navigation }) => ({
           tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
@@ -390,14 +389,6 @@ export const AppNavigator = () => {
             <AppStack.Screen 
               name="FriendProfile" 
               component={FriendProfileScreen} 
-              options={{ 
-                presentation: 'card',
-                animation: 'slide_from_right'
-              }}
-            />
-            <AppStack.Screen 
-              name="AllSportsFriends" 
-              component={AllSportsFriendsScreen} 
               options={{ 
                 presentation: 'card',
                 animation: 'slide_from_right'

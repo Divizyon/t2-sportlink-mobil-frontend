@@ -15,6 +15,10 @@ import { useThemeStore } from '../../store/appStore/themeStore';
 import * as Location from 'expo-location';
 import { useProfileStore } from '../../store/userStore/profileStore';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { DiscoverStackParamList } from '../../navigation/DiscoverStack';
 import { useMapsStore } from '../../store/appStore/mapsStore';
 import { useEventStore } from '../../store/eventStore/eventStore';
 import { useHomeStore } from '../../store/appStore/homeStore';
@@ -26,10 +30,23 @@ import { SportsFriends } from '../../components/Discover/SportsFriends';
 import { NearbyFacilities } from '../../components/Discover/NearbyFacilities';
 import NearbyEventsComponent from '../../components/Shared/NearbyEventsComponent';
 
+type TabParamList = {
+  Home: undefined;
+  Events: undefined;
+  Discover: undefined;
+  Notifications: undefined;
+  Profile: undefined;
+};
+
+type DiscoverScreenNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<DiscoverStackParamList, 'DiscoverMain'>,
+  BottomTabNavigationProp<TabParamList>
+>;
+
 export const DiscoverScreen: React.FC = () => {
   const { theme } = useThemeStore();
   const { defaultLocation } = useProfileStore();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<DiscoverScreenNavigationProp>();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -211,8 +228,8 @@ export const DiscoverScreen: React.FC = () => {
   };
   
   const handleSeeAllFacilities = () => {
-    // Tüm tesisler ekranına yönlendir
-    navigation.navigate('AllFacilities');
+    // Tüm tesisler ekranına yönlendir - şimdilik devre dışı
+    console.log('Tüm tesisler ekranı henüz mevcut değil');
   };
   
   return (

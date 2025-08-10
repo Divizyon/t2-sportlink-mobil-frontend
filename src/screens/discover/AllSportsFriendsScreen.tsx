@@ -7,13 +7,15 @@ import {
   SafeAreaView, 
   ActivityIndicator, 
   RefreshControl,
-  StatusBar 
+  StatusBar,
+  TouchableOpacity 
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useFriendsStore } from '../../store/userStore/friendsStore';
 import { SportFriendCard } from '../../components/Discover/SportFriendCard';
 import { Ionicons } from '@expo/vector-icons';
 import { SuggestedFriend } from '../../api/friends/friendsApi';
+import { useNavigation } from '@react-navigation/native';
 
 // SportFriend tipini tanımlayalım - SportFriendCard'da kullanılan tip
 interface SportFriend {
@@ -52,6 +54,7 @@ interface SportFriend {
 
 export const AllSportsFriendsScreen: React.FC = () => {
   const { theme } = useThemeStore();
+  const navigation = useNavigation();
   const { 
     suggestedFriends, 
     fetchSuggestedFriends, 
@@ -60,6 +63,11 @@ export const AllSportsFriendsScreen: React.FC = () => {
   } = useFriendsStore();
   
   const [refreshing, setRefreshing] = useState(false);
+
+  // Geri gitme fonksiyonu
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
 
   // İlk yüklemede arkadaş önerilerini getir
   useEffect(() => {
@@ -116,66 +124,101 @@ export const AllSportsFriendsScreen: React.FC = () => {
   // Yükleme durumu
   if (isLoadingSuggestions && !refreshing && displayFriends.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <StatusBar 
           barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} 
           backgroundColor={theme.colors.background}
         />
-        <View style={styles.headerContainer}>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-            Spor Arkadaşları
-          </Text>
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.accent} />
-          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-            Spor arkadaşları yükleniyor...
-          </Text>
-        </View>
-      </SafeAreaView>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.headerContainer}>
+            <TouchableOpacity 
+              onPress={handleGoBack}
+              style={styles.backButton}
+            >
+              <Ionicons 
+                name="arrow-back" 
+                size={24} 
+                color={theme.colors.text} 
+              />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+              Spor Arkadaşları
+            </Text>
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.accent} />
+            <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+              Spor arkadaşları yükleniyor...
+            </Text>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   // Hata durumu
   if (error && !refreshing && displayFriends.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <StatusBar 
           barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} 
           backgroundColor={theme.colors.background}
         />
-        <View style={styles.headerContainer}>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-            Spor Arkadaşları
-          </Text>
-        </View>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            Arkadaş önerileri alınırken bir hata oluştu.
-          </Text>
-          <Text style={[styles.errorSubText, { color: theme.colors.textSecondary }]}>
-            Lütfen daha sonra tekrar deneyin.
-          </Text>
-        </View>
-      </SafeAreaView>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.headerContainer}>
+            <TouchableOpacity 
+              onPress={handleGoBack}
+              style={styles.backButton}
+            >
+              <Ionicons 
+                name="arrow-back" 
+                size={24} 
+                color={theme.colors.text} 
+              />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+              Spor Arkadaşları
+            </Text>
+          </View>
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>
+              Arkadaş önerileri alınırken bir hata oluştu.
+            </Text>
+            <Text style={[styles.errorSubText, { color: theme.colors.textSecondary }]}>
+              Lütfen daha sonra tekrar deneyin.
+            </Text>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar 
         barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} 
         backgroundColor={theme.colors.background}
       />
       
-      <View style={styles.headerContainer}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          Spor Arkadaşları
-        </Text>
-      </View>
-      
-      <FlatList
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity 
+            onPress={handleGoBack}
+            style={styles.backButton}
+          >
+            <Ionicons 
+              name="arrow-back" 
+              size={24} 
+              color={theme.colors.text} 
+            />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+            Spor Arkadaşları
+          </Text>
+        </View>
+        
+        <FlatList
         data={displayFriends}
         renderItem={({ item }) => (
           <View style={styles.cardContainer}>
@@ -206,7 +249,8 @@ export const AllSportsFriendsScreen: React.FC = () => {
           </View>
         }
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -214,11 +258,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  safeArea: {
+    flex: 1,
+  },
   headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  backButton: {
+    marginRight: 16,
+    padding: 4,
   },
   headerTitle: {
     fontSize: 24,
