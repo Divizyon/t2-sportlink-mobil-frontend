@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -119,6 +119,11 @@ export const HomeScreen: React.FC = () => {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const footerOpacity = useState(new Animated.Value(0))[0];
   const [showLocationModal, setShowLocationModal] = useState(false);
+  
+  // Header modernizasyonu için animasyon değerleri
+  const brandFadeAnim = useRef(new Animated.Value(0)).current;
+  const brandTranslateY = useRef(new Animated.Value(8)).current;
+  const headerPulseAnim = useRef(new Animated.Value(1)).current;
   
   // Lazy loading göstergesi için önceki durumu takip etmek için ref kullanıyoruz
   const wasNearEnd = React.useRef(false);
@@ -280,6 +285,44 @@ export const HomeScreen: React.FC = () => {
       getUnreadMessagesCount();
       // Arkadaşlık isteklerini getir
       fetchFriendRequests();
+
+      // Marka alanı giriş animasyonu
+      brandFadeAnim.setValue(0);
+      brandTranslateY.setValue(8);
+      Animated.parallel([
+        Animated.timing(brandFadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(brandTranslateY, {
+          toValue: 0,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Header arkaplanında hafif pulse efekti (sonsuz döngü)
+      const pulseLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(headerPulseAnim, {
+            toValue: 1.05,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(headerPulseAnim, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseLoop.start();
+      
+      return () => {
+        pulseLoop.stop();
+      };
     }, [getUnreadMessagesCount, fetchFriendRequests])
   );
   
@@ -451,7 +494,34 @@ export const HomeScreen: React.FC = () => {
           borderBottomColor: theme.colors.border
         }
       ]}>
-       
+        {/* Arkaplan bubble efektleri (renk bütünlüğü korunarak) */}
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: theme.colors.accent + '12',
+            top: -40,
+            left: -20,
+            transform: [{ scale: headerPulseAnim }],
+          }}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            backgroundColor: theme.colors.primary + '10',
+            bottom: -30,
+            right: 10,
+            transform: [{ scale: headerPulseAnim }],
+          }}
+        />
+
         {/* Divizyon icon on the left */}
         <Image 
           source={require('../../../assets/images/divizyon.png')} 
@@ -460,12 +530,17 @@ export const HomeScreen: React.FC = () => {
         />
         
         {/* Centered SportLink text */}
-        <View style={styles.centerLogoContainer}>
+        <Animated.View 
+          style={[
+            styles.centerLogoContainer,
+            { opacity: brandFadeAnim, transform: [{ translateY: brandTranslateY }] }
+          ]}
+        >
           <Text style={[styles.logoText, { color: theme.colors.text }]}>
-            <Text style={{color: '#4CAF50'}}>Sport</Text>
-            <Text style={{color: '#2F4F4F'}}>Link</Text>
+            <Text style={{ color: theme.colors.accent }}>Sport</Text>
+            <Text style={{ color: colors.accentDark }}>Link</Text>
           </Text>
-        </View>
+        </Animated.View>
         
         <View style={styles.headerButtons}>
          {/* Arkadaşlık İstekleri Butonu */}
