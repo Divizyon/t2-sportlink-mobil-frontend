@@ -3,17 +3,30 @@ import { ScrollView, TouchableOpacity, View, Text, StyleSheet } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../../store/appStore/themeStore';
 import { Sport } from '../../../types/apiTypes/api.types';
+import { 
+  spacing, 
+  borderRadius, 
+  typography, 
+  shadows, 
+  componentPresets, 
+  iconSizes, 
+  createAlphaColor 
+} from '../../../utils/designSystem';
 
 interface SportCategoriesProps {
   sports: Sport[];
   onSelectSport: (sport: Sport) => void;
   selectedSportId?: string;
+  variant?: 'default' | 'compact' | 'pill';
+  showAllOption?: boolean;
 }
 
 const SportCategories: React.FC<SportCategoriesProps> = ({ 
   sports, 
   onSelectSport,
-  selectedSportId
+  selectedSportId,
+  variant = 'default',
+  showAllOption = true
 }) => {
   const { theme } = useThemeStore();
   
@@ -36,46 +49,84 @@ const SportCategories: React.FC<SportCategoriesProps> = ({
     return 'body-outline'; // Varsayılan ikon
   };
   
+  const getCategoryItemStyle = (isSelected: boolean) => {
+    const baseStyle = variant === 'pill' ? styles.pillItem : styles.categoryItem;
+    const selectedBg = isSelected ? theme.colors.accent : 
+                     variant === 'pill' ? createAlphaColor(theme.colors.accent, 0.08) : theme.colors.card;
+    const borderColor = isSelected ? theme.colors.accent : 
+                       variant === 'pill' ? 'transparent' : theme.colors.border;
+    
+    return [
+      baseStyle,
+      {
+        backgroundColor: selectedBg,
+        borderColor: borderColor,
+      }
+    ];
+  };
+  
+  const getIconContainerStyle = (isSelected: boolean) => {
+    if (variant === 'pill') {
+      return [
+        styles.modernIconContainer,
+        {
+          backgroundColor: isSelected ? 
+            createAlphaColor(theme.colors.white, 0.2) : 
+            createAlphaColor(theme.colors.accent, 0.15)
+        }
+      ];
+    }
+    
+    return [
+      styles.iconContainer,
+      {
+        backgroundColor: isSelected ? theme.colors.white : createAlphaColor(theme.colors.accent, 0.15)
+      }
+    ];
+  };
+  
+  const getTextColor = (isSelected: boolean) => {
+    if (variant === 'pill') {
+      return isSelected ? theme.colors.white : theme.colors.text;
+    }
+    return isSelected ? theme.colors.white : theme.colors.text;
+  };
+  
   return (
     <ScrollView 
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        variant === 'compact' && styles.compactContainer
+      ]}
       style={styles.container}
     >
       {/* Tümü seçeneği */}
-      <TouchableOpacity 
-        style={[
-          styles.categoryItem, 
-          { 
-            backgroundColor: !selectedSportId ? theme.colors.accent : theme.colors.card,
-            borderColor: !selectedSportId ? theme.colors.accent : theme.colors.border 
-          }
-        ]}
-        onPress={() => onSelectSport({ id: '', name: 'Tümü' } as Sport)}
-      >
-        <View 
-          style={[
-            styles.iconContainer, 
-            { backgroundColor: !selectedSportId ? theme.colors.white : theme.colors.accent + '20' }
-          ]}
+      {showAllOption && (
+        <TouchableOpacity 
+          style={getCategoryItemStyle(!selectedSportId)}
+          onPress={() => onSelectSport({ id: '', name: 'Tümü' } as Sport)}
+          activeOpacity={0.7}
         >
-          <Ionicons 
-            name="apps-outline"
-            size={20} 
-            color={!selectedSportId ? theme.colors.accent : theme.colors.accent} 
-          />
-        </View>
-        <Text 
-          style={[
-            styles.categoryName,
-            { color: !selectedSportId ? theme.colors.white : theme.colors.text }
-          ]}
-          numberOfLines={1}
-        >
-          Tümü
-        </Text>
-      </TouchableOpacity>
+          <View style={getIconContainerStyle(!selectedSportId)}>
+            <Ionicons 
+              name="apps-outline"
+              size={variant === 'pill' ? iconSizes.sm : iconSizes.md} 
+              color={!selectedSportId ? theme.colors.white : theme.colors.accent} 
+            />
+          </View>
+          <Text 
+            style={[
+              variant === 'pill' ? styles.pillText : styles.categoryName,
+              { color: getTextColor(!selectedSportId) }
+            ]}
+            numberOfLines={1}
+          >
+            Tümü
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {sports.map((sport) => {
         const isSelected = selectedSportId === sport.id;
@@ -84,31 +135,21 @@ const SportCategories: React.FC<SportCategoriesProps> = ({
         return (
           <TouchableOpacity 
             key={sport.id} 
-            style={[
-              styles.categoryItem, 
-              { 
-                backgroundColor: isSelected ? theme.colors.accent : theme.colors.card,
-                borderColor: isSelected ? theme.colors.accent : theme.colors.border 
-              }
-            ]}
+            style={getCategoryItemStyle(isSelected)}
             onPress={() => onSelectSport(sport)}
+            activeOpacity={0.7}
           >
-            <View 
-              style={[
-                styles.iconContainer, 
-                { backgroundColor: isSelected ? theme.colors.white : theme.colors.accent + '20' }
-              ]}
-            >
+            <View style={getIconContainerStyle(isSelected)}>
               <Ionicons 
                 name={iconName}
-                size={16} 
-                color={isSelected ? theme.colors.accent : theme.colors.accent} 
+                size={variant === 'pill' ? iconSizes.sm : iconSizes.md} 
+                color={isSelected ? theme.colors.white : theme.colors.accent} 
               />
             </View>
             <Text 
               style={[
-                styles.categoryName,
-                { color: isSelected ? theme.colors.white : theme.colors.text }
+                variant === 'pill' ? styles.pillText : styles.categoryName,
+                { color: getTextColor(isSelected) }
               ]}
               numberOfLines={1}
             >
@@ -123,37 +164,57 @@ const SportCategories: React.FC<SportCategoriesProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   contentContainer: {
-    paddingRight: 8,
+    paddingHorizontal: spacing.xl,
+    paddingRight: spacing.md,
+  },
+  compactContainer: {
+    paddingHorizontal: spacing.lg,
   },
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.xl,
+    marginRight: spacing.md,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    ...shadows.sm,
+  },
+  pillItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.round,
+    marginRight: spacing.md,
+    borderWidth: 0,
+    ...shadows.md,
   },
   iconContainer: {
-    width: 20,
-    height: 20,
-    borderRadius: 16,
+    ...componentPresets.iconContainer.xs,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
+    marginRight: spacing.sm,
+  },
+  modernIconContainer: {
+    ...componentPresets.iconContainer.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
   },
   categoryName: {
-    fontWeight: '600',
-    fontSize: 13
-  }
+    fontWeight: typography.fontWeights.semibold,
+    fontSize: typography.fontSizes.sm,
+    letterSpacing: typography.letterSpacing.tight,
+  },
+  pillText: {
+    fontWeight: typography.fontWeights.semibold,
+    fontSize: typography.fontSizes.md,
+    letterSpacing: typography.letterSpacing.tight,
+  },
 });
 
 export default SportCategories;

@@ -543,34 +543,13 @@ export const HomeScreen: React.FC = () => {
 
         {/* Duyurular - Yatay Kaydırma */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="megaphone-outline" size={20} color={colors.accentDark} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Duyurular</Text>
-            </View>
-            <TouchableOpacity>
-              <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                paddingRight: 5,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <SectionHeader
+            title="Duyurular"
+            subtitle="Son haberler ve duyurular"
+            icon="megaphone-outline"
+            variant="featured"
+            onPress={() => console.log('Tüm duyurular')}
+          />
           
           {isLoadingAnnouncements ? (
             <View style={styles.loaderContainer}>
@@ -696,32 +675,13 @@ export const HomeScreen: React.FC = () => {
         
         {/* Sana Özel Etkinlikler */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="star-outline" size={20} color={colors.accentDark} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Sana Özel</Text>
-            </View>
-            <TouchableOpacity onPress={handleViewAllEvents}>
-              <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                paddingRight: 5,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-               
-              </View>
-            </TouchableOpacity>
-          </View>
+          <SectionHeader
+            title="Sana Özel"
+            subtitle="Tercihler doğrultusunda seçilen"
+            icon="star"
+            variant="featured"
+            onPress={handleViewAllEvents}
+          />
           
           {isLoadingRecommendedEvents ? (
             <View style={styles.loaderContainer}>
@@ -845,34 +805,13 @@ export const HomeScreen: React.FC = () => {
 
         {/* Spor Haberleri - Yatay kaydırmalı */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="newspaper-outline" size={20} color={colors.accentDark} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Spor Haberleri</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('AllNewsScreen')}>
-              <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                paddingRight: 5,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <SectionHeader
+            title="Spor Haberleri"
+            subtitle="Güncel spor dünyası haberleri"
+            icon="newspaper-outline"
+            variant="featured"
+            onPress={() => navigation.navigate('AllNewsScreen')}
+          />
           
           {isLoadingNews ? (
             <View style={styles.loaderContainer}>
