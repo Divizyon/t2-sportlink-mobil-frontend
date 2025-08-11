@@ -163,6 +163,11 @@
   - [x] Arkadaşlık bildirimleri
   - [x] Mesajlaşma bildirimleri
 
+### Android Geri Butonu
+- [x] Global `navigationRef` ile kök seviye navigasyon kontrolü eklendi
+- [x] `useAndroidBackHandler` hook'u ile donanım geri tuşu yönetimi
+- [x] Kökte çift basışta çıkış, ara seviyelerde `goBack()` davranışı
+
 ## Yapılacak İşler
 
 ### Ana sayfa

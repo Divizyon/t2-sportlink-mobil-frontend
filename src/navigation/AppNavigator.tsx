@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './navigationRef';
+import { useAndroidBackHandler } from '../utils/useAndroidBackHandler';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, ViewStyle, TouchableOpacity, Text } from 'react-native';
@@ -291,6 +293,8 @@ const TabNavigator = () => {
 };
 
 export const AppNavigator = () => {
+  // Android donanım geri tuşu yönetimi
+  useAndroidBackHandler();
   const { isAuthenticated, checkAuth } = useAuthStore();
   const { resetState: resetFriendsState } = useFriendsStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -343,7 +347,7 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       {isAuthenticated ? (
         <>
           <AppStack.Navigator screenOptions={{ headerShown: false }}>

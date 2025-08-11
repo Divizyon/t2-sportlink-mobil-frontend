@@ -40,12 +40,14 @@ export const SportsFriends: React.FC<SportsFriendsProps> = ({
   // Spor bilgilerini formatlayan yardımcı fonksiyon
   const mapSportsData = (friend: SuggestedFriend) => {
     if (!friend.user_sports || friend.user_sports.length === 0) {
-      return [{ name: 'Spor Belirsiz', icon: 'help-circle-outline' }];
+      return [{ id: 'unknown', name: 'Spor Belirsiz', icon: 'help-circle-outline' }];
     }
     
     return friend.user_sports.map(sport => ({
+      id: sport.id,
       name: sport.name,
-      icon: sport.icon || 'fitness-outline', // Özel ikon yoksa varsayılan kullan
+      icon: sport.icon || 'fitness-outline',
+      skill_level: sport.skill_level,
     }));
   };
 

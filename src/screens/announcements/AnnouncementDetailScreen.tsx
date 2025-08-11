@@ -51,9 +51,9 @@ export const useAnnouncementDetailStore = create<AnnouncementDetailState>((set) 
       const response = await announcementService.getAnnouncementDetail(announcementId);
       
       // API yanıtını kontrol et
-      if (response.success && response.data && response.data.announcement) {
-        // API'nin döndüğü formatta veri (tekil duyuru)
-        const announcement = response.data.announcement;
+      if (response.success && response.data) {
+        // api.types.ts: AnnouncementResponse => data: Announcement
+        const announcement = response.data;
         
     
         

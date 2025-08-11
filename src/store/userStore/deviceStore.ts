@@ -86,7 +86,10 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       const token = await get().generateDeviceToken();
       
       // Token'ı API ile kaydet
-      const response = await deviceService.registerToken(token, platform);
+      // deviceService.registerToken tipi 'ios' | 'android' | 'expo' bekler
+      const normalizedPlatform: 'ios' | 'android' | 'expo' =
+        platform === 'ios' || platform === 'android' ? platform : 'expo';
+      const response = await deviceService.registerToken(token, normalizedPlatform);
       
       if (response.success) {
         set({ isLoading: false });

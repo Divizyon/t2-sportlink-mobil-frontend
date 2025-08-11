@@ -18,7 +18,7 @@ const SportCategories: React.FC<SportCategoriesProps> = ({
   const { theme } = useThemeStore();
   
   // Spor için ikon belirleme
-  const getSportIcon = (sportName: string): string => {
+  const getSportIcon = (sportName: string): React.ComponentProps<typeof Ionicons>['name'] => {
     const sportLower = sportName.toLowerCase();
     
     if (sportLower.includes('futbol')) return 'football-outline';
