@@ -64,5 +64,25 @@ export const deviceService = {
       apiClient.get('/devices/my-devices'),
       'Cihaz listesi alınırken bir hata oluştu'
     );
+  },
+
+  /**
+   * Belirli bir cihazın oturumunu kapatır
+   */
+  async revokeDevice(deviceId: string, token?: string): Promise<ApiResponse<{ success: boolean }>> {
+    return safeApiCall<{ success: boolean }>(
+      apiClient.post('/devices/revoke', { device_id: deviceId, token }),
+      'Cihaz oturumu kapatılırken bir hata oluştu'
+    );
+  },
+
+  /**
+   * Tüm diğer cihazların oturumunu kapatır (mevcut cihaz hariç)
+   */
+  async revokeAllOtherDevices(): Promise<ApiResponse<{ success: boolean }>> {
+    return safeApiCall<{ success: boolean }>(
+      apiClient.post('/devices/revoke-all-others'),
+      'Diğer cihaz oturumları kapatılırken bir hata oluştu'
+    );
   }
 }; 

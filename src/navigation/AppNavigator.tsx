@@ -4,8 +4,9 @@ import { navigationRef } from './navigationRef';
 import { useAndroidBackHandler } from '../utils/useAndroidBackHandler';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, ViewStyle, TouchableOpacity, Text } from 'react-native';
+import { View, ViewStyle, TouchableOpacity, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
 import { useAuthStore } from '../store/userStore/authStore';
 import { useFriendsStore } from '../store/userStore/friendsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -341,7 +342,11 @@ export const AppNavigator = () => {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
-        <ActivityIndicator size="large" color={theme.colors.accent} />
+        <Image
+          source={require('../../assets/loading/ball-toggle.gif')}
+          style={{ width: 120, height: 120 }}
+          resizeMode="contain"
+        />
       </View>
     );
   }

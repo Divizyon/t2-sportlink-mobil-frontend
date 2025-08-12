@@ -750,6 +750,18 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({
                   </View>
                 </View>
               </View>
+              {/* Silme Butonu */}
+              <TouchableOpacity 
+                style={styles.removeButtonList}
+                onPress={() => handleRemoveSport(item.sportId)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons 
+                  name="trash-outline" 
+                  size={20} 
+                  color={themeColors.textSecondary} 
+                />
+              </TouchableOpacity>
             </View>
           );
         }}
@@ -991,6 +1003,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
+  },
+  removeButtonList: {
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   selectedItemBadge: {
     paddingHorizontal: 8,

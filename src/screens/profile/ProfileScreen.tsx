@@ -4,11 +4,13 @@ import {
   StyleSheet, 
   SafeAreaView, 
   ScrollView, 
-  ActivityIndicator, 
+  ActivityIndicator,
   RefreshControl,
   Text,
-  TouchableOpacity
+  TouchableOpacity,
+  Image
 } from 'react-native';
+
 import { useThemeStore } from '../../store/appStore/themeStore';
 import { useProfileStore } from '../../store/userStore/profileStore';
 import { useMapsStore } from '../../store/appStore/mapsStore';
@@ -107,7 +109,11 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.accent} />
+          <Image
+            source={require('../../../assets/loading/ball-toggle.gif')}
+            style={{ width: 120, height: 120 }}
+            resizeMode="contain"
+          />
         </View>
       </SafeAreaView>
     );

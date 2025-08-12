@@ -246,7 +246,11 @@ export const NotificationsScreen: React.FC = () => {
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Image
+                source={require('../../../assets/loading/ball-toggle.gif')}
+                style={{ width: 120, height: 120 }}
+                resizeMode="contain"
+              />
             </View>
           ) : (
             <View style={styles.emptyContainer}>

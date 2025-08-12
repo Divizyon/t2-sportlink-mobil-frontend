@@ -344,7 +344,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       
       // API isteği kimliği oluştur
       const apiRequestId = useApiStore.getState().addRequest({
-        url: `/users/profile/sport/${sportId}`,
+        url: `/users/profile/sport-interest/${sportId}`,
         method: 'DELETE'
       });
       

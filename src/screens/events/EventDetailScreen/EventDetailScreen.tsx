@@ -18,6 +18,7 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
+
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../../store/appStore/themeStore';
@@ -570,7 +571,11 @@ export const EventDetailScreen: React.FC = () => {
   if (isLoading && !currentEvent) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.accent} />
+        <Image
+          source={require('../../../../assets/loading/ball-toggle.gif')}
+          style={{ width: 120, height: 120 }}
+          resizeMode="contain"
+        />
         <Text style={[styles.loadingText, { color: theme.colors.text }]}>
           Etkinlik bilgileri yükleniyor...
         </Text>

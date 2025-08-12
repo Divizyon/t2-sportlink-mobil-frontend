@@ -138,7 +138,7 @@ export const RegisterScreen: React.FC = () => {
   
   // Şifre gücünü kontrol et
   const checkPasswordStrength = (pass: string) => {
-    // Şifre değerini her zaman güncelle
+    // Şifre değerini güncelle
     setPassword(pass);
     
     // Şifre boşsa gösterme
@@ -187,7 +187,6 @@ export const RegisterScreen: React.FC = () => {
     
     setPasswordStrength({ score, message, color });
     setFormErrors({...formErrors, password: error});
-    setPassword(pass);
   };
   
   const validateForm = async (): Promise<boolean> => {

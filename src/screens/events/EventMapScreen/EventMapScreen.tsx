@@ -8,10 +8,10 @@ import {
   Platform, 
   StatusBar,
   Linking,
-  ActivityIndicator,
   Image,
   Alert
 } from 'react-native';
+
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useEventStore } from '../../../store/eventStore/eventStore';
@@ -107,7 +107,11 @@ export const EventMapScreen: React.FC = () => {
   if (isLoading && !currentEvent) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.accent} />
+        <Image
+          source={require('../../../../assets/loading/ball-toggle.gif')}
+          style={{ width: 120, height: 120 }}
+          resizeMode="contain"
+        />
         <Text style={[styles.loadingText, { color: theme.colors.text }]}>
           Konum bilgileri yükleniyor...
         </Text>

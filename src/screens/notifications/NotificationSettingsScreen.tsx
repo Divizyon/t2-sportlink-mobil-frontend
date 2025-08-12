@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -71,7 +72,11 @@ export const NotificationSettingsScreen: React.FC = () => {
 
       {isSettingsLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Image
+            source={require('../../../assets/loading/ball-toggle.gif')}
+            style={{ width: 120, height: 120 }}
+            resizeMode="contain"
+          />
         </View>
       ) : (
         <ScrollView style={styles.content}>
