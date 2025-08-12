@@ -6,30 +6,32 @@ import { useMapsStore } from '../../store/appStore/mapsStore';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { useEventStore } from '../../store/eventStore/eventStore';
 
+// Sport görselleri - doğru import path'leri
+const footballImage = require('../../../assets/sportImage/football.png');
+const basketballImage = require('../../../assets/sportImage/basketball.png');
+const tennisImage = require('../../../assets/sportImage/tennis.png');
+const defaultSportImage = require('../../../assets/sportImage/image.png');
 
-// Spor kategorilerine göre internet URL'lerinden resim tanımları
-const sportImageURLs: Record<string, string> = {
-  futbol: 'https://images.unsplash.com/photo-1627834249219-048df1143a01?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  basketbol: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=2980&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  tenis: 'https://images.unsplash.com/photo-1622163642998-1ea32b0bbc67?q=80&w=3024&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  voleybol: 'https://images.unsplash.com/photo-1592656094267-764a45160876?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  yüzme: 'https://plus.unsplash.com/premium_photo-1701030722617-25087a8fe287?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  default: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=900&q=80',
+
+// Spor kategorilerine göre lokal görsel tanımları
+const sportImages: Record<string, any> = {
+  futbol: footballImage,
+  basketbol: basketballImage,
+  tenis: tennisImage,
+  default: defaultSportImage,
 };
-
+ 
 // Spor kategorisini alarak görsel kaynağını döndüren yardımcı fonksiyon
 export const getSportImageSource = (sportName: string): ImageSourcePropType => {
-  if (!sportName) return { uri: sportImageURLs.default };
+  if (!sportName) return sportImages.default;
   
   const sport = sportName.toLowerCase();
   
-  if (sport.includes('futbol')) return { uri: sportImageURLs.futbol };
-  if (sport.includes('basket')) return { uri: sportImageURLs.basketbol };
-  if (sport.includes('tenis')) return { uri: sportImageURLs.tenis };
-  if (sport.includes('voleybol')) return { uri: sportImageURLs.voleybol };
-  if (sport.includes('yüzme')) return { uri: sportImageURLs.yüzme };
+  if (sport.includes('futbol') || sport.includes('football')) return sportImages.futbol;
+  if (sport.includes('basket')) return sportImages.basketbol;
+  if (sport.includes('tenis') || sport.includes('tennis')) return sportImages.tenis;
   
-  return { uri: sportImageURLs.default };
+  return sportImages.default;
 };
 
 // Spor kategorisine göre tag rengini döndüren yardımcı fonksiyon
