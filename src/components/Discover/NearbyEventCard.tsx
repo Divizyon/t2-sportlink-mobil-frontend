@@ -217,7 +217,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const isEventFull = event.current_participants >= event.max_participants;
 
   // Kategori görselini ve tag rengini belirleme
-  const sportImage = imageError ? { uri: sportImageURLs.default } : getSportImageSource(event.sport.name);
+  const sportImage = imageError ? sportImages.default : getSportImageSource(event.sport.name);
   const tagColor = getSportTagColor(event.sport.name);
   const sportIconName = getSportIcon(event.sport.name);
 
