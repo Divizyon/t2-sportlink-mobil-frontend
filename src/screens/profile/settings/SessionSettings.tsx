@@ -444,37 +444,28 @@ const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
     console.log(`Cihaz ID: ${device.id}, Token: ${device.token || 'undefined/null'}, Platform: ${device.platform}`);
   }, [device.id]);
 
-  // Token kontrolü yapmak için yardımcı fonksiyon
-  const handleRevoke = () => {
-    if (!device.token) {
-      console.warn(`Token değeri bulunamadı, Cihaz ID: ${device.id}`);
-      // token değeri yoksa bile deviceId ile çağır
-      onRevoke(device.id, '');
-    } else {
-      console.log(`Çıkış işlemi başlatılıyor, Token: ${device.token}`);
-      onRevoke(device.id, device.token);
-    }
-  };
+
 
   return (
     <View 
       style={[
         styles.deviceItem, 
         { 
-          backgroundColor: theme.colors.cardBackground,
+          backgroundColor: device.isCurrentDevice ? theme.colors.cardBackground : theme.colors.cardBackground + '80',
           borderColor: device.isCurrentDevice ? theme.colors.accent : 'transparent',
           borderWidth: device.isCurrentDevice ? 1.5 : 0,
+          opacity: device.isCurrentDevice ? 1 : 0.6,
         }
       ]}
     >
       {device.isCurrentDevice && (
         <View style={[styles.currentDeviceBadge, { backgroundColor: theme.colors.accent }]}>
           <Ionicons name="checkmark-circle" size={14} color="#FFF" />
-          <Text style={styles.currentDeviceBadgeText}>Bu Cihaz</Text>
+          <Text style={styles.currentDeviceBadgeText}>Aktif</Text>
         </View>
       )}
       
-      {/* Üst kısım - Cihaz adı, işletim sistemi ve çıkış butonu */}
+      {/* Üst kısım - Cihaz adı ve işletim sistemi */}
       <View style={styles.deviceHeader}>
         <View style={styles.deviceTitleContainer}>
           <View style={[
@@ -482,7 +473,7 @@ const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
             { 
               backgroundColor: device.isCurrentDevice 
                 ? theme.colors.accent + '20' 
-                : theme.colors.accent + '10',
+                : theme.colors.textSecondary + '20',
               width: device.isCurrentDevice ? 42 : 36,
               height: device.isCurrentDevice ? 42 : 36,
             }
@@ -490,49 +481,30 @@ const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
             <Ionicons 
               name={getDeviceIcon(device.deviceType)} 
               size={device.isCurrentDevice ? 22 : 18} 
-              color={theme.colors.accent} 
+              color={device.isCurrentDevice ? theme.colors.accent : theme.colors.textSecondary} 
             />
           </View>
           <View style={styles.deviceTitleContent}>
             <Text style={[
               styles.deviceName, 
               { 
-                color: theme.colors.text,
-                fontWeight: device.isCurrentDevice ? '700' : '500',
+                color: device.isCurrentDevice ? theme.colors.text : theme.colors.textSecondary,
+                fontWeight: device.isCurrentDevice ? '700' : '400',
                 fontSize: device.isCurrentDevice ? 16 : 15
               }
             ]}>
               {device.deviceName}
             </Text>
-            <Text style={[styles.deviceOs, { color: theme.colors.textSecondary }]}>
+            <Text style={[
+              styles.deviceOs, 
+              { 
+                color: device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'
+              }
+            ]}>
               {device.os}{device.browser ? ` • ${device.browser}` : ''}
             </Text>
           </View>
         </View>
-        
-        {!device.isCurrentDevice && (
-          <TouchableOpacity 
-            style={[
-              styles.revokeButton, 
-              { 
-                borderColor: theme.colors.error + '30',
-                backgroundColor: theme.colors.error + '08',
-              }
-            ]}
-            onPress={handleRevoke}
-            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-          >
-            <Ionicons 
-              name="exit-outline" 
-              size={16} 
-              color={theme.colors.error}
-              style={{ marginRight: 4 }}
-            />
-            <Text style={[styles.revokeText, { color: theme.colors.error }]}>
-              Çıkış Yap
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
       
       {/* Alt kısım - Konum, platform ve süre bilgisi */}
@@ -540,16 +512,36 @@ const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
         {/* Konum ve platform bilgisi */}
         <View style={styles.detailRow}>
           <View style={styles.detailItem}>
-            <Ionicons name="location-outline" size={14} color={theme.colors.textSecondary} style={styles.detailIcon} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+            <Ionicons 
+              name="location-outline" 
+              size={14} 
+              color={device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'} 
+              style={styles.detailIcon} 
+            />
+            <Text style={[
+              styles.detailText, 
+              { 
+                color: device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'
+              }
+            ]}>
               {device.location}
             </Text>
           </View>
           
           {device.platform && (
           <View style={styles.detailItem}>
-              <Ionicons name="apps-outline" size={14} color={theme.colors.textSecondary} style={styles.detailIcon} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+              <Ionicons 
+                name="apps-outline" 
+                size={14} 
+                color={device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'} 
+                style={styles.detailIcon} 
+              />
+            <Text style={[
+              styles.detailText, 
+              { 
+                color: device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'
+              }
+            ]}>
                 {device.platform.charAt(0).toUpperCase() + device.platform.slice(1)}
             </Text>
           </View>
@@ -558,11 +550,21 @@ const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
         
         {/* Zaman bilgisi - sağ altta */}
         <View style={styles.timeContainer}>
-          <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} style={styles.detailIcon} />
-          <Text style={[styles.timeText, { color: theme.colors.textSecondary }]}>
+          <Ionicons 
+            name="time-outline" 
+            size={14} 
+            color={device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'} 
+            style={styles.detailIcon} 
+          />
+          <Text style={[
+            styles.timeText, 
+            { 
+              color: device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'
+            }
+          ]}>
             {formatDate(device.lastActive)}
-              </Text>
-            </View>
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -942,72 +944,7 @@ export const SessionSettings: React.FC = () => {
           </View>
         </View>
         
-        {/* Tüm oturumları kapatma butonu */}
-        <TouchableOpacity 
-          style={[
-            styles.logoutAllButton, 
-            { 
-              backgroundColor: theme.colors.error + '10',
-              borderColor: theme.colors.error + '30',
-              borderWidth: 1 
-            }
-          ]}
-          onPress={() => {
-            Alert.alert(
-              'Tüm Oturumları Kapat',
-              'Bu cihaz dışındaki tüm cihazlarda oturumlarınız kapatılacak. Devam etmek istiyor musunuz?',
-              [
-                { text: 'İptal', style: 'cancel' },
-                { 
-                  text: 'Tüm Oturumları Kapat', 
-                  style: 'destructive',
-                  onPress: async () => {
-                    // İşlem başladı bildirisi göster
-                    const loadingAlert = Alert.alert(
-                      'İşlem Başladı',
-                      'Diğer cihazlardaki oturumlar kapatılıyor, lütfen bekleyin...'
-                    );
-                    
-                    try {
-                      // Tüm diğer cihazları kapat - deviceService API'sini kullan
-                      console.log('Tüm diğer cihazlardaki oturumlar kapatılıyor...');
-                      const response = await deviceService.revokeAllOtherDevices();
-                      
-                      // İşlem sonucunu kullanıcıya bildir
-                      if (response.success) {
-                        Alert.alert('Başarılı', 'Tüm diğer cihazlardaki oturumlar kapatıldı');
-                        // Cihaz listesini yenile
-                        fetchDevices();
-                      } else {
-                        Alert.alert(
-                          'Hata', 
-                          response.error || 'Diğer cihaz oturumları kapatılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.'
-                        );
-                      }
-                    } catch (error) {
-                      console.error('Toplu çıkış işlemi sırasında hata:', error);
-                      Alert.alert(
-                        'Hata', 
-                        'Oturumlar kapatılırken beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
-                      );
-                    }
-                  }
-                },
-              ]
-            );
-          }}
-          id="logoutAllButton"
-        >
-          <Ionicons 
-            name="exit-outline" 
-            size={18} 
-            color={theme.colors.error} 
-            style={styles.logoutAllIcon}
-          />
-          <Text style={[styles.logoutAllText, { color: theme.colors.error }]}>
-            Diğer Tüm Cihazlardan Çıkış Yap
-          </Text>
-        </TouchableOpacity>
+
         
       </ScrollView>
     </SafeAreaView>
