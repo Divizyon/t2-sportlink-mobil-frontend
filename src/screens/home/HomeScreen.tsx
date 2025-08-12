@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -119,6 +119,11 @@ export const HomeScreen: React.FC = () => {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const footerOpacity = useState(new Animated.Value(0))[0];
   const [showLocationModal, setShowLocationModal] = useState(false);
+  
+  // Header modernizasyonu için animasyon değerleri
+  const brandFadeAnim = useRef(new Animated.Value(0)).current;
+  const brandTranslateY = useRef(new Animated.Value(8)).current;
+  const headerPulseAnim = useRef(new Animated.Value(1)).current;
   
   // Lazy loading göstergesi için önceki durumu takip etmek için ref kullanıyoruz
   const wasNearEnd = React.useRef(false);
@@ -280,6 +285,44 @@ export const HomeScreen: React.FC = () => {
       getUnreadMessagesCount();
       // Arkadaşlık isteklerini getir
       fetchFriendRequests();
+
+      // Marka alanı giriş animasyonu
+      brandFadeAnim.setValue(0);
+      brandTranslateY.setValue(8);
+      Animated.parallel([
+        Animated.timing(brandFadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(brandTranslateY, {
+          toValue: 0,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Header arkaplanında hafif pulse efekti (sonsuz döngü)
+      const pulseLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(headerPulseAnim, {
+            toValue: 1.05,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(headerPulseAnim, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseLoop.start();
+      
+      return () => {
+        pulseLoop.stop();
+      };
     }, [getUnreadMessagesCount, fetchFriendRequests])
   );
   
@@ -451,7 +494,34 @@ export const HomeScreen: React.FC = () => {
           borderBottomColor: theme.colors.border
         }
       ]}>
-       
+        {/* Arkaplan bubble efektleri (renk bütünlüğü korunarak) */}
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: theme.colors.accent + '12',
+            top: -40,
+            left: -20,
+            transform: [{ scale: headerPulseAnim }],
+          }}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            backgroundColor: theme.colors.primary + '10',
+            bottom: -30,
+            right: 10,
+            transform: [{ scale: headerPulseAnim }],
+          }}
+        />
+
         {/* Divizyon icon on the left */}
         <Image 
           source={require('../../../assets/images/divizyon.png')} 
@@ -460,12 +530,17 @@ export const HomeScreen: React.FC = () => {
         />
         
         {/* Centered SportLink text */}
-        <View style={styles.centerLogoContainer}>
+        <Animated.View 
+          style={[
+            styles.centerLogoContainer,
+            { opacity: brandFadeAnim, transform: [{ translateY: brandTranslateY }] }
+          ]}
+        >
           <Text style={[styles.logoText, { color: theme.colors.text }]}>
-            <Text style={{color: '#4CAF50'}}>Sport</Text>
-            <Text style={{color: '#2F4F4F'}}>Link</Text>
+            <Text style={{ color: theme.colors.accent }}>Sport</Text>
+            <Text style={{ color: colors.accentDark }}>Link</Text>
           </Text>
-        </View>
+        </Animated.View>
         
         <View style={styles.headerButtons}>
          {/* Arkadaşlık İstekleri Butonu */}
@@ -1093,20 +1168,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 3,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 0,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    shadowOpacity: 0.08,
     zIndex: 10,
     position: 'relative',
+    elevation: 8,
   },
   menuButton: {
     padding: 8,
   },
   logoText: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -1117,12 +1198,18 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   headerActionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
+    marginLeft: 10,
+    backgroundColor: 'rgba(51, 134, 38, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   scrollView: {
     flex: 1,
@@ -1132,12 +1219,21 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   greetingContainer: {
-    paddingHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    backgroundColor: 'rgba(51, 134, 38, 0.02)',
+    marginHorizontal: 16,
+    borderRadius: 18,
+    paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
   },
   greetingContent: {
     flex: 1,
@@ -1148,14 +1244,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '700',
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   greetingName: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '800',
     marginLeft: 8,
+    letterSpacing: -0.3,
   },
   greetingEmoji: {
     fontSize: 24,
@@ -1164,6 +1262,8 @@ const styles = StyleSheet.create({
   },
   greetingSubtext: {
     fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   profileImageContainer: {
     width: 44,
@@ -1232,14 +1332,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 36,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
@@ -1249,8 +1349,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   viewAllText: {
     fontSize: 14,
