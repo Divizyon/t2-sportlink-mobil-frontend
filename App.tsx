@@ -18,33 +18,8 @@ const SplashScreen = () => {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const translateYAnim = useRef(new Animated.Value(20)).current;
   const sloganFadeAnim = useRef(new Animated.Value(0)).current;
-  const bgCircleAnim = useRef(new Animated.Value(0)).current;
-  const leafFadeAnim = useRef(new Animated.Value(0)).current;
-  const leafTranslateAnim = useRef(new Animated.Value(30)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   
   const { theme } = useThemeStore();
-
-  // Sportif ikon URL'si
-  const leafImageUrl = "https://cdn.pixabay.com/photo/2018/05/17/14/53/plant-3408820_1280.png";
-  
-  // Pulse animasyonu için
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [pulseAnim]);
   
   useEffect(() => {
     Animated.sequence([
@@ -66,25 +41,6 @@ const SplashScreen = () => {
           duration: 1000,
           useNativeDriver: true,
         }),
-        Animated.timing(bgCircleAnim, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Yaprak animasyonu
-      Animated.parallel([
-        Animated.timing(leafFadeAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.spring(leafTranslateAnim, {
-          toValue: 0,
-          friction: 6,
-          tension: 40,
-          useNativeDriver: true,
-        }),
       ]),
       // Slogan animasyonu
       Animated.timing(sloganFadeAnim, {
@@ -94,73 +50,10 @@ const SplashScreen = () => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [fadeAnim, scaleAnim, sloganFadeAnim, bgCircleAnim, leafFadeAnim, leafTranslateAnim, translateYAnim]);
+  }, [fadeAnim, scaleAnim, sloganFadeAnim, translateYAnim]);
   
   return (
     <View style={[styles.splashContainer, { backgroundColor: '#FFFFFF' }]}>
-      {/* Arkaplan çemberleri */}
-      <Animated.View style={[
-        styles.backgroundCircle,
-        {
-          opacity: bgCircleAnim,
-          transform: [
-            { scale: bgCircleAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.5, 1.5]
-            })}
-          ]
-        }
-      ]} />
-      
-      <Animated.View style={[
-        styles.secondaryBackgroundCircle,
-        {
-          opacity: bgCircleAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 0.6]
-          }),
-          transform: [
-            { scale: pulseAnim }
-          ]
-        }
-      ]} />
-      
-      {/* Yaprağın konumlandırılması */}
-      <Animated.Image 
-        source={{ uri: leafImageUrl }} 
-        style={[
-          styles.leafImage,
-          {
-            opacity: leafFadeAnim,
-            transform: [
-              { translateY: leafTranslateAnim },
-              { translateX: leafTranslateAnim },
-              { rotate: '-15deg' }
-            ]
-          }
-        ]}
-        resizeMode="contain"
-      />
-      
-      {/* İkinci süs yaprağı */}
-      <Animated.Image 
-        source={{ uri: leafImageUrl }} 
-        style={[
-          styles.secondaryLeafImage,
-          {
-            opacity: leafFadeAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 0.4]
-            }),
-            transform: [
-              { translateY: leafTranslateAnim },
-              { translateX: -leafTranslateAnim },
-              { rotate: '25deg' }
-            ]
-          }
-        ]}
-        resizeMode="contain"
-      />
       
       {/* Logo ve Slogan Container */}
       <Animated.View
@@ -209,19 +102,31 @@ const SplashScreen = () => {
       </Animated.Text>
       
       {/* Developed by Divizyon */}
-      <Animated.Text 
+      <Animated.View 
         style={[
-          styles.developedByText, 
+          styles.developedByContainer, 
           { 
             opacity: sloganFadeAnim.interpolate({
               inputRange: [0, 1],
-              outputRange: [0, 0.5]
+              outputRange: [0, 0.8]
             })
           }
         ]}
       >
-        Developed by Divizyon
-      </Animated.Text>
+        <View style={styles.divizyonBadge}>
+          <Text style={styles.developedByText}>
+            Developed by
+          </Text>
+          <Image 
+            source={require('./assets/images/divizyon.png')}
+            style={styles.divizyonIcon}
+            resizeMode="contain"
+          />
+          <Text style={styles.divizyonText}>
+            Divizyon
+          </Text>
+        </View>
+      </Animated.View>
     </View>
   );
 };
@@ -333,22 +238,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
-  backgroundCircle: {
-    position: 'absolute',
-    width: width * 2,
-    height: width * 2,
-    borderRadius: width,
-    backgroundColor: 'rgba(51, 134, 38, 0.06)', // Accent renk (yeşil) tonunda transparan arka plan
-    zIndex: 1,
-  },
-  secondaryBackgroundCircle: {
-    position: 'absolute',
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: width * 0.4,
-    backgroundColor: 'rgba(51, 134, 38, 0.1)', // Accent renk (yeşil) tonunda daha koyu transparan arka plan
-    zIndex: 1,
-  },
+
   contentContainer: {
     alignItems: 'center',
     zIndex: 3,
@@ -376,24 +266,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     letterSpacing: 0.5,
   },
-  leafImage: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    top: height * 0.1,
-    right: width * 0.15,
-    zIndex: 2,
-    opacity: 0.7,
-  },
-  secondaryLeafImage: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    bottom: height * 0.15,
-    left: width * 0.15,
-    zIndex: 2,
-    opacity: 0.4,
-  },
+
   versionText: {
     position: 'absolute',
     bottom: 40,
@@ -401,12 +274,45 @@ const styles = StyleSheet.create({
     color: '#666',
     letterSpacing: 0.5,
   },
-  developedByText: {
+  developedByContainer: {
     position: 'absolute',
-    bottom: 20,
-    fontSize: 10,
-    color: '#999',
+    bottom: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divizyonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#338626',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  developedByText: {
+    fontSize: 11,
+    color: '#FFFFFF',
     letterSpacing: 0.3,
     fontStyle: 'italic',
+    marginRight: 4,
+    fontWeight: '400',
+  },
+  divizyonIcon: {
+    width: 16,
+    height: 16,
+    marginHorizontal: 4,
+  },
+  divizyonText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+    fontStyle: 'italic',
+    fontWeight: '600',
+    marginLeft: 2,
   },
 });
