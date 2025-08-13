@@ -574,105 +574,13 @@ export const HomeScreen: React.FC = () => {
               contentContainerStyle={styles.horizontalScrollContent}
             >
               {announcements.length > 0 ? (
-                announcements.map((announcement, index) => {
-                  // Her duyuru için tamamen rastgele renk oluşturalım
-                  const getRandomColor = () => {
-                    // Canlı ve görsel olarak güzel renkler için önceden belirlenmiş renk tonları kullanalım
-                    const colorHues = [
-                      12,   // kırmızı-turuncu
-                      36,   // turuncu
-                      60,   // sarı
-                      100,  // yeşil-sarı
-                      140,  // yeşil
-                      180,  // camgöbeği
-                      210,  // mavi-camgöbeği
-                      240,  // mavi
-                      280,  // mor
-                      320,  // fuşya
-                      340   // kırmızı-fuşya
-                    ];
-                    
-                    // Duyuru ID'sine göre veya index değerine göre renk seçebiliriz
-                    // Burada tamamen rastgele bir renk yerine duyurunun kimliğine göre belirli bir renk seçelim
-                    // Bu sayede her duyurunun her zaman aynı rengi olur, daha tutarlı bir görünüm elde edilir
-                    const id = announcement.id;
-                    const idSum = id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-                    const hueIndex = idSum % colorHues.length;
-                    
-                    // Baz renk tonunu alalım
-                    const baseHue = colorHues[hueIndex];
-                    // Renk tonuna +/- 10 derece rastgele varyasyon ekleyelim
-                    const hue = baseHue + (Math.random() * 20 - 10);
-                    
-                    // Canlı renkler için yüksek doygunluk
-                    const saturation = 75 + Math.floor(Math.random() * 20); // %75-95 arası doygunluk
-                    
-                    // Parlak ama çok açık olmayan renkler için
-                    const lightness = 45 + Math.floor(Math.random() * 10); // %45-55 arası parlaklık
-                    
-                    // HSL'yi HEX'e dönüştüren yardımcı fonksiyon
-                    const hslToHex = (h: number, s: number, l: number) => {
-                      s /= 100;
-                      l /= 100;
-                      
-                      const c = (1 - Math.abs(2 * l - 1)) * s;
-                      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-                      const m = l - c / 2;
-                      let r, g, b;
-                      
-                      if (0 <= h && h < 60) {
-                        [r, g, b] = [c, x, 0];
-                      } else if (60 <= h && h < 120) {
-                        [r, g, b] = [x, c, 0];
-                      } else if (120 <= h && h < 180) {
-                        [r, g, b] = [0, c, x];
-                      } else if (180 <= h && h < 240) {
-                        [r, g, b] = [0, x, c];
-                      } else if (240 <= h && h < 300) {
-                        [r, g, b] = [x, 0, c];
-                      } else {
-                        [r, g, b] = [c, 0, x];
-                      }
-                      
-                      const toHex = (value: number) => {
-                        const hex = Math.round((value + m) * 255).toString(16);
-                        return hex.length === 1 ? '0' + hex : hex;
-                      };
-                      
-                      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-                    };
-                    
-                    return hslToHex(hue, saturation, lightness);
-                  };
-                  
-                  const borderColor = getRandomColor();
-                  
-                  return (
-                    <TouchableOpacity 
-                      key={announcement.id} 
-                      style={[styles.announcementCardHorizontal, { 
-                        backgroundColor: theme.colors.card,
-                        borderColor: theme.colors.border,
-                        borderLeftWidth: 4,
-                        borderLeftColor: borderColor
-                      }]}
-                      onPress={() => handleAnnouncementPress(announcement)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.announcementContentHorizontal}>
-                        <Text style={[styles.announcementTitleHorizontal, { color: theme.colors.text }]} numberOfLines={1}>
-                          {announcement.title}
-                        </Text>
-                        <Text 
-                          style={[styles.announcementTextHorizontal, { color: theme.colors.textSecondary }]}
-                          numberOfLines={2}
-                        >
-                          {announcement.content}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })
+                announcements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    announcement={announcement}
+                    onPress={handleAnnouncementPress}
+                  />
+                ))
               ) : (
                 <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
                   <Ionicons name="information-circle-outline" size={24} color={colors.accentDark} />

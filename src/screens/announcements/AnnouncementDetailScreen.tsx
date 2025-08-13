@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Platform } from 'react-native';
 import { 
   View, 
   Text, 
@@ -13,7 +14,8 @@ import {
   Modal,
   Animated,
   TouchableWithoutFeedback,
-  Easing
+  Easing,
+  Linking,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +23,7 @@ import { useThemeStore } from '../../store/appStore/themeStore';
 import { create } from 'zustand';
 import { Announcement } from '../../types/apiTypes/api.types';
 import announcementService from '../../api/announcements/announcementService';
+import { colors } from '../../constants/colors/colors';
 
 // Route param tipini tanımla
 type AnnouncementDetailRouteParams = {
@@ -30,7 +33,6 @@ type AnnouncementDetailRouteParams = {
   };
 };
 
-// Türkçe karakterleri düzeltmek için yardımcı fonksiyon
 // Zustand store oluştur - Duyuru detayı için
 interface AnnouncementDetailState {
   currentAnnouncement: Announcement | null;
@@ -52,11 +54,9 @@ export const useAnnouncementDetailStore = create<AnnouncementDetailState>((set) 
       
       // API yanıtını kontrol et
       if (response.success && response.data) {
-        // api.types.ts: AnnouncementResponse => data: Announcement
-        const announcement = response.data;
-        
-    
-        
+        // API yanıtı announcement nesnesi içerebilir
+        const announcement = response.data.announcement || response.data;
+        console.log('Gelen duyuru detayı:', announcement);
         set({ currentAnnouncement: announcement, isLoading: false });
       } else {
         throw new Error('API yanıtı beklenmeyen formatta');
@@ -74,7 +74,7 @@ export const useAnnouncementDetailStore = create<AnnouncementDetailState>((set) 
 }));
 
 const { width, height } = Dimensions.get('window');
-const MODAL_HEIGHT = height * 0.8;
+const MODAL_HEIGHT = height * 0.9;
 
 export const AnnouncementDetailScreen: React.FC = () => {
   const { theme } = useThemeStore();
@@ -136,14 +136,112 @@ export const AnnouncementDetailScreen: React.FC = () => {
     
     try {
       await Share.share({
-        message: `${currentAnnouncement.title} - ${currentAnnouncement.content}`,
+        message: `${currentAnnouncement.title} - ${currentAnnouncement.content.replace(/<[^>]*>/g, '')}`,
         title: currentAnnouncement.title,
       });
     } catch (error) {
       console.error('Paylaşım hatası:', error);
     }
   };
-  
+
+  // Slug'dan resim URL'sini kontrol et
+  const isImageUrl = (slug?: string): boolean => {
+    if (!slug) return false;
+    return slug.startsWith('http') && (slug.includes('.jpg') || slug.includes('.jpeg') || slug.includes('.png') || slug.includes('.gif') || slug.includes('.webp'));
+  };
+
+  // HTML içeriğinden resim URL'sini çıkarma
+  const extractImageUrlFromHtml = (content?: string): string | null => {
+    if (!content) return null;
+    
+    // HTML içindeki img tag'lerini ara
+    const htmlImgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    const htmlMatch = htmlImgRegex.exec(content);
+    
+    if (htmlMatch && htmlMatch[1]) {
+      const imagePath = htmlMatch[1].trim();
+      
+      // Eğer relative path ise (uploads ile başlıyorsa) tam URL'ye çevir
+      if (imagePath.startsWith('/uploads/')) {
+        return `https://sepet.konya.bel.tr/wwwsporkonyacomtr${imagePath}`;
+      }
+      
+      // Eğer zaten tam URL ise direkt döndür
+      return imagePath;
+    }
+    
+    return null;
+  };
+
+  // HTML içeriğinden metni çıkarma
+  const extractTextFromHtml = (content?: string): string => {
+    if (!content) return '';
+    
+    // HTML tag'lerini kaldır
+    let cleanText = content.replace(/<[^>]*>/g, '');
+    
+    // Fazla boşlukları temizle
+    cleanText = cleanText.replace(/\n\s*\n/g, '\n').trim();
+    
+    // HTML entities'leri decode et
+    cleanText = cleanText
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+    
+    return cleanText;
+  };
+
+  // Tarihi formatlama
+  const formatDate = (dateString?: string): string => {
+    if (!dateString || isNaN(new Date(dateString).getTime())) {
+      return 'Tarih belirtilmemiş';
+    }
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  // Kaynak URL'sini açma
+  const openSourceUrl = (content?: string) => {
+    if (!content) return;
+    
+    // Kaynak URL'sini çıkar
+    const sourceRegex = /\*\*Kaynak:\*\* \[(.*?)\]\((https?:\/\/[^\s)]+)\)/;
+    const match = content.match(sourceRegex);
+    
+    if (match && match[2]) {
+      const url = match[2];
+      Linking.canOpenURL(url).then(supported => {
+        if (supported) {
+          Linking.openURL(url);
+        } else {
+          console.log("URL açılamıyor:", url);
+        }
+      });
+    }
+  };
+
+  // Resim URL'sini belirle
+  const getImageUrl = (): string | null => {
+    if (!currentAnnouncement) return null;
+    
+    // Önce slug'dan kontrol et
+    if (isImageUrl(currentAnnouncement.slug)) {
+      return currentAnnouncement.slug;
+    }
+    
+    // Sonra içerikten kontrol et
+    return extractImageUrlFromHtml(currentAnnouncement.content);
+  };
+
   // Klasik sayfa olarak göster
   if (!showAsModal) {
     return (
@@ -214,43 +312,65 @@ export const AnnouncementDetailScreen: React.FC = () => {
               showsVerticalScrollIndicator={false}
             >
               {/* Duyuru Görseli */}
-              <Image
-                source={{ uri: "https://t4.ftcdn.net/jpg/04/26/04/61/360_F_426046170_Bshw7CccMbBLIFd9PCdLdKv3XRSkgFMh.jpg" }}
-                style={styles.announcementImage}
-                resizeMode="cover"
-              />
+              {getImageUrl() && (
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: getImageUrl() || '' }}
+                    style={styles.announcementImage}
+                    resizeMode="contain"
+                    onError={(error) => console.log('Resim yükleme hatası:', error.nativeEvent.error)}
+                  />
+                </View>
+              )}
               
-              {/* Duyuru Başlığı */}
+              {/* Duyuru Başlığı ve Tarihi */}
               <View style={[styles.announcementHeader]}>
                 <Text style={[styles.announcementTitle, { color: theme.colors.text }]}>
                   {currentAnnouncement.title}
                 </Text>
-              </View>
-              
-              {/* Duyuru Tarihi */}
-              <View style={[styles.announcementMeta, { borderBottomColor: theme.colors.border }]}>
-                <View style={styles.dateRow}>
+                
+                <View style={styles.dateContainer}>
                   <Ionicons name="calendar-outline" size={18} color={theme.colors.textSecondary} />
                   <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
-                    {currentAnnouncement.created_at && !isNaN(new Date(currentAnnouncement.created_at).getTime())
-                      ? new Date(currentAnnouncement.created_at).toLocaleDateString('tr-TR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })
-                      : 'Tarih belirtilmemiş'}
+                    {formatDate(currentAnnouncement.created_at)}
                   </Text>
                 </View>
-                
-                <TouchableOpacity onPress={handleShare}>
-                  <Ionicons name="share-social-outline" size={22} color={theme.colors.accent} />
-                </TouchableOpacity>
               </View>
               
               {/* Duyuru İçeriği */}
-              <Text style={[styles.announcementContent, { color: theme.colors.text }]}>
-                {(currentAnnouncement.content)}
-              </Text>
+              <View style={[styles.contentSection, { borderTopColor: theme.colors.border }]}>
+                <Text style={[styles.announcementContent, { color: theme.colors.text }]}>
+                  {extractTextFromHtml(currentAnnouncement.content) || 'İçerik yüklenemedi.'}
+                </Text>
+                
+                {/* Debug bilgisi - Sadece geliştirme aşamasında göster */}
+                {__DEV__ && (
+                  <View style={styles.debugContainer}>
+                    <Text style={{color: 'gray', fontSize: 12, marginTop: 20}}>
+                      Duyuru ID: {currentAnnouncement.id}
+                    </Text>
+                    <Text style={{color: 'gray', fontSize: 12, marginTop: 4}}>
+                      Slug: {currentAnnouncement.slug ? 'Var' : 'Yok'}
+                    </Text>
+                    <Text style={{color: 'gray', fontSize: 12, marginTop: 4}}>
+                      İçerik Uzunluğu: {currentAnnouncement.content ? currentAnnouncement.content.length : 0} karakter
+                    </Text>
+                  </View>
+                )}
+              </View>
+              
+              {/* Kaynak Bölümü */}
+              {currentAnnouncement.content && currentAnnouncement.content.includes("**Kaynak:**") && (
+                <TouchableOpacity 
+                  style={[styles.sourceButton, { backgroundColor: theme.colors.primary + '15' }]}
+                  onPress={() => openSourceUrl(currentAnnouncement.content)}
+                >
+                  <Ionicons name="link-outline" size={20} color={theme.colors.primary} />
+                  <Text style={[styles.sourceText, { color: theme.colors.primary }]}>
+                    Kaynak Sitesini Ziyaret Et
+                  </Text>
+                </TouchableOpacity>
+              )}
               
               {/* Alt Boşluk */}
               <View style={styles.bottomPadding} />
@@ -263,12 +383,24 @@ export const AnnouncementDetailScreen: React.FC = () => {
             </View>
           )}
           
+          {/* Paylaş butonu */}
+          {currentAnnouncement && (
+            <TouchableOpacity 
+              style={[styles.shareButton, { backgroundColor: theme.colors.primary }]} 
+              onPress={handleShare}
+            >
+              <Ionicons name="share-social-outline" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+          
           {/* Kapat butonu */}
           <TouchableOpacity 
-            style={[styles.closeButton, { backgroundColor: theme.colors.card }]} 
+            style={[styles.closeButton, { 
+              backgroundColor: theme.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)' 
+            }]} 
             onPress={closeModal}
           >
-            <Ionicons name="close" size={24} color={theme.colors.text} />
+            <Ionicons name="close" size={24} color={theme.mode === 'dark' ? '#FFFFFF' : '#000000'} />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -318,14 +450,35 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  shareButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   loadingContainer: {
     flex: 1,
@@ -356,30 +509,25 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 0,
   },
-  announcementHeader: {
-    padding: 16,
-    paddingTop: 8,
-  },
-  announcementTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 30,
+  imageContainer: {
+    width: '100%',
+    height: 250,
+    backgroundColor: '#f0f0f0',
   },
   announcementImage: {
     width: '100%',
-    height: 200,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    height: '100%',
   },
-  announcementMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
+  announcementHeader: {
+    padding: 20,
   },
-  dateRow: {
+  announcementTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 32,
+    marginBottom: 12,
+  },
+  dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -387,13 +535,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 6,
   },
+  contentSection: {
+    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
   announcementContent: {
     fontSize: 16,
     lineHeight: 24,
-    padding: 16,
+  },
+  sourceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+    marginTop: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  sourceText: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   bottomPadding: {
-    height: 40,
+    height: 80,
   },
   noDataContainer: {
     flex: 1,
@@ -404,4 +570,12 @@ const styles = StyleSheet.create({
   noDataText: {
     fontSize: 16,
   },
+  debugContainer: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  }
 });

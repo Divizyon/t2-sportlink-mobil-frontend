@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { useThemeStore } from '../../../store/appStore/themeStore';
 import { Announcement } from '../../../types/apiTypes/api.types';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,9 @@ interface AnnouncementCardProps {
   announcement: Announcement;
   onPress: (announcement: Announcement) => void;
 }
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.8 > 300 ? 300 : width * 0.8;
 
 const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPress }) => {
   const { theme } = useThemeStore();
@@ -21,6 +24,13 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPre
       year: 'numeric' 
     });
   };
+
+  // Slug'dan resim URL'sini kontrol et
+  const isImageUrl = (slug: string): boolean => {
+    return slug.startsWith('http') && (slug.includes('.jpg') || slug.includes('.jpeg') || slug.includes('.png') || slug.includes('.gif') || slug.includes('.webp'));
+  };
+
+  const imageUrl = isImageUrl(announcement.slug) ? announcement.slug : null;
   
   return (
     <TouchableOpacity 
@@ -34,41 +44,58 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPre
       onPress={() => onPress(announcement)}
       activeOpacity={0.7}
     >
-      <View style={styles.headerRow}>
-        <View style={styles.titleContainer}>
-          <Text 
-            style={[styles.title, { color: theme.colors.text }]}
-            numberOfLines={1}
-          >
-            {announcement.title}
-          </Text>
-          <Text style={[styles.date, { color: theme.colors.textSecondary }]}>
-            {formatDate(announcement.created_at)}
-          </Text>
+      {/* Resim Bölümü */}
+      {imageUrl && (
+        <View style={styles.imageWrapper}>
+          <Image 
+            source={{ uri: imageUrl }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <View style={[styles.dateTag, { backgroundColor: theme.colors.primary }]}>
+            <Text style={styles.dateText}>{formatDate(announcement.created_at)}</Text>
+          </View>
         </View>
-        <View style={[styles.iconContainer, { backgroundColor: theme.colors.accent + '20' }]}>
-          <Ionicons name="megaphone-outline" size={16} color={theme.colors.accent} />
-        </View>
-      </View>
+      )}
       
-      <Text 
-        style={[styles.content, { color: theme.colors.textSecondary }]}
-        numberOfLines={3}
-      >
-        {announcement.content}
-      </Text>
-      
-      <View style={styles.footer}>
-        <View style={[styles.badge, { backgroundColor: theme.colors.primary + '15' }]}>
-          <Text style={[styles.badgeText, { color: theme.colors.primary }]}>
-            Duyuru
-          </Text>
-        </View>
+      {/* İçerik Bölümü */}
+      <View style={styles.contentContainer}>
         <Text 
-          style={[styles.readMore, { color: theme.colors.primary }]}
+          style={[styles.title, { color: theme.colors.text }]}
+          numberOfLines={2}
         >
-          Detaylar
+          {announcement.title}
         </Text>
+        
+        {!imageUrl && (
+          <Text 
+            style={[styles.content, { color: theme.colors.textSecondary }]}
+            numberOfLines={3}
+          >
+            {announcement.content}
+          </Text>
+        )}
+        
+        <View style={styles.footer}>
+          {!imageUrl && (
+            <Text style={[styles.date, { color: theme.colors.textSecondary }]}>
+              {formatDate(announcement.created_at)}
+            </Text>
+          )}
+          <View style={styles.readMoreContainer}>
+            <Text 
+              style={[styles.readMore, { color: theme.colors.primary }]}
+            >
+              Detaylar
+            </Text>
+            <Ionicons 
+              name="chevron-forward" 
+              size={14} 
+              color={theme.colors.primary} 
+              style={styles.icon}
+            />
+          </View>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -76,9 +103,8 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPre
 
 const styles = StyleSheet.create({
   container: {
-    width: 280,
+    width: CARD_WIDTH,
     borderRadius: 16,
-    padding: 16,
     marginRight: 12,
     marginLeft: 4,
     marginVertical: 8,
@@ -88,33 +114,39 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
     borderWidth: 1,
-    borderColor: 'transparent'
+    borderColor: 'transparent',
+    overflow: 'hidden'
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+  imageWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: 160,
   },
-  titleContainer: {
-    flex: 1,
-    marginRight: 10,
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  dateTag: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderTopRightRadius: 8,
+  },
+  dateText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  contentContainer: {
+    padding: 16,
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  date: {
-    fontSize: 12,
     marginBottom: 8,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    lineHeight: 22,
   },
   content: {
     fontSize: 14,
@@ -125,19 +157,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 8,
   },
-  badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-  },
-  badgeText: {
+  date: {
     fontSize: 12,
-    fontWeight: '600',
+  },
+  readMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   readMore: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  icon: {
+    marginLeft: 2,
   }
 });
 
