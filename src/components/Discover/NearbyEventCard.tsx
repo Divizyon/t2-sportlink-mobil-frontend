@@ -10,6 +10,7 @@ import { useEventStore } from '../../store/eventStore/eventStore';
 const footballImage = require('../../../assets/sportImage/football.png');
 const basketballImage = require('../../../assets/sportImage/basketball.png');
 const tennisImage = require('../../../assets/sportImage/tennis.png');
+const volleyballImage = require('../../../assets/sportImage/volleyball.png');
 
 
 // Spor kategorilerine göre lokal görsel tanımları
@@ -17,6 +18,8 @@ const sportImages: Record<string, any> = {
   futbol: footballImage,
   basketbol: basketballImage,
   tenis: tennisImage,
+  voleybol: volleyballImage,
+  default: footballImage, // Default olarak futbol görseli
 };
  
 // Spor kategorisini alarak görsel kaynağını döndüren yardımcı fonksiyon
@@ -28,6 +31,7 @@ export const getSportImageSource = (sportName: string): ImageSourcePropType => {
   if (sport.includes('futbol') || sport.includes('football')) return sportImages.futbol;
   if (sport.includes('basket')) return sportImages.basketbol;
   if (sport.includes('tenis') || sport.includes('tennis')) return sportImages.tenis;
+  if (sport.includes('voley') || sport.includes('volleyball')) return sportImages.voleybol;
   
   return sportImages.default;
 };
