@@ -531,57 +531,8 @@ export const HomeScreen: React.FC = () => {
             </Text>
           </View>
         </View>
-
-        {/* Duyurular - Yatay Kaydırma */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <View style={{
-                marginRight: 8, 
-                borderRadius: 12, 
-                padding: 4,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Ionicons name="megaphone-outline" size={20} color={colors.accentDark} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Duyurular</Text>
-            </View>
-           
-          </View>
-          
-          {isLoadingAnnouncements ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="small" color={theme.colors.accent} />
-            </View>
-          ) : (
-            <ScrollView 
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScrollContent}
-            >
-              {announcements.length > 0 ? (
-                announcements.map((announcement) => (
-                  <AnnouncementCard
-                    key={announcement.id}
-                    announcement={announcement}
-                    onPress={handleAnnouncementPress}
-                  />
-                ))
-              ) : (
-                <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
-                  <Ionicons name="information-circle-outline" size={24} color={colors.accentDark} />
-                  <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                    Duyuru bulunamadı
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          )}
-        </View>
-        
-        {/* Sana Özel Etkinlikler */}
-        <View style={styles.section}>
+   {/* Sana Özel Etkinlikler */}
+   <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <View style={{
@@ -766,6 +717,9 @@ export const HomeScreen: React.FC = () => {
             </View>
           )}
         </View>
+      
+        
+     
             
         {/* Yakındaki Etkinlikler - Yatay kaydırmalı */}
         <NearbyEventsComponent 
@@ -896,7 +850,53 @@ export const HomeScreen: React.FC = () => {
             </ScrollView>
           )}
         </View>
-        
+          {/* Duyurular - Yatay Kaydırma */}
+          <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionHeaderLeft}>
+              <View style={{
+                marginRight: 8, 
+                borderRadius: 12, 
+                padding: 4,
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Ionicons name="megaphone-outline" size={20} color={colors.accentDark} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Duyurular</Text>
+            </View>
+           
+          </View>
+          
+          {isLoadingAnnouncements ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="small" color={theme.colors.accent} />
+            </View>
+          ) : (
+            <ScrollView 
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContent}
+            >
+              {announcements.length > 0 ? (
+                announcements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    announcement={announcement}
+                    onPress={handleAnnouncementPress}
+                  />
+                ))
+              ) : (
+                <View style={[styles.emptyCardHorizontal, { backgroundColor: theme.colors.card }]}>
+                  <Ionicons name="information-circle-outline" size={24} color={colors.accentDark} />
+                  <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                    Duyuru bulunamadı
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          )}
+        </View>
         {/* Modern Footer - Sadece daha fazla kaydırınca görünür - Animated ile */}
         <Animated.View 
           style={{
@@ -954,7 +954,7 @@ export const HomeScreen: React.FC = () => {
             fontWeight: '300',
             fontStyle: 'italic',
           }}>
-            Developed by Divizyon
+            Developed by Divizyon & KBB
           </Text>
         </Animated.View>
       </ScrollView>

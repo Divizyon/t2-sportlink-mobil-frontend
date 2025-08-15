@@ -135,7 +135,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
                 activeOpacity={0.8}
               >
                 <Ionicons name="add-circle-outline" size={14} color="white" style={{ marginRight: 4 }} />
-                <Text style={styles.joinButtonText}>Katıl</Text>
+                <Text style={styles.joinButtonText}>Detay</Text>
               </TouchableOpacity>
             )}
           </View>

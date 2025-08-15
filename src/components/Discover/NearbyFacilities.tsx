@@ -9,44 +9,42 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useThemeStore } from '../../store/appStore/themeStore';
-import { useFacilitiesStore } from '../../store/appStore/facilitiesStore';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors/colors';
+import { SportsFacility } from '../../types/sportsFacilities.types';
 
 interface NearbyFacilitiesProps {
   onSeeAll: () => void;
+  facilitiesData: SportsFacility[];
 }
 
 const facilityTypes = [
   { id: 'all', name: 'Tümü', icon: 'fitness' },
-  { id: 'football', name: 'Futbol', icon: 'football' },
-  { id: 'basketball', name: 'Basketbol', icon: 'basketball' },
-  { id: 'tennis', name: 'Tenis', icon: 'tennisball' },
-  { id: 'swimming', name: 'Yüzme', icon: 'water' },
-  { id: 'gym', name: 'Spor Salonu', icon: 'barbell' },
+  { id: 'Yüzme', name: 'Yüzme', icon: 'water' },
+  { id: 'Tenis', name: 'Tenis', icon: 'tennisball' },
+  { id: 'Basketbol/Salon Sporları', name: 'Basketbol', icon: 'basketball' },
+  { id: 'Futbol (Halı Saha)', name: 'Futbol', icon: 'football' },
+  { id: 'Fitness', name: 'Fitness', icon: 'barbell' },
 ];
 
-export const NearbyFacilities: React.FC<NearbyFacilitiesProps> = ({ onSeeAll }) => {
+export const NearbyFacilities: React.FC<NearbyFacilitiesProps> = ({ onSeeAll, facilitiesData }) => {
   const { theme } = useThemeStore();
-  const { 
-    facilities, 
-    isLoading, 
-    error, 
-    selectedType,
-    setSelectedType,
-    fetchNearbyFacilities 
-  } = useFacilitiesStore();
+  const [selectedType, setSelectedType] = React.useState<string | null>(null);
+  
+  // Static veri kullanıyoruz, API hatası yok
+  const isLoading = false;
+  const error = null;
 
   // Tesis tipine göre filtreleme
   const handleTypeSelect = (type: string) => {
     const newType = type === 'all' ? null : type;
     setSelectedType(newType);
-    // Konum bilgisini mapsStore'dan al
-    const { lastLocation } = require('../../store/appStore/mapsStore').useMapsStore.getState();
-    if (lastLocation) {
-      fetchNearbyFacilities(lastLocation.latitude, lastLocation.longitude, newType || undefined);
-    }
   };
+
+  // Filtrelenmiş tesisler
+  const filteredFacilities = selectedType 
+    ? facilitiesData.filter(facility => facility.sport === selectedType)
+    : facilitiesData;
 
   return (
     <View style={styles.container}>
@@ -101,87 +99,66 @@ export const NearbyFacilities: React.FC<NearbyFacilitiesProps> = ({ onSeeAll }) 
       </ScrollView>
 
       {/* Tesisler Listesi */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.accent} />
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={24} color={theme.colors.error} />
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.facilitiesContainer}
-        >
-          {facilities.length > 0 ? (
-            facilities.map((facility) => (
-              <TouchableOpacity
-                key={facility.id}
-                style={[styles.facilityCard, { backgroundColor: theme.colors.card }]}
-              >
-                <View style={styles.facilityImageContainer}>
-                  {facility.photos && facility.photos.length > 0 ? (
-                    <Image
-                      source={{ uri: facility.photos[0] }}
-                      style={styles.facilityImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.facilityImagePlaceholder, { backgroundColor: theme.colors.accent + '20' }]}>
-                      <Ionicons name="business" size={30} color={colors.accentDark} />
-                    </View>
-                  )}
-                  {facility.openNow !== undefined && (
-                    <View style={[
-                      styles.statusBadge,
-                      { backgroundColor: facility.openNow ? '#4CAF50' : '#F44336' }
-                    ]}>
-                      <Text style={styles.statusText}>
-                        {facility.openNow ? 'Açık' : 'Kapalı'}
-                      </Text>
-                    </View>
-                  )}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.facilitiesContainer}
+      >
+        {filteredFacilities.length > 0 ? (
+          filteredFacilities.slice(0, 5).map((facility, index) => (
+            <TouchableOpacity
+              key={`${facility.name}-${index}`}
+              style={[styles.facilityCard, { backgroundColor: theme.colors.card }]}
+            >
+              <View style={styles.facilityImageContainer}>
+                {facility.image_url ? (
+                  <Image
+                    source={{ uri: facility.image_url }}
+                    style={styles.facilityImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.facilityImagePlaceholder, { backgroundColor: theme.colors.accent + '20' }]}>
+                    <Ionicons name="business" size={30} color={colors.accentDark} />
+                  </View>
+                )}
+                
+                {/* Spor türü badge'i */}
+                <View style={[styles.sportBadge, { backgroundColor: colors.accent }]}>
+                  <Text style={styles.sportBadgeText}>
+                    {facility.sport}
+                  </Text>
                 </View>
+              </View>
 
-                <View style={styles.facilityInfo}>
-                  <Text style={[styles.facilityName, { color: theme.colors.text }]} numberOfLines={1}>
-                    {facility.name}
-                  </Text>
-                  <Text style={[styles.facilityAddress, { color: theme.colors.textSecondary }]} numberOfLines={2}>
-                    {facility.address}
-                  </Text>
-                  
-                  <View style={styles.facilityFooter}>
-                    {facility.rating && (
-                      <View style={styles.ratingContainer}>
-                        <Ionicons name="star" size={14} color="#FFC107" />
-                        <Text style={[styles.rating, { color: theme.colors.text }]}>
-                          {facility.rating.toFixed(1)}
-                        </Text>
-                      </View>
-                    )}
-                    {facility.distance && (
-                      <Text style={[styles.distance, { color: theme.colors.textSecondary }]}>
-                        {(facility.distance / 1000).toFixed(1)} km
-                      </Text>
-                    )}
+              <View style={styles.facilityInfo}>
+                <Text style={[styles.facilityName, { color: theme.colors.text }]} numberOfLines={2}>
+                  {facility.name}
+                </Text>
+                <Text style={[styles.facilityAddress, { color: theme.colors.textSecondary }]} numberOfLines={2}>
+                  {facility.address}
+                </Text>
+                
+                <View style={styles.facilityFooter}>
+                  <View style={styles.districtBadge}>
+                    <Ionicons name="location" size={12} color={colors.accent} />
+                    <Text style={[styles.districtText, { color: colors.accent }]}>
+                      {facility.district}
+                    </Text>
                   </View>
                 </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <View style={[styles.emptyContainer, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="location-outline" size={24} color={colors.accentDark} />
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                Yakında tesis bulunamadı
-              </Text>
-            </View>
-          )}
-        </ScrollView>
-      )}
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={[styles.emptyContainer, { backgroundColor: theme.colors.card }]}>
+            <Ionicons name="location-outline" size={24} color={colors.accentDark} />
+            <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+              Bu kategoride tesis bulunamadı
+            </Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -333,5 +310,28 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 8,
     fontSize: 14,
+  },
+  sportBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  sportBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  districtBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  districtText: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginLeft: 2,
   },
 }); 

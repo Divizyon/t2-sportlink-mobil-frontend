@@ -24,6 +24,15 @@ import { useEventStore } from '../../store/eventStore/eventStore';
 import { useHomeStore } from '../../store/appStore/homeStore';
 import { useFacilitiesStore } from '../../store/appStore/facilitiesStore';
 
+// SportsFacilities verilerini import et
+import { 
+  sportsFacilitiesData, 
+  sportIconMap, 
+  sportColorMap,
+  availableSports,
+  availableDistricts 
+} from '../../data/sportsFacilitiesData';
+
 // Doğrudan her bir bileşeni import ediyoruz
 import { DiscoverHeader } from '../../components/Discover/DiscoverHeader';
 import { SportsFriends } from '../../components/Discover/SportsFriends';
@@ -61,8 +70,7 @@ export const DiscoverScreen: React.FC = () => {
   // HomeStore'dan yükleme durumunu al - tutarlılık için
   const { isLoadingNearbyEvents } = useHomeStore();
   
-  // Facilities store'u kullan
-  const { fetchNearbyFacilities } = useFacilitiesStore();
+  // Facilities store'u kullan - artık static veri kullanıyoruz
   
   // Diğer yükleme durumları
   const [loadingFriends, setLoadingFriends] = useState(true);
@@ -79,11 +87,8 @@ export const DiscoverScreen: React.FC = () => {
             defaultLocation.longitude
           );
           
-          // Yakındaki tesisleri getir
-          fetchNearbyFacilities(
-            defaultLocation.latitude,
-            defaultLocation.longitude
-          );
+          // Yakındaki tesisleri getir - artık static veri kullanıyoruz
+          // fetchNearbyFacilities çağrısı kaldırıldı
           return;
         }
         
@@ -110,11 +115,8 @@ export const DiscoverScreen: React.FC = () => {
           location.coords.longitude
         );
         
-        // Yakındaki tesisleri getir
-        fetchNearbyFacilities(
-          location.coords.latitude,
-          location.coords.longitude
-        );
+        // Yakındaki tesisleri getir - artık static veri kullanıyoruz
+        // fetchNearbyFacilities çağrısı kaldırıldı
         
         // Ters geocoding ile adres bilgisini al
         try {
@@ -157,11 +159,8 @@ export const DiscoverScreen: React.FC = () => {
     if (lastLocation) {
       // Etkinlikleri mesafeye göre sırala
       fetchAllEventsByDistance(true);
-      // Yakındaki tesisleri getir
-      fetchNearbyFacilities(
-        lastLocation.latitude,
-        lastLocation.longitude
-      );
+      // Yakındaki tesisleri getir - artık static veri kullanıyoruz
+      // fetchNearbyFacilities çağrısı kaldırıldı
     } else {
       // Konum yoksa tarih sırasına göre sırala
       fetchAllEventsByDistance(false);
@@ -192,11 +191,8 @@ export const DiscoverScreen: React.FC = () => {
       if (lastLocation) {
         // Etkinlikleri mesafeye göre sırala
         await fetchAllEventsByDistance(true);
-        // Yakındaki tesisleri yeniden getir
-        await fetchNearbyFacilities(
-          lastLocation.latitude,
-          lastLocation.longitude
-        );
+        // Yakındaki tesisleri yeniden getir - artık static veri kullanıyoruz
+        // fetchNearbyFacilities çağrısı kaldırıldı
       } else {
         // Konum yoksa tarih sırasına göre sırala
         await fetchAllEventsByDistance(false);
@@ -228,8 +224,8 @@ export const DiscoverScreen: React.FC = () => {
   };
   
   const handleSeeAllFacilities = () => {
-    // Tüm tesisler ekranına yönlendir - şimdilik devre dışı
-    console.log('Tüm tesisler ekranı henüz mevcut değil');
+    // SportsFacilities ekranına yönlendir
+    navigation.navigate('SportsFacilities');
   };
   
   return (
@@ -268,7 +264,10 @@ export const DiscoverScreen: React.FC = () => {
         />
         
         {/* Yakınımdaki Tesisler */}
-        <NearbyFacilities onSeeAll={handleSeeAllFacilities} />
+        <NearbyFacilities 
+          onSeeAll={handleSeeAllFacilities}
+          facilitiesData={sportsFacilitiesData}
+        />
         
         {/* Konya Tanıtım Bölümü */}
         <View style={[styles.konyaSection, { backgroundColor: theme.colors.card }]}>

@@ -116,11 +116,33 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
 
       {/* Banner image below logout */}
       <View style={styles.bannerContainer}>
-        <Image 
-          source={require('../../../assets/images/banner.png')} 
-          style={styles.bannerImage}
-          resizeMode="contain"
-        />
+    
+        
+        {/* Partnership logos */}
+        <View style={styles.partnershipContainer}>
+        
+          <View style={styles.partnersRow}>
+            <View style={styles.partnerLogo}>
+              <Image 
+                source={require('../../../assets/images/divizyon.png')} 
+                style={styles.divizyonLogo}
+                resizeMode="contain"
+              />
+           
+            </View>
+            
+        
+            
+            <View style={styles.partnerLogo}>
+              <Image 
+                source={require('../../../assets/kbb.png')} 
+                style={styles.kbbLogo}
+                resizeMode="contain"
+              />
+            
+            </View>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -197,5 +219,46 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: 120,
     height: 60,
+  },
+  partnershipContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  partnershipLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  partnersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partnerLogo: {
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  divizyonLogo: {
+    width: 32,
+    height: 32,
+    marginBottom: 4,
+  },
+  kbbLogo: {
+    width: 32,
+    height: 32,
+    marginBottom: 4,
+  },
+  partnerText: {
+    fontSize: 10,
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
+  partnerSeparator: {
+    marginHorizontal: 6,
+  },
+  separatorText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

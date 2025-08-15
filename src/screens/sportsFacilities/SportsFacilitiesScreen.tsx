@@ -32,6 +32,35 @@ import {
 } from '../../data/sportsFacilitiesData';
 
 /**
+ * Spor türlerine göre default resim mapping'i
+ */
+const getSportDefaultImage = (sport: SportType) => {
+  switch (sport) {
+    case 'Yüzme':
+      return require('../../../assets/sportImage/swim.png');
+    case 'Tenis':
+      return require('../../../assets/sportImage/tennis.png');
+    case 'Basketbol/Salon Sporları':
+      return require('../../../assets/sportImage/basketball.png');
+    case 'Futbol (Halı Saha)':
+    case 'Futbol (Stadyum/Amatör)':
+      return require('../../../assets/sportImage/football.png');
+    case 'Fitness':
+      return require('../../../assets/sportImage/walk.png');
+    case 'Bowling':
+      return require('../../../assets/sportImage/volleyball.png');
+    case 'Go-kart':
+      return require('../../../assets/sportImage/run.png');
+    case 'Dövüş Sporları':
+    case 'Okçuluk':
+    case 'Kaykay (Skateboard)':
+    case 'Tırmanış (Bouldering/Spor Tırmanış)':
+    default:
+      return require('../../../assets/sportImage/camp.png');
+  }
+};
+
+/**
  * Spor Tesisi Kartı Bileşeni
  */
 const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onPress, onMapPress }) => {
@@ -45,45 +74,51 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onPress, onMapPre
       onPress={() => onPress?.(facility)}
       activeOpacity={0.7}
     >
-      {/* Spor İkonu ve Tür */}
-      <View style={styles.cardHeader}>
-        <View style={[styles.sportIconContainer, { backgroundColor: `${sportColor}20` }]}>
-          <Ionicons name={sportIcon as any} size={24} color={sportColor} />
-        </View>
-        <View style={styles.sportInfo}>
-          <Text style={[styles.sportType, { color: sportColor }]}>
-            {facility.sport}
-          </Text>
-          <Text style={[styles.facilityName, { color: theme.colors.text }]} numberOfLines={2}>
-            {facility.name}
-          </Text>
+      {/* Tesis Resmi */}
+      <View style={styles.facilityImageContainer}>
+        <Image
+          source={facility.image_url ? { uri: facility.image_url } : getSportDefaultImage(facility.sport)}
+          style={styles.facilityImage}
+          resizeMode="cover"
+        />
+        {/* Spor türü overlay */}
+        <View style={[styles.sportOverlay, { backgroundColor: `${sportColor}E6` }]}>
+          <Ionicons name={sportIcon as any} size={16} color="white" />
+          <Text style={styles.sportOverlayText}>{facility.sport}</Text>
         </View>
       </View>
 
-      {/* Adres Bilgisi */}
-      <View style={styles.addressContainer}>
-        <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
-        <Text style={[styles.addressText, { color: theme.colors.textSecondary }]} numberOfLines={2}>
-          {facility.address}
+      {/* Tesis Bilgileri */}
+      <View style={styles.facilityContent}>
+        <Text style={[styles.facilityName, { color: theme.colors.text }]} numberOfLines={2}>
+          {facility.name}
         </Text>
-      </View>
 
-      {/* İlçe ve Harita Butonu */}
-      <View style={styles.cardFooter}>
-        <View style={[styles.districtBadge, { backgroundColor: `${theme.colors.accent}20` }]}>
-          <Text style={[styles.districtText, { color: theme.colors.accent }]}>
-            {facility.district}
+        {/* Adres Bilgisi */}
+        <View style={styles.addressContainer}>
+          <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
+          <Text style={[styles.addressText, { color: theme.colors.textSecondary }]} numberOfLines={2}>
+            {facility.address}
           </Text>
         </View>
-        
-        <TouchableOpacity
-          style={[styles.mapButton, { backgroundColor: sportColor }]}
-          onPress={() => onMapPress?.(facility)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="map-outline" size={16} color="white" />
-          <Text style={styles.mapButtonText}>Harita</Text>
-        </TouchableOpacity>
+
+        {/* İlçe ve Harita Butonu */}
+        <View style={styles.cardFooter}>
+          <View style={[styles.districtBadge, { backgroundColor: `${theme.colors.accent}20` }]}>
+            <Text style={[styles.districtText, { color: theme.colors.accent }]}>
+              {facility.district}
+            </Text>
+          </View>
+          
+          <TouchableOpacity
+            style={[styles.mapButton, { backgroundColor: sportColor }]}
+            onPress={() => onMapPress?.(facility)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="map-outline" size={16} color="white" />
+            <Text style={styles.mapButtonText}>Harita</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -100,6 +135,13 @@ const FilterModal: React.FC<{
 }> = ({ visible, onClose, onApplyFilters, currentFilters }) => {
   const { theme } = useThemeStore();
   const [tempFilters, setTempFilters] = useState<FilterOptions>(currentFilters);
+
+  // Modal açıldığında currentFilters ile senkronize et
+  React.useEffect(() => {
+    if (visible) {
+      setTempFilters(currentFilters);
+    }
+  }, [visible, currentFilters]);
 
   const toggleSport = (sport: SportType) => {
     setTempFilters(prev => ({
@@ -212,6 +254,9 @@ const FilterModal: React.FC<{
                 );
               })}
             </View>
+            
+            {/* Boşluk için dummy content */}
+            <View style={{ height: 50 }} />
           </ScrollView>
 
           <View style={styles.modalFooter}>
@@ -367,6 +412,8 @@ export const SportsFacilitiesScreen: React.FC = () => {
           />
         )}
         keyExtractor={(item, index) => `${item.name}-${index}`}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
@@ -453,56 +500,71 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
   facilityCard: {
+    flex: 1,
+    marginHorizontal: 4,
     marginBottom: 16,
     borderRadius: 16,
-    padding: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    maxWidth: '48%',
   },
-  cardHeader: {
+  facilityImageContainer: {
+    width: '100%',
+    height: 120,
+    position: 'relative',
+  },
+  facilityImage: {
+    width: '100%',
+    height: '100%',
+  },
+  sportOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    marginBottom: 12,
-  },
-  sportIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 4,
   },
-  sportInfo: {
+  sportOverlayText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
     flex: 1,
   },
-  sportType: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  facilityContent: {
+    padding: 12,
   },
   facilityName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
+    marginBottom: 6,
   },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 10,
+    gap: 6,
   },
   addressText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -510,25 +572,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   districtBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   districtText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   mapButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
   },
   mapButtonText: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -565,8 +627,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   modalBody: {
-    flex: 1,
+    maxHeight: 400,
     paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   filterSectionTitle: {
     fontSize: 16,

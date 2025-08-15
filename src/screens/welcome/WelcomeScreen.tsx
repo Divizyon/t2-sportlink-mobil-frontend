@@ -73,7 +73,9 @@ const WelcomeScreen: React.FC = () => {
               <View style={styles.footerContainer}>
                 <Text style={styles.versionText}>versiyon 0.0.1</Text>
                 <Text style={styles.copyrightText}>© 2025 SportLink</Text>
-                <Text style={styles.developedByText}>Developed by Divizyon</Text>
+                <View style={styles.partnerContainer}>
+                  <Text style={styles.developedByText}>Developed by Divizyon & KBB</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -225,6 +227,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 12,
+  },
+  partnerContainer: {
+    alignItems: 'center',
+    marginTop: 4,
   },
   developedByText: {
     textAlign: 'center',

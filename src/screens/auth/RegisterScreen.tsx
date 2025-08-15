@@ -358,7 +358,14 @@ export const RegisterScreen: React.FC = () => {
               style={styles.divizyonLogo}
               resizeMode="contain"
             />
-            <Text style={styles.divizyonText}>Powered by Divizyon</Text>
+            <Text style={styles.divizyonText}>Divizyon</Text>
+            <Text style={styles.partnerSeparator}> & </Text>
+            <Image 
+              source={require('../../../assets/kbb.png')} 
+              style={styles.kbbLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.kbbText}>KBB</Text>
           </View>
         </View>
         
@@ -789,24 +796,39 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   divizyonContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'flex-end',
     paddingRight: 10,
     paddingTop: 8,
   },
   divizyonLogo: {
-    width: 28,
-    height: 28,
-    marginBottom: 4,
+    width: 20,
+    height: 20,
+    marginRight: 4,
   },
   divizyonText: {
     fontSize: 10,
     color: '#666',
     fontStyle: 'italic',
-    textAlign: 'right',
-    maxWidth: 120,
-    lineHeight: 12,
+    fontWeight: 'bold',
+  },
+  partnerSeparator: {
+    fontSize: 10,
+    color: '#666',
+    fontWeight: 'bold',
+    marginHorizontal: 2,
+  },
+  kbbLogo: {
+    width: 20,
+    height: 20,
+    marginHorizontal: 4,
+  },
+  kbbText: {
+    fontSize: 10,
+    color: '#666',
+    fontStyle: 'italic',
+    fontWeight: 'bold',
   },
 }); 

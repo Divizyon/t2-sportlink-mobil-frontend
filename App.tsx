@@ -125,6 +125,15 @@ const SplashScreen = () => {
           <Text style={styles.divizyonText}>
             Divizyon
           </Text>
+          <Text style={styles.partnerText}> & </Text>
+          <Image 
+            source={require('./assets/kbb.png')}
+            style={styles.kbbIcon}
+            resizeMode="contain"
+          />
+          <Text style={styles.kbbText}>
+            KBB
+          </Text>
         </View>
       </Animated.View>
     </View>
@@ -308,6 +317,26 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   divizyonText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+    fontStyle: 'italic',
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  partnerText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+    fontWeight: '400',
+    marginHorizontal: 2,
+  },
+  kbbIcon: {
+    width: 16,
+    height: 16,
+    marginHorizontal: 4,
+  },
+  kbbText: {
     fontSize: 11,
     color: '#FFFFFF',
     letterSpacing: 0.3,

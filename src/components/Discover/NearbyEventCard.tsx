@@ -331,7 +331,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
                 disabled={isJoining}
               >
                 <Ionicons name="checkmark-circle-outline" size={14} color="white" style={{ marginRight: 2 }} />
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Katıl</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Detay</Text>
               </TouchableOpacity>
             ) : isEventFull ? (
               <View style={{ 
@@ -362,7 +362,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
                 ) : (
                   <>
                     <Ionicons name="add-circle-outline" size={14} color={getSportTagColor(event.sport.name)} style={{ marginRight: 2 }} />
-                    <Text style={{ color: getSportTagColor(event.sport.name), fontWeight: 'bold', fontSize: 13 }}>Katıl</Text>
+                    <Text style={{ color: getSportTagColor(event.sport.name), fontWeight: 'bold', fontSize: 13 }}>Detay</Text>
                   </>
                 )}
               </TouchableOpacity>
