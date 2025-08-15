@@ -17,6 +17,54 @@ import { useAuthStore } from '../../store/userStore/authStore';
 import { Event } from '../../types/eventTypes/event.types';
 import { formatDate, formatTimeRange, isDatePassed } from '../../utils/dateUtils';
 
+// Spor görselleri - assets/sportImage altındaki tüm görselleri ekle
+const footballImage = require('../../../assets/sportImage/football.png');
+const basketballImage = require('../../../assets/sportImage/basketball.png');
+const tennisImage = require('../../../assets/sportImage/tennis.png');
+const volleyballImage = require('../../../assets/sportImage/volleyball.png');
+const walkImage = require('../../../assets/sportImage/walk.png');
+
+// Spor kategorilerine göre lokal görsel tanımları
+const sportImages: Record<string, any> = {
+  futbol: footballImage,
+  football: footballImage,
+  basketbol: basketballImage,
+  basketball: basketballImage,
+  tenis: tennisImage,
+  tennis: tennisImage,
+  voleybol: volleyballImage,
+  volleyball: volleyballImage,
+  yürüyüş: walkImage,
+  walk: walkImage,
+  default: footballImage, // Default olarak futbol görseli
+};
+
+// Spor kategorisini alarak görsel kaynağını döndüren yardımcı fonksiyon
+export const getSportImageSource = (sportName: string): any => {
+  if (!sportName) return sportImages.default;
+  const sport = sportName.toLowerCase();
+  if (sport.includes('yürü') || sport.includes('walk')) return sportImages.yürüyüş;
+  if (sport.includes('futbol') || sport.includes('football')) return sportImages.futbol;
+  if (sport.includes('basket')) return sportImages.basketbol;
+  if (sport.includes('tenis') || sport.includes('tennis')) return sportImages.tenis;
+  if (sport.includes('voley') || sport.includes('volley')) return sportImages.voleybol;
+  return sportImages.default;
+};
+
+// Spor kategorisine göre tag rengini döndüren yardımcı fonksiyon
+export const getSportTagColor = (sportName: string): string => {
+  if (!sportName) return '#2196F3';
+  
+  const sport = sportName.toLowerCase();
+  if (sport.includes('yürü') || sport.includes('walk')) return '#479B6E';
+  if (sport.includes('futbol') || sport.includes('football')) return '#64BF77';
+  if (sport.includes('basket')) return '#E4843D';
+  if (sport.includes('yüz') || sport.includes('swim')) return '#27BCE7';
+  if (sport.includes('tenis')) return '#FF9800';
+  if (sport.includes('voleybol')) return '#9C27B0';
+  return '#2196F3';
+};
+
 const { width } = Dimensions.get('window');
 
 interface EventCardProps {
@@ -52,10 +100,6 @@ export const EventCard: React.FC<EventCardProps> = ({
   };
   
   const isEventFull = safeEvent.participant_count >= safeEvent.max_participants;
-  
-  // API yapısına göre kullanıcının katılma durumunu belirle
-  const isUserParticipant = safeEvent.is_joined || false;
-  const isUserCreator = safeEvent.creator_id === user?.id;
 
   // Etkinliğe katılma fonksiyonu
   const handleJoinEvent = async () => {
@@ -90,382 +134,175 @@ export const EventCard: React.FC<EventCardProps> = ({
     }
   };
 
-  // Spor etkinliği için uygun ikonu belirle
-  const getSportIcon = (sport: any) => {
-    if (!sport) return 'fitness-outline';
+  
+  // API yapısına göre kullanıcının katılma durumunu belirle
+  const isUserParticipant = safeEvent.is_joined || false;
+  const isUserCreator = safeEvent.creator_id === user?.id;
+
+  // Spor kategorisine göre icon adını döndüren yardımcı fonksiyon
+  const getSportIcon = (
+    sportName: string
+  ): "football-outline" | "basketball-outline" | "tennisball-outline" | "baseball-outline" | "fitness-outline" => {
+    if (!sportName) return 'fitness-outline';
     
-    // Spor ismini al (api yanıtına göre)
-    const sportName = sport.name?.toLowerCase() || '';
-    const sportIcon = sport.icon || '';
-    
-    // API'den gelen icon değerini kontrol et
-    if (sportIcon && sportIcon !== 'default-icon') {
-      if (sportIcon.includes('football')) return 'football-outline';
-      if (sportIcon.includes('basketball')) return 'basketball-outline';
-      return 'fitness-outline';
-    }
-    
-    // Sport adına göre standart ikon belirle
-    if (sportName.includes('futbol')) return 'football-outline';
-    if (sportName.includes('basketbol')) return 'basketball-outline'; 
-    if (sportName.includes('voleybol')) return 'baseball-outline';
-    if (sportName.includes('tenis')) return 'tennisball-outline';
-    if (sportName.includes('yüzme')) return 'water-outline';
-    if (sportName.includes('koşu') || sportName.includes('kosu')) return 'walk-outline';
-    if (sportName.includes('bisiklet')) return 'bicycle-outline';
-    if (sportName.includes('e-spor') || sportName.includes('espor')) return 'game-controller-outline';
-    if (sportName.includes('masa tenisi')) return 'tennisball-outline';
-    return 'fitness-outline'; // Varsayılan
+    const sport = sportName.toLowerCase();
+    if (sport.includes('futbol')) return 'football-outline';
+    if (sport.includes('basket')) return 'basketball-outline';
+    if (sport.includes('tenis')) return 'tennisball-outline';
+    if (sport.includes('voleybol')) return 'baseball-outline';
+    return 'fitness-outline';
   };
-  
-  // Katılımcıların avatarlarını göster
-  const renderParticipantAvatars = () => {
-    const maxVisibleAvatars = 3;
-    const participants = safeEvent.participants || [];
-    const totalParticipants = safeEvent.participant_count;
+
+  // Tarih ve saat formatları
+  const formatEventDate = (date: Date | string) => {
+    const eventDate = new Date(date);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     
-    // Gösterilecek katılımcıları belirle
-    const visibleParticipants = participants.slice(0, maxVisibleAvatars);
-    
-    return (
-      <View style={styles.participantsIconContainer}>
-        {/* Katılımcılar varsa en fazla 3 avatar göster */}
-        {visibleParticipants.length > 0 && visibleParticipants.map((participant :any, index:any) => (
-          <View 
-            key={participant.user_id || index}
-            style={[
-              styles.participantAvatar,
-              { 
-                backgroundColor: theme.colors.accent,
-                left: index * -8,
-                zIndex: maxVisibleAvatars - index,
-              }
-            ]}
-          >
-            {participant.user?.profile_picture ? (
-              <Image source={{ uri: participant.user.profile_picture }} style={styles.avatarImage} />
-            ) : (
-              <Ionicons name="person" size={10} color="white" />
-            )}
-          </View>
-        ))}
-        
-        {/* Eğer katılımcı yoksa veya hiç gösterilen katılımcı yoksa */}
-        {visibleParticipants.length === 0 && (
-          <View 
-            style={[
-              styles.participantAvatar,
-              { 
-                backgroundColor: theme.colors.accent,
-                zIndex: 3,
-              }
-            ]}
-          >
-            <Ionicons name="person" size={10} color="white" />
-          </View>
-        )}
-        
-        {/* Ek katılımcıları +X şeklinde göster */}
-        {totalParticipants > maxVisibleAvatars && (
-          <View 
-            style={[
-              styles.participantAvatarMore,
-              { 
-                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)',
-                left: (maxVisibleAvatars - 1) * -8 + 8,
-                zIndex: 0,
-              }
-            ]}
-          >
-            <Text style={[styles.moreText, { color: theme.colors.text }]}>
-              +{totalParticipants - maxVisibleAvatars}
-            </Text>
-          </View>
-        )}
-      </View>
-    );
-  };
-  
-  // Oluşturucu bilgisini formatla
-  const getCreatorName = () => {
-    if (!safeEvent.creator) return 'Kullanıcı';
-    
-    const firstName = safeEvent.creator.first_name || '';
-    const lastName = safeEvent.creator.last_name || '';
-    const username = safeEvent.creator.username || '';
-    
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName || username || 'Kullanıcı';
-  };
-  
-  // Tarihi geçmiş etkinlik mi kontrol et  
-  const isExpiredEvent = safeEvent.event_date && isDatePassed(safeEvent.event_date) && safeEvent.status === 'active';
-  const shouldHighlight = isExpiredEvent;
-  
-  // Status badge için ikon ve renk belirle
-  const getStatusBadge = () => {
-    // Kullanıcının bu etkinlikle ilgili durumu
-    if (isUserCreator) {
-      return {
-        icon: 'star',
-        color: '#FFD700', // Altın rengi
-        bgColor: '#FFD700',
-        show: true
-      };
-    }
-    
-    if (isUserParticipant) {
-      return {
-        icon: 'checkmark',
-        color: '#4CAF50', // Yeşil
-        bgColor: '#4CAF50',
-        show: true
-      };
-    }
-    
-    // Etkinlik durumuna göre
-    switch (safeEvent.status) {
-      case 'active':
-        if (!isEventFull) {
-          return {
-            icon: 'add',
-            color: '#4CAF50', // Yeşil - pozitif mesaj için
-            bgColor: '#4CAF50',
-            show: true
-          };
-        }
-        return { show: false };
-      case 'completed':
-        return {
-          icon: 'trophy',
-          color: '#4CAF50', // Yeşil
-          bgColor: '#4CAF50',
-          show: true
-        };
-      default:
-        return { show: false };
+    if (eventDate.toDateString() === today.toDateString()) {
+      return 'Bugün';
+    } else if (eventDate.toDateString() === tomorrow.toDateString()) {
+      return 'Yarın';
+    } else {
+      // Basit Türkçe gün formatı
+      const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+      return days[eventDate.getDay()];
     }
   };
-  
-  const statusBadge = getStatusBadge();
-  
+
+  const formatEventTime = (time: Date | string) => {
+    const eventTime = new Date(time);
+    return `${eventTime.getHours().toString().padStart(2, '0')}:${eventTime.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  // Kategori görselini ve tag rengini belirleme
+  const sportImage = getSportImageSource(safeEvent.sport?.name || '');
+  const tagColor = getSportTagColor(safeEvent.sport?.name || '');
+  const sportIconName = getSportIcon(safeEvent.sport?.name || '');
+
   return (
-    <TouchableOpacity 
-      style={[
-        styles.container, 
-        { 
-          backgroundColor: theme.colors.cardBackground || theme.colors.background,
-          borderColor: getBorderColor(safeEvent.status, safeEvent.event_date, safeEvent.is_private, theme.colors),
-          borderWidth: 2, // Çerçeveyi daha belirgin yapmak için 2 yaptık
-          shadowColor: safeEvent.is_private ? '#000000' : getBorderColor(safeEvent.status, safeEvent.event_date, safeEvent.is_private, theme.colors),
-          shadowOpacity: safeEvent.is_private ? 0.15 : 0.1,
-          // Pasif veya tarihi geçmiş etkinlikler için opaklığı azalt
-          opacity: shouldHighlight ? 0.8 : 1,
-        },
-        style
-      ]} 
+    <TouchableOpacity
+      style={[styles.container, { 
+        backgroundColor: theme.colors.cardBackground, 
+        borderColor: tagColor, 
+        borderWidth: 3 // Border kalınlığı
+      }]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
     >
-      {/* Status Badge - Sol üst köşe */}
-      {statusBadge.show && (
-        <View style={[
-          styles.statusBadgeTopLeft,
-          { backgroundColor: statusBadge.bgColor }
-        ]}>
-          <Ionicons 
-            name={statusBadge.icon as any} 
-            size={16} 
-            color="white" 
-          />
-        </View>
-      )}
-      
-      {/* Kategori/Spor Türü İkonu - Daha Belirgin */}
-      <View style={[styles.sportIconContainer, { backgroundColor: '#FF6B35' + '20' }]}>
-        <Ionicons 
-          name={getSportIcon(safeEvent.sport)} 
-          size={24} 
-          color="#FF6B35" 
+      {/* Spor Kategori Resmi */}
+      <View style={[styles.imageContainer, { backgroundColor: '#E6F4EA' }]}> 
+        <Image 
+          source={sportImage}
+          style={styles.sportImage}
+          resizeMode="cover"
         />
       </View>
       
-      {/* Status Badge - Aktif olmayan etkinlikler için */}
-      {(safeEvent.status !== 'active' || shouldHighlight) && (
-        <View style={[
-          styles.expiredBadge, 
-          { 
-            backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) 
-          }
-        ]}>
-          <Ionicons 
-            name={getStatusIcon(safeEvent.status, safeEvent.event_date)} 
-            size={12} 
-            color="white" 
-          />
-        </View>
-      )}
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text 
-          style={[styles.title, { color: theme.colors.text }]} 
-          numberOfLines={1}
-        >
-          {safeEvent.title}
-        </Text>
-      </View>
-      
-      {/* Status Badge */}
-      <View style={styles.statusContainer}>
-        <View style={[
-          styles.statusBadge, 
-          { 
-            backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) + '20',
-            borderColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), 
-          }
-        ]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors) }]} />
-          <Ionicons 
-            name={getStatusIcon(safeEvent.status, safeEvent.event_date)} 
-            size={12} 
-            color={getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors)} 
-            style={{marginRight: 4}} 
-          />
-          <Text style={[styles.statusText, { color: getStatusColor(safeEvent.status, safeEvent.event_date, theme.colors), fontWeight: '700' }]}>
-            {getStatusText(safeEvent.status, safeEvent.event_date)}
+      <View style={styles.contentContainer}>
+        {/* Etkinlik Başlığı ve Katılımcı Sayısı */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={[styles.title, { color: '#222', fontWeight: 'bold', fontSize: 17, flex: 1, marginRight: 8 }]} numberOfLines={1}>
+            {safeEvent.title || `${safeEvent.sport?.name || 'Spor'} Etkinliği`}
           </Text>
-        </View>
-        
-        {/* Özel etkinlik rozeti */}
-        {safeEvent.is_private && (
-          <View style={[
-            styles.privateBadge, 
-            { 
-              backgroundColor: theme.colors.accent + '15',
-              borderColor: theme.colors.accent, 
-            }
-          ]}>
-            <Ionicons name="lock-closed" size={10} color={theme.colors.accent} style={styles.privateIcon} />
-            <Text style={[styles.privateText, { color: theme.colors.accent }]}>
-              Özel Etkinlik
+          {/* Katılımcı sayısı badgesi - etkinlik adının sağında */}
+          <View style={{
+            backgroundColor: '#4A90E2',
+            borderRadius: 15,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <Ionicons name="people-outline" size={14} color="white" />
+            <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 4, fontSize: 12 }}>
+              {safeEvent.participant_count || 0}/{safeEvent.max_participants || 10}
             </Text>
           </View>
-        )}
-      </View>
-      
-      {/* Divider */}
-      <View style={[styles.divider, { backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]} />
-      
-      {/* Details - Daha Net Bilgiler */}
-      <View style={styles.details}>
-        <View style={styles.infoItem}>
-          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
-            <Ionicons name="calendar-outline" size={16} color="#FF6B35" />
-          </View>
-          <Text style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}>
-            {formatDate(safeEvent.event_date)}
+        </View>
+        
+        {/* Tarih */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <Ionicons name="calendar-outline" size={16} color="#222" />
+          <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }}>
+            {formatEventDate(safeEvent.event_date)}
           </Text>
         </View>
         
-        <View style={styles.infoItem}>
-          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
-            <Ionicons name="time-outline" size={16} color="#FF6B35" />
-          </View>
-          <Text style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}>
-            {formatTimeRange(safeEvent.start_time, safeEvent.end_time)}
+        {/* Saat */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <Ionicons name="time-outline" size={16} color="#222" />
+          <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }}>
+            {formatEventTime(safeEvent.start_time)}
           </Text>
         </View>
         
-        <View style={styles.infoItem}>
-          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
-            <Ionicons name="location-outline" size={16} color="#FF6B35" />
+        {/* Lokasyon ve Katıl Butonu */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+            <Ionicons name="location-outline" size={16} color="#222" />
+            <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }} numberOfLines={1}>
+              {safeEvent.location_name && safeEvent.location_name.length > 15 
+                ? safeEvent.location_name.substring(0, 15) + '...' 
+                : safeEvent.location_name}
+            </Text>
           </View>
-          <Text 
-            style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}
-            numberOfLines={1}
-          >
-            {safeEvent.location_name}
-          </Text>
-        </View>
-      </View>
-      
-      {/* Footer */}
-      <View style={styles.footer}>
-        {/* Participants - Sol taraf */}
-        <View style={styles.participantsContainer}>
-          {renderParticipantAvatars()}
           
-          <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-            {safeEvent.participant_count}/{safeEvent.max_participants}
-          </Text>
-        </View>
-        
-        {/* Katıl Butonu - Sağ taraf */}
-        {!isUserParticipant && !isUserCreator && !isEventFull && safeEvent.status === 'active' && (
-          <TouchableOpacity 
-            style={[
-              styles.joinButton, 
-              { 
-                backgroundColor: isJoining ? '#ccc' : '#FF6B35',
-                opacity: isJoining ? 0.7 : 1
-              }
-            ]}
-            onPress={handleJoinEvent}
-            activeOpacity={0.8}
-            disabled={isJoining}
-          >
-            {isJoining ? (
-              <ActivityIndicator size="small" color="white" style={{ marginRight: 6 }} />
-            ) : (
-              <Ionicons name="add-circle-outline" size={16} color="white" style={{ marginRight: 6 }} />
-            )}
-            <Text style={styles.joinButtonText}>
-              {isJoining ? 'Katılıyor...' : 'Katıl'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      {/* Join status badges */}
-      {showJoinStatus && (
-        <View style={styles.joinStatusContainer}>
-            {isUserParticipant && (
-              <View style={[styles.joinBadge, { backgroundColor: '#4CAF50' + '15' }]}>
-                <Ionicons name="checkmark-circle" size={14} color="#4CAF50" style={{ marginRight: 4 }} />
-                <Text style={[styles.joinBadgeText, { color: '#4CAF50' }]}>Katıldınız</Text>
-              </View>
-            )}
-            
-            {isUserCreator && (
-              <View style={[styles.joinBadge, { backgroundColor: theme.colors.primary + '15' }]}>
-                <Ionicons name="create" size={14} color={theme.colors.primary} style={{ marginRight: 4 }} />
-                <Text style={[styles.joinBadgeText, { color: theme.colors.primary }]}>Düzenleyiciniz</Text>
-              </View>
-            )}
-            
-            {isEventFull && !isUserParticipant && !isUserCreator && (
-              <View style={[styles.joinBadge, { backgroundColor: theme.colors.error + '15' }]}>
-                <Ionicons name="close-circle" size={14} color={theme.colors.error} style={{ marginRight: 4 }} />
-                <Text style={[styles.joinBadgeText, { color: theme.colors.error }]}>Dolu</Text>
-              </View>
-            )}
-          </View>
-        )}
-      
-      {/* Creator info */}
-      {safeEvent.creator && (
-        <View style={styles.creatorSection}>
-          <View style={styles.creatorContainer}>
-            <View style={[styles.creatorAvatarPlaceholder, { backgroundColor: theme.colors.accent + '30' }]}>
-              <Ionicons name="person" size={12} color={theme.colors.accent} />
+          {/* Katıl Butonu - konum bilgisinin sağında */}
+          {isUserParticipant ? (
+            <TouchableOpacity 
+              style={{ 
+                borderWidth: 2, 
+                borderColor: tagColor, 
+                backgroundColor: tagColor, 
+                borderRadius: 20, 
+                paddingHorizontal: 12, 
+                paddingVertical: 6, 
+                flexDirection: 'row', 
+                alignItems: 'center' 
+              }}
+              disabled={true}
+            >
+              <Ionicons name="checkmark-circle-outline" size={14} color="white" style={{ marginRight: 2 }} />
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Katıl</Text>
+            </TouchableOpacity>
+          ) : isEventFull ? (
+            <View style={{ 
+              borderWidth: 2, 
+              borderColor: '#aaa', 
+              borderRadius: 20, 
+              paddingHorizontal: 12, 
+              paddingVertical: 6 
+            }}>
+              <Text style={{ color: '#aaa', fontWeight: 'bold', fontSize: 13 }}>Dolu</Text>
             </View>
-            <Text style={[styles.creatorName, { color: theme.colors.text }]}>
-              {getCreatorName()}
-            </Text>
-          </View>
+          ) : (
+            <TouchableOpacity 
+              style={{ 
+                borderWidth: 2, 
+                borderColor: tagColor, 
+                borderRadius: 20, 
+                paddingHorizontal: 12, 
+                paddingVertical: 6, 
+                flexDirection: 'row', 
+                alignItems: 'center' 
+              }}
+              onPress={handleJoinEvent}
+              disabled={isJoining}
+            >
+              {isJoining ? (
+                <ActivityIndicator size="small" color={tagColor} />
+              ) : (
+                <>
+                  <Ionicons name="add-circle-outline" size={14} color={tagColor} style={{ marginRight: 2 }} />
+                  <Text style={{ color: tagColor, fontWeight: 'bold', fontSize: 13 }}>Katıl</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
-      )}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -562,15 +399,37 @@ const getStatusIcon = (status: string, eventDate?: string) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: 16,
-    padding: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    borderWidth: 1,
     elevation: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    width: width - 32, // Ekran genişliği - marginler
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
+    overflow: 'hidden',
+  },
+  sportImage: {
+    width: '100%',
+    height: '100%',
+  },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   statusBadgeTopLeft: {
     position: 'absolute',
@@ -606,11 +465,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
     paddingRight: 40,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    flexShrink: 1,
   },
   ratingContainer: {
     flexDirection: 'row',

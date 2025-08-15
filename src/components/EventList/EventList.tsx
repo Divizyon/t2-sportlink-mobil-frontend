@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardContainer: {
-    marginBottom: 6,
+    marginBottom: 12,
   }
 });
