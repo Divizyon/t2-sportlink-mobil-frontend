@@ -547,20 +547,7 @@ export const HomeScreen: React.FC = () => {
               </View>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Duyurular</Text>
             </View>
-            <TouchableOpacity>
-              <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                paddingRight: 5,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
-              </View>
-            </TouchableOpacity>
+           
           </View>
           
           {isLoadingAnnouncements ? (
@@ -704,12 +691,56 @@ export const HomeScreen: React.FC = () => {
                 </TouchableOpacity>
               ))}
               
-              {/* Tümünü gör butonu */}
+              {/* İlgi alanları ekleme call to action */}
               <TouchableOpacity 
-                style={[styles.viewAllRecommendedCard, { backgroundColor: theme.colors.card + '80' }]}
-                onPress={handleViewAllEvents}
+                style={[styles.callToActionCard, { backgroundColor: `${theme.colors.accent}15` }]}
+                onPress={() => {
+                  // @ts-ignore
+                  navigation.navigate('Profile', { 
+                    screen: 'EditSportPreferences' 
+                  });
+                }}
+                activeOpacity={0.8}
               >
-               
+                <View style={styles.callToActionHeader}>
+                  <View style={[styles.callToActionIcon, { backgroundColor: theme.colors.accent }]}>
+                    <Ionicons name="add-circle-outline" size={24} color="white" />
+                  </View>
+                  <View style={[styles.callToActionBadge, { backgroundColor: `${theme.colors.accent}20` }]}>
+                    <Text style={[styles.callToActionBadgeText, { color: theme.colors.accent }]}>
+                      ÖNERİ
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.callToActionContent}>
+                  <Text style={[styles.callToActionTitle, { color: theme.colors.text }]}>
+                    Daha Fazla Öneri Al
+                  </Text>
+                  <Text style={[styles.callToActionSubtitle, { color: theme.colors.textSecondary }]}>
+                    Profilinden spor ilgi alanlarını ekle ve güncelle
+                  </Text>
+                  
+                  <View style={styles.callToActionFeatures}>
+                    <View style={styles.callToActionFeature}>
+                      <Ionicons name="checkmark-circle" size={16} color={theme.colors.accent} />
+                      <Text style={[styles.callToActionFeatureText, { color: theme.colors.textSecondary }]}>
+                        Kişiselleştirilmiş öneriler
+                      </Text>
+                    </View>
+                    <View style={styles.callToActionFeature}>
+                      <Ionicons name="checkmark-circle" size={16} color={theme.colors.accent} />
+                      <Text style={[styles.callToActionFeatureText, { color: theme.colors.textSecondary }]}>
+                        İlgi alanına uygun etkinlikler
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={[styles.callToActionButton, { backgroundColor: theme.colors.accent }]}>
+                    <Text style={styles.callToActionButtonText}>İlgi Alanları Ekle</Text>
+                    <Ionicons name="arrow-forward" size={16} color="white" />
+                  </View>
+                </View>
               </TouchableOpacity>
             </ScrollView>
           ) : (
@@ -1693,18 +1724,81 @@ const styles = StyleSheet.create({
     fontSize: 12,
     flex: 1,
   },
-  viewAllRecommendedCard: {
-    width: 160,
-    padding: 16,
+
+  callToActionCard: {
+    width: 532, // 2 kart boyutunda (260 * 2 + margin)
     borderRadius: 16,
+    marginRight: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    shadowColor: '#000',
+   
+  },
+  callToActionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    paddingBottom: 8,
+  },
+  callToActionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  callToActionBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  callToActionBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  callToActionContent: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  callToActionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  callToActionSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  callToActionFeatures: {
+    marginBottom: 16,
+    gap: 8,
+  },
+  callToActionFeature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  callToActionFeatureText: {
+    fontSize: 13,
+    flex: 1,
+  },
+  callToActionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    marginRight: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  callToActionButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   recommendationReasonBadge: {
     position: 'absolute',

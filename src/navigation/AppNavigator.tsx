@@ -34,7 +34,7 @@ import WelcomeScreen from '../screens/welcome/WelcomeScreen';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { EventsScreen } from '../screens/events/EventsScreen';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
-import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { SportsFacilitiesScreen } from '../screens/sportsFacilities/SportsFacilitiesScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 // App Screens
@@ -246,36 +246,12 @@ const TabNavigator = () => {
         })}
       />
       <Tab.Screen
-        name="Notifications"
-        component={NotificationsScreen}
+        name="SportsFacilities"
+        component={SportsFacilitiesScreen}
         options={{
-          tabBarLabel: 'Bildirimler',
+          tabBarLabel: 'Spor Alanları',
           tabBarIcon: ({ color, size }) => (
-            <View>
-              <Ionicons name="notifications-outline" size={size} color={color} />
-              {unreadCount > 0 && (
-                <View style={{
-                  position: 'absolute',
-                  top: -6,
-                  right: -10,
-                  minWidth: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  backgroundColor: theme.colors.accent,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingHorizontal: 4,
-                }}>
-                  <Text style={{
-                    color: 'white',
-                    fontSize: 10,
-                    fontWeight: 'bold',
-                  }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <Ionicons name="fitness-outline" size={size} color={color} />
           ),
         }}
       />

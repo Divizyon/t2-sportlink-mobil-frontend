@@ -22,7 +22,7 @@ const footballImage = require('../../../assets/sportImage/football.png');
 const basketballImage = require('../../../assets/sportImage/basketball.png');
 const tennisImage = require('../../../assets/sportImage/tennis.png');
 const volleyballImage = require('../../../assets/sportImage/volleyball.png');
-const walkImage = require('../../../assets/sportImage/walk.png');
+const walkImage = require('../../../assets/sportImage/run.png');
 
 // Spor kategorilerine göre lokal görsel tanımları
 const sportImages: Record<string, any> = {
@@ -117,7 +117,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           { text: 'Detaya Git', onPress: () => onPress && onPress() }
         ]
       );
-      return;
+  return;
     }
     
     try {
@@ -220,14 +220,6 @@ export const EventCard: React.FC<EventCardProps> = ({
               {safeEvent.participant_count || 0}/{safeEvent.max_participants || 10}
             </Text>
           </View>
-        </View>
-        
-        {/* Tarih */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-          <Ionicons name="calendar-outline" size={16} color="#222" />
-          <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }}>
-            {formatEventDate(safeEvent.event_date)}
-          </Text>
         </View>
         
         {/* Saat */}
@@ -397,21 +389,7 @@ const getStatusIcon = (status: string, eventDate?: string) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    elevation: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    overflow: 'hidden',
-    width: width - 32, // Ekran genişliği - marginler
-  },
+  // ...existing code...
   imageContainer: {
     position: 'relative',
     width: '100%',
@@ -542,22 +520,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  footer: {
-    flexDirection: 'row',
+  container: {
+    borderRadius: 16,
+    elevation: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    display: 'flex',
+    flexDirection: 'column',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  participantsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  participantsIconContainer: {
-    flexDirection: 'row',
-    marginRight: 12,
-    width: 44,
-    height: 20,
+    overflow: 'hidden',
+    minHeight: 180,
   },
   participantAvatar: {
     width: 20,

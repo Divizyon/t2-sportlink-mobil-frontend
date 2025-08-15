@@ -52,7 +52,7 @@ export const getSportTagColor = (sportName: string): string => {
   if (sport.includes('yüz') || sport.includes('swim')) return '#27BCE7';
   if (sport.includes('tenis')) return '#FF9800';
   if (sport.includes('voleybol')) return '#9C27B0';
-  return '#2196F3';
+  return '#64BF77';
 };// Spor kategorisine göre icon adını döndüren yardımcı fonksiyon
 // Ionicons'un kabul ettiği 'type' tiplerinden birini dönmeli
 export const getSportIcon = (
@@ -235,7 +235,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
         style={[styles.container, { 
           backgroundColor: theme.colors.cardBackground, 
           borderColor: getSportTagColor(event.sport.name), 
-          borderWidth: 3 // Border kalınlığını artırdık
+          borderWidth: 4 // Border kalınlığını artırdık
         }]}
         onPress={onPress}
         activeOpacity={0.85}

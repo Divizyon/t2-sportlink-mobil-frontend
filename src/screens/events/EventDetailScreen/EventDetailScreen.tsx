@@ -17,6 +17,7 @@ import {
   Modal,
   TextInput,
   FlatList,
+  ImageBackground,
 } from 'react-native';
 
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -28,6 +29,80 @@ import { useMapsStore } from '../../../store/appStore/mapsStore';
 import { formatDate, formatTimeRange, formatDateTime } from '../../../utils/dateUtils';
 import { colors } from '../../../constants/colors/colors';
 import { DistanceInfo } from '../../../components/maps/DistanceInfo';
+
+// Spor görselleri import
+const footballImage = require('../../../../assets/sportImage/football.png');
+const basketballImage = require('../../../../assets/sportImage/basketball.png');
+const tennisImage = require('../../../../assets/sportImage/tennis.png');
+const volleyballImage = require('../../../../assets/sportImage/volleyball.png');
+const walkImage = require('../../../../assets/sportImage/walk.png');
+
+// Spor kategorilerine göre görsel eşleştirme
+const sportImages: Record<string, any> = {
+  basketbol: basketballImage,
+  futbol: footballImage,
+  tenis: tennisImage,
+  voleybol: volleyballImage,
+  koşu: walkImage,
+  yoga: walkImage,
+  fitness: walkImage,  
+  yüzme: walkImage,
+  badminton: tennisImage,
+  bisiklet: walkImage,
+  default: footballImage,
+};
+
+// Spor kategorisine göre görsel döndüren fonksiyon
+const getSportImageSource = (sportName: string): any => {
+  if (!sportName) return sportImages.default;
+  const sport = sportName.toLowerCase();
+  
+  if (sport === 'basketbol') return sportImages.basketbol;
+  if (sport === 'futbol') return sportImages.futbol;
+  if (sport === 'tenis') return sportImages.tenis;
+  if (sport === 'voleybol') return sportImages.voleybol;
+  if (sport === 'koşu') return sportImages.koşu;
+  if (sport === 'yoga') return sportImages.yoga;
+  if (sport === 'fitness') return sportImages.fitness;
+  if (sport === 'yüzme') return sportImages.yüzme;
+  if (sport === 'badminton') return sportImages.badminton;
+  if (sport === 'bisiklet') return sportImages.bisiklet;
+  
+  if (sport.includes('basket')) return sportImages.basketbol;
+  if (sport.includes('futbol') || sport.includes('football')) return sportImages.futbol;
+  if (sport.includes('tenis') || sport.includes('tennis')) return sportImages.tenis;
+  if (sport.includes('voley') || sport.includes('volley')) return sportImages.voleybol;
+  if (sport.includes('koş') || sport.includes('yürü') || sport.includes('walk')) return sportImages.koşu;
+  
+  return sportImages.default;
+};
+
+// Spor kategorisine göre renk döndüren fonksiyon
+const getSportTagColor = (sportName: string): string => {
+  if (!sportName) return '#2196F3';
+  
+  const sport = sportName.toLowerCase();
+  
+  if (sport === 'basketbol') return '#E4843D';
+  if (sport === 'futbol') return '#64BF77';
+  if (sport === 'tenis') return '#FF9800';
+  if (sport === 'voleybol') return '#9C27B0';
+  if (sport === 'koşu') return '#479B6E';
+  if (sport === 'yoga') return '#8BC34A';
+  if (sport === 'fitness') return '#F44336';
+  if (sport === 'yüzme') return '#27BCE7';
+  if (sport === 'badminton') return '#FFEB3B';
+  if (sport === 'bisiklet') return '#607D8B';
+  
+  if (sport.includes('basket')) return '#E4843D';
+  if (sport.includes('futbol') || sport.includes('football')) return '#64BF77';
+  if (sport.includes('tenis')) return '#FF9800';
+  if (sport.includes('voleybol')) return '#9C27B0';
+  if (sport.includes('koş') || sport.includes('yürü') || sport.includes('walk')) return '#479B6E';
+  if (sport.includes('yüz') || sport.includes('swim')) return '#27BCE7';
+  
+  return '#2196F3';
+};
 
 // Route param tipini tanımla
 type EventDetailRouteParams = {
@@ -603,13 +678,20 @@ export const EventDetailScreen: React.FC = () => {
   
   if (!currentEvent) return null; // TypeScript için kontrol
   
-  // Sayısal değerleri doğru formatta parse et
-  const currentParticipants = parseInt(String(currentEvent.current_participants), 10) || 0;
+  // API response'undan doğru verileri al
+  const participants = currentEvent.participants || [];
+  const currentParticipants = participants.length;
   const maxParticipants = parseInt(String(currentEvent.max_participants), 10) || 1;
   
   const isEventCreator = currentEvent.creator_id === user?.id;
+  
+  // Kullanıcının bu etkinliğe katılıp katılmadığını kontrol et
+  const isUserJoined = participants.some((participant: any) => 
+    participant.user_id === user?.id || participant.user?.id === user?.id
+  );
+  
   const isEventFull = currentParticipants >= maxParticipants;
-  const canJoin = !currentEvent.is_joined && !isEventFull && currentEvent.status === 'active';
+  const canJoin = !isUserJoined && !isEventFull && currentEvent.status === 'active';
   
   // İlerleme çubuğu yüzdesi (0-100 arasında sınırlandırılmış)
   const progressPercentage = Math.min(
@@ -620,321 +702,299 @@ export const EventDetailScreen: React.FC = () => {
   // Kalan katılımcı sayısı
   const remainingSpots = Math.max(maxParticipants - currentParticipants, 0);
   
+  // Spor kategorisi bilgilerini al
+  const sportName = currentEvent.sport?.name || '';
+  const sportImage = getSportImageSource(sportName);
+  const sportColor = getSportTagColor(sportName);
+  
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <StatusBar 
-        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} 
-        backgroundColor="transparent" 
-        translucent 
-      />
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleGoBack}>
-          <Ionicons name="chevron-back" size={28} color={theme.colors.text} />
-        </TouchableOpacity>
-        
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleShareEvent}>
-            <Ionicons name="share-social-outline" size={22} color={theme.colors.text} />
-          </TouchableOpacity>
+      {/* Hero Image Section with Overlay */}
+      <View style={styles.heroSection}>
+        <ImageBackground 
+          source={sportImage} 
+          style={styles.heroImage}
+          imageStyle={styles.heroImageStyle}
+        >
+          {/* Gradient Overlay */}
+          <View style={[styles.gradientOverlay, { backgroundColor: sportColor + '99' }]} />
           
-          {isEventCreator && (
-            <TouchableOpacity style={styles.iconButton} onPress={handleEditEvent}>
-              <Ionicons name="create-outline" size={22} color={theme.colors.text} />
+          {/* Header */}
+          <SafeAreaView style={styles.header}>
+            <TouchableOpacity style={[styles.headerButton, styles.backBtn]} onPress={handleGoBack}>
+              <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
-          )}
-        </View>
+            
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={[styles.headerButton, styles.iconButton]} onPress={handleShareEvent}>
+                <Ionicons name="share-social-outline" size={20} color="white" />
+              </TouchableOpacity>
+              
+              {isEventCreator && (
+                <TouchableOpacity style={[styles.headerButton, styles.iconButton]} onPress={handleEditEvent}>
+                  <Ionicons name="create-outline" size={20} color="white" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </SafeAreaView>
+          
+          {/* Hero Content */}
+          <View style={styles.heroContent}>
+            {/* Sport Category Badge */}
+            <View style={[styles.sportBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+              <Text style={styles.sportBadgeText}>{sportName}</Text>
+            </View>
+            
+            {/* Title */}
+            <Text style={styles.heroTitle}>{currentEvent.title}</Text>
+            
+            {/* Date and Time */}
+            <View style={styles.heroInfo}>
+              <View style={styles.heroInfoItem}>
+                <Ionicons name="calendar-outline" size={16} color="white" />
+                <Text style={styles.heroInfoText}>
+                  {formatDate(currentEvent.event_date)}
+                </Text>
+              </View>
+              
+              <View style={styles.heroInfoItem}>
+                <Ionicons name="time-outline" size={16} color="white" />
+                <Text style={styles.heroInfoText}>
+                  {formatTimeRange(currentEvent.start_time, currentEvent.end_time)}
+                </Text>
+              </View>
+            </View>
+            
+            {/* Status and Privacy Badges */}
+            <View style={styles.badgeRow}>
+              <View style={[styles.statusBadge, { 
+                backgroundColor: currentEvent.status === 'active' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(255, 255, 255, 0.2)'
+              }]}>
+                <Text style={styles.statusBadgeText}>
+                  {getStatusText(currentEvent.status, currentEvent.event_date)}
+                </Text>
+              </View>
+              
+              {currentEvent.is_private && (
+                <View style={[styles.privateBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                  <Ionicons name="lock-closed" size={12} color="white" />
+                  <Text style={styles.privateBadgeText}>Özel</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </ImageBackground>
       </View>
       
+      {/* Content Section */}
       <ScrollView
+        style={styles.contentSection}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Etkinlik Başlığı ve Status Badge */}
-        <View style={styles.titleContainer}>
-          {/* Özel etkinlik rozeti */}
-          {currentEvent.is_private && (
-            <View style={[styles.privateBadge, { backgroundColor: theme.colors.primary + '20', alignSelf: 'flex-start', marginBottom: 8 }]}>
-              <Ionicons name="lock-closed" size={12} color={theme.colors.primary} style={styles.privateIcon} />
-              <Text style={[styles.privateText, { color: theme.colors.primary }]}>
-                Özel Etkinlik
-              </Text>
-            </View>
-          )}
-          
-          <View style={styles.badgeRow}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              {currentEvent.title}
-            </Text>
-          
-            <View style={[styles.statusBadge, { 
-              backgroundColor: currentEvent.status === 'active' ? theme.colors.accent + '20' : getStatusColor(currentEvent.status, currentEvent.event_date, theme.colors)
-            }]}>
-              <Text style={[styles.statusText, {
-                color: currentEvent.status === 'active' ? theme.colors.accent : 'white'
-              }]}>
-                {getStatusText(currentEvent.status, currentEvent.event_date)}
-              </Text>
-            </View>
-          </View>
-          
-          {/* Tarih ve Saat Bilgisi */}
-          <View style={styles.infoRow}>
-            <View style={styles.infoItem}>
-              <Ionicons name="calendar-outline" size={18} color={theme.colors.accent} />
-              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-                {formatDate(currentEvent.event_date)}
+        {/* Participants Section */}
+        <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <Ionicons name="people-outline" size={22} color={sportColor} />
+              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                Katılımcılar
               </Text>
             </View>
             
-            <View style={styles.infoItem}>
-              <Ionicons name="time-outline" size={18} color={theme.colors.accent} />
-              <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-                {formatTimeRange(currentEvent.start_time, currentEvent.end_time)}
-              </Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Özel etkinlik bilgisi */}
-        {currentEvent.is_private && !currentEvent.is_joined && !isEventCreator && (
-          <View style={[styles.section, { 
-            backgroundColor: theme.colors.primary + '10', 
-            borderWidth: 1, 
-            borderColor: theme.colors.primary + '30',
-            marginBottom: 16
-          }]}>
-            <View style={styles.privateEventInfoContainer}>
-              <Ionicons name="information-circle" size={24} color={theme.colors.primary} />
-              <Text style={[styles.privateEventInfoText, { color: theme.colors.text }]}>
-                Bu özel bir etkinliktir. Katılmak için organizatörden aldığınız davet kodunu girmeniz gerekecektir.
-              </Text>
-            </View>
-          </View>
-        )}
-        
-        {/* Katılımcı Bilgisi */}
-        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="people-outline" size={22} color={theme.colors.accent} />
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Katılımcılar
-            </Text>
-            <View style={styles.participantsCountBadge}>
-              <Text style={styles.participantsCountText}>
+            <View style={[styles.participantsBadge, { backgroundColor: sportColor + '20' }]}>
+              <Text style={[styles.participantsBadgeText, { color: sportColor }]}>
                 {currentParticipants}/{maxParticipants}
               </Text>
             </View>
           </View>
           
+          {/* Progress Bar */}
           <View style={styles.progressContainer}>
-            <View 
-              style={[
-                styles.progressBar, 
-                { backgroundColor: theme.colors.light }
-              ]}
-            >
+            <View style={[styles.progressBar, { backgroundColor: theme.colors.border }]}>
               <View 
                 style={[
                   styles.progressFill, 
                   { 
-                    backgroundColor: isEventFull ? theme.colors.error : theme.colors.accent,
+                    backgroundColor: isEventFull ? theme.colors.error : sportColor,
                     width: `${progressPercentage}%` 
                   }
                 ]}
               />
             </View>
-          </View>
-          
-          <View style={styles.participantsActions}>
-            <Text style={[styles.participantsStatus, { color: theme.colors.textSecondary }]}>
+            
+            <Text style={[styles.progressText, { color: theme.colors.textSecondary }]}>
               {isEventFull 
-                ? 'Bu etkinliğin kontenjanı dolmuştur.' 
+                ? 'Etkinlik dolu' 
                 : `${remainingSpots} kişilik yer kaldı`
               }
             </Text>
-            
-            {currentParticipants > 0 && (
-              <TouchableOpacity 
-                style={[styles.viewAllButton, { borderColor: theme.colors.accent }]}
-                onPress={handleOpenParticipantsModal}
-              >
-                <Text style={[styles.viewAllButtonText, { color: theme.colors.accent }]}>
-                  Tüm Katılımcıları Gör
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={theme.colors.accent} />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
         
-        {/* Konum ve Mesafe Bilgisi */}
-        {renderLocationAndDistance()}
-        
-        {/* Organizatör Bilgisi */}
-        {currentEvent.creator_name && (
-          <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="person-outline" size={22} color={theme.colors.accent} />
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Organizatör
+        {/* Location Section */}
+        <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <Ionicons name="location-outline" size={22} color={sportColor} />
+              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                Konum
               </Text>
             </View>
+          </View>
+          
+          <Text style={[styles.locationText, { color: theme.colors.text }]}>
+            {currentEvent.location_name}
+          </Text>
+          
+          {/* Distance Info */}
+          {currentEvent.location_latitude && currentEvent.location_longitude && lastLocation && (
+            <View style={styles.distanceContainer}>
+              <DistanceInfo
+                origin={`${lastLocation.latitude},${lastLocation.longitude}`}
+                destination={`${currentEvent.location_latitude},${currentEvent.location_longitude}`}
+                transportMode={selectedTransportMode}
+                showDetails={false}
+              />
+            </View>
+          )}
+          
+          {/* Map Buttons */}
+          <View style={styles.mapButtons}>
+            <TouchableOpacity 
+              style={[styles.mapButton, { backgroundColor: sportColor }]}
+              onPress={handleViewMap}
+            >
+              <Ionicons name="map-outline" size={18} color="white" />
+              <Text style={styles.mapButtonText}>Haritada Gör</Text>
+            </TouchableOpacity>
             
-            <View style={styles.creatorContainer}>
-              {currentEvent.creator_avatar ? (
-                <Image 
-                  source={{ uri: currentEvent.creator_avatar }} 
-                  style={styles.creatorAvatar}
-                />
-              ) : (
-                <View style={[styles.creatorAvatarPlaceholder, { backgroundColor: theme.colors.accent }]}>
-                  <Text style={styles.creatorAvatarText}>
-                    {currentEvent.creator_name.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              
-              <View style={styles.creatorInfo}>
-                <Text style={[styles.creatorName, { color: theme.colors.text }]}>
-                  {currentEvent.creator_name}
+            <TouchableOpacity 
+              style={[styles.mapButton, { backgroundColor: theme.colors.primary }]}
+              onPress={handleOpenMap}
+            >
+              <Ionicons name="navigate-outline" size={18} color="white" />
+              <Text style={styles.mapButtonText}>Yol Tarifi</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Description Section */}
+        <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <Ionicons name="document-text-outline" size={22} color={sportColor} />
+              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                Etkinlik Açıklaması
+              </Text>
+            </View>
+          </View>
+          
+          <Text style={[styles.descriptionText, { color: theme.colors.text }]}>
+            {currentEvent.description}
+          </Text>
+        </View>
+        
+        {/* Organizer Section */}
+        {currentEvent.creator && (
+          <View style={[styles.card, { backgroundColor: theme.colors.cardBackground }]}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderLeft}>
+                <Ionicons name="person-outline" size={22} color={sportColor} />
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                  Organizatör
                 </Text>
-                <Text style={[styles.creatorSubtext, { color: theme.colors.textSecondary }]}>
+              </View>
+            </View>
+            
+            <View style={styles.organizerContainer}>
+              <View style={[styles.organizerAvatar, { backgroundColor: sportColor }]}>
+                <Text style={styles.organizerAvatarText}>
+                  {`${currentEvent.creator.first_name} ${currentEvent.creator.last_name}`.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              
+              <View style={styles.organizerInfo}>
+                <Text style={[styles.organizerName, { color: theme.colors.text }]}>
+                  {`${currentEvent.creator.first_name} ${currentEvent.creator.last_name}`}
+                </Text>
+                <Text style={[styles.organizerRole, { color: theme.colors.textSecondary }]}>
                   {isEventCreator ? 'Siz (Etkinlik Organizatörü)' : 'Etkinlik Organizatörü'}
                 </Text>
               </View>
             </View>
           </View>
         )}
-        
-        {/* Etkinlik Açıklaması */}
-        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={22} color={theme.colors.accent} />
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Etkinlik Açıklaması
-            </Text>
-          </View>
-          
-          <Text style={[styles.description, { color: theme.colors.text }]}>
-            {currentEvent.description}
-          </Text>
-        </View>
-        
-        {/* Değerlendirme */}
-        {currentEvent.average_rating !== undefined && (
-          <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="star-outline" size={22} color={theme.colors.accent} />
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Değerlendirme
-              </Text>
-            </View>
-            
-            <View style={styles.ratingContainer}>
-              <View style={styles.stars}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Ionicons 
-                    key={star} 
-                    name={star <= Math.round(currentEvent.average_rating || 0) ? "star" : "star-outline"} 
-                    size={24} 
-                    color="#FFD700" 
-                    style={styles.starIcon}
-                  />
-                ))}
-              </View>
-              
-              <Text style={[styles.ratingText, { color: theme.colors.text }]}>
-                {(currentEvent.average_rating || 0).toFixed(1)}/5.0
-              </Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={[styles.rateButton, { borderColor: theme.colors.accent }]}
-              onPress={() => navigation.navigate('RateEvent', { eventId: currentEvent.id })}
-            >
-              <Text style={[styles.rateButtonText, { color: theme.colors.accent }]}>
-                Bu Etkinliği Değerlendir
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
       
-      {/* Alt butonlar */}
-      <SafeAreaView>
-        <View style={[styles.footer, { 
-          backgroundColor: theme.mode === 'dark' ? theme.colors.cardBackground : theme.colors.background,
-          borderTopColor: theme.colors.border
-        }]}>
-          {isEventCreator ? (
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
-              onPress={handleDeleteEvent}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <>
-                  <Ionicons name="trash-outline" size={20} color="white" />
-                  <Text style={styles.actionButtonText}>Etkinliği Sil</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : currentEvent.is_joined ? (
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
-              onPress={handleLeaveEvent}
-              disabled={isLeaving}
-            >
-              {isLeaving ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <>
-                  <Ionicons name="exit-outline" size={20} color="white" />
-                  <Text style={styles.actionButtonText}>Etkinlikten Ayrıl</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity 
-              style={[
-                styles.actionButton, 
-                { 
-                  backgroundColor: canJoin ? theme.colors.accent : theme.colors.dark,
-                  opacity: canJoin ? 1 : 0.7
-                }
-              ]}
-              onPress={handleJoinEvent}
-              disabled={!canJoin || isJoining}
-            >
-              {isJoining ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <>
-                  <Ionicons 
-                    name={canJoin ? (currentEvent.is_private ? "key-outline" : "checkmark-circle-outline") : "close-circle-outline"} 
-                    size={20} 
-                    color="white" 
-                  />
-                  <Text style={styles.actionButtonText}>
-                    {isEventFull ? 'Etkinlik Dolu' : (currentEvent.is_private ? 'Davet Kodu ile Katıl' : 'Etkinliğe Katıl')}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
+      {/* Bottom Action Button */}
+      <SafeAreaView style={[styles.bottomSection, { backgroundColor: theme.colors.cardBackground }]}>
+        {isEventCreator ? (
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
+            onPress={handleDeleteEvent}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={20} color="white" />
+                <Text style={styles.actionButtonText}>Etkinliği Sil</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        ) : isUserJoined ? (
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
+            onPress={handleLeaveEvent}
+            disabled={isLeaving}
+          >
+            {isLeaving ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons name="exit-outline" size={20} color="white" />
+                <Text style={styles.actionButtonText}>Etkinlikten Ayrıl</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[
+              styles.actionButton, 
+              { 
+                backgroundColor: canJoin ? sportColor : theme.colors.textSecondary,
+                opacity: canJoin ? 1 : 0.7
+              }
+            ]}
+            onPress={handleJoinEvent}
+            disabled={!canJoin || isJoining}
+          >
+            {isJoining ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons 
+                  name={canJoin ? (currentEvent.is_private ? "key-outline" : "checkmark-circle-outline") : "close-circle-outline"} 
+                  size={20} 
+                  color="white" 
+                />
+                <Text style={styles.actionButtonText}>
+                  {isEventFull ? 'Etkinlik Dolu' : (currentEvent.is_private ? 'Davet Kodu ile Katıl' : 'Etkinliğe Katıl')}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </SafeAreaView>
       
-      {/* Davet kodu modalı */}
+      {/* Modals */}
       {renderInvitationCodeModal()}
-      
-      {/* Participants Modal */}
       {renderParticipantsModal()}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1011,25 +1071,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+  
+  // Hero Section Styles
+  heroSection: {
+    height: 350,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroImageStyle: {
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingTop: 40,
-    paddingBottom: 8,
-    zIndex: 10,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 10,
   },
+  headerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerActions: {
-    flexDirection: 'row',
   },
   iconButton: {
     width: 40,
@@ -1039,20 +1130,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
+  
+  heroContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    justifyContent: 'flex-end',
   },
-  titleContainer: {
-    marginBottom: 16,
-    paddingTop: 8,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  
+  sportBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
     marginBottom: 12,
   },
+  sportBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
+  heroTitle: {
+    color: 'white',
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    lineHeight: 34,
+  },
+  
+  heroInfo: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 16,
+  },
+  heroInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroInfoText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 8,
+  },
+  
   statusBadge: {
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -1064,10 +1192,180 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  sportBadge: {
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'white',
+  },
+  
+  privateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
+    marginLeft: 8,
+  },
+  privateBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'white',
+    marginLeft: 4,
+  },
+  
+  // Content Section Styles
+  contentSection: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 30,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  
+  participantsBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  participantsBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  progressContainer: {
+    marginBottom: 16,
+  },
+  progressBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  
+  
+  locationText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  distanceContainer: {
+    marginBottom: 16,
+  },
+  mapButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  mapButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 6,
+  },
+  mapButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  
+  descriptionText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  
+  organizerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  organizerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  organizerAvatarText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  organizerInfo: {
+    flex: 1,
+  },
+  organizerName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  organizerRole: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  
+  // Bottom Section Styles
+  bottomSection: {
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 8,
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // Old styles that still needed
+  titleContainer: {
+    marginBottom: 16,
+    paddingTop: 8,
   },
   sportText: {
     fontWeight: '600',
@@ -1122,19 +1420,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.accent,
-  },
-  progressContainer: {
-    marginVertical: 8,
-  },
-  progressBar: {
-    height: 6,
-    borderRadius: 3,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
   },
   participantsStatus: {
     fontSize: 14,
@@ -1254,20 +1539,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  actionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
   backButton: {
     marginTop: 20,
     paddingVertical: 10,
@@ -1281,6 +1552,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
+    marginTop: 20,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1353,14 +1625,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-  },
-  privateBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    marginLeft: 8,
   },
   privateIcon: {
     marginRight: 4,

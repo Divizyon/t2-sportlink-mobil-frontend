@@ -65,22 +65,7 @@ export const NearbyEventsComponent: React.FC<NearbyEventsComponentProps> = ({
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Yakındaki Etkinlikler</Text>
           </View>
           
-          {onSeeAll && (
-            <TouchableOpacity onPress={onSeeAll}>
-              <View style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                paddingRight: 5,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
+   
         </View>
       )}
       
@@ -191,11 +176,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: 'rgba(0,0,0,0.05)',
+    borderWidth: 2,
     marginRight: 12,
   },
   viewAllContent: {

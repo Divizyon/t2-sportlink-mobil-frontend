@@ -55,7 +55,6 @@ export const EventList: React.FC<EventListProps> = ({
   // Boş liste durumu
   const renderEmpty = () => {
     if (isLoading) return null;
-    
     return (
       <View style={styles.emptyContainer}>
         <Animated.View 
@@ -70,26 +69,30 @@ export const EventList: React.FC<EventListProps> = ({
             color={theme.colors.accent} 
           />
         </Animated.View>
-        <Text style={[styles.emptyText, { color: theme.colors.text }]}>
+        <Text style={[styles.emptyText, { color: theme.colors.text }]}> 
           {emptyText}
         </Text>
       </View>
     );
   };
-  
-  // Etkinliğe tıklama işleyicisi
+
   const handleEventPress = (event: Event) => {
     if (onEventPress) {
       onEventPress(event);
     }
   };
-  
+
   return (
     <FlatList
       data={events}
+
+      
       renderItem={({ item, index }) => (
         <Animated.View
-          style={styles.cardContainer}
+          style={[
+            styles.cardContainer,
+
+          ]}
         >
           <EventCard
             event={item}
@@ -123,6 +126,7 @@ export const EventList: React.FC<EventListProps> = ({
       initialNumToRender={8}
       maxToRenderPerBatch={10}
       windowSize={10}
+      numColumns={2}
     />
   );
 };
@@ -165,6 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardContainer: {
-    marginBottom: 12,
+    width: '50%',
+    padding: 8
   }
 });

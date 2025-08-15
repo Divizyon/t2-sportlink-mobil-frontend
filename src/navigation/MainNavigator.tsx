@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { EventsScreen } from '../screens/events/EventsScreen';
 import { DiscoverScreen } from '../screens/discover/DiscoverScreen';
-import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { SportsFacilitiesScreen } from '../screens/sportsFacilities/SportsFacilitiesScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 import { useThemeStore } from '../store/appStore/themeStore';
@@ -77,21 +77,12 @@ export function MainNavigator() {
       />
       
       <Tab.Screen
-        name="Notifications"
-        component={NotificationsScreen}
+        name="SportsFacilities"
+        component={SportsFacilitiesScreen}
         options={{
-          tabBarLabel: 'Bildirimler',
+          tabBarLabel: 'Spor Alanları',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <View>
-              <Ionicons name="notifications-outline" size={size} color={color} />
-              {unreadCount > 0 && (
-                <View style={[styles.badgeContainer, { backgroundColor: theme.colors.primary }]}>
-                  <Text style={styles.badgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <Ionicons name="fitness-outline" size={size} color={color} />
           ),
         }}
       />
