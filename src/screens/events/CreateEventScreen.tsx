@@ -758,19 +758,15 @@ export const CreateEventScreen: React.FC = () => {
         visible={startTimeModalVisible}
         onRequestClose={() => setStartTimeModalVisible(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setStartTimeModalVisible(false)}
-        >
-          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setStartTimeModalVisible(false)} />
+          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}> 
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Başlangıç Saati Seçin</Text>
               <TouchableOpacity onPress={() => setStartTimeModalVisible(false)}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
             <DatePicker
               mode="time"
               minuteInterval={15}
@@ -787,7 +783,7 @@ export const CreateEventScreen: React.FC = () => {
               style={{ borderRadius: 10 }}
             />
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     );
   };
@@ -801,19 +797,15 @@ export const CreateEventScreen: React.FC = () => {
         visible={endTimeModalVisible}
         onRequestClose={() => setEndTimeModalVisible(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setEndTimeModalVisible(false)}
-        >
-          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setEndTimeModalVisible(false)} />
+          <View style={[styles.modalView, { backgroundColor: theme.colors.cardBackground }]}> 
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Bitiş Saati Seçin</Text>
               <TouchableOpacity onPress={() => setEndTimeModalVisible(false)}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
             <DatePicker
               mode="time"
               minuteInterval={15}
@@ -830,7 +822,7 @@ export const CreateEventScreen: React.FC = () => {
               style={{ borderRadius: 10 }}
             />
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     );
   };

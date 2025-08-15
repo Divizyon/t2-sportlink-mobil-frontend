@@ -131,6 +131,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         ...params,
         page: params.page ? Number(params.page) : 1, // Ensure page is a valid number
         limit: params.limit ? Number(params.limit) : 10, // Ensure limit is a valid number
+        status: 'active', // Sadece aktif etkinlikler gelsin
       };
       
       set({ isLoading: true, error: null });

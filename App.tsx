@@ -82,7 +82,7 @@ const SplashScreen = () => {
             }
           ]}
         >
-          sporun sosyal hali
+          Sporun sosyal hali
         </Animated.Text>
       </Animated.View>
       

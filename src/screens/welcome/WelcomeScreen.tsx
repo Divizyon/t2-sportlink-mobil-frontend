@@ -50,7 +50,7 @@ const WelcomeScreen: React.FC = () => {
                   <Text style={styles.logoTitle}>
                     <Text style={styles.sportText}>Sport</Text><Text style={styles.linkText}>Link</Text>
                   </Text>
-                  <Text style={styles.tagline}>sporun sosyal hali</Text>
+                  <Text style={styles.tagline}>Sporun sosyal hali</Text>
                 </View>
               </View>
             </View>
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    justifyContent: 'space-between',
-    paddingTop: Platform.OS === 'android' ? 60 : 40,
+    justifyContent: 'flex-start',
+    paddingTop: Platform.OS === 'android' ? 40 : 20,
     paddingBottom: 10,
     width: '100%',
   },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   buttonSection: {
     width: '100%',
-    marginBottom: 20,
+    marginTop: 40,
     justifyContent: 'flex-end',
   },
   signUpButton: {

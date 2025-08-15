@@ -351,22 +351,6 @@ export const RegisterScreen: React.FC = () => {
           >
             <Ionicons name="chevron-back" size={24} color="#333" />
           </TouchableOpacity>
-          
-          <View style={styles.divizyonContainer}>
-            <Image 
-              source={require('../../../assets/images/divizyon.png')} 
-              style={styles.divizyonLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.divizyonText}>Divizyon</Text>
-            <Text style={styles.partnerSeparator}> & </Text>
-            <Image 
-              source={require('../../../assets/kbb.png')} 
-              style={styles.kbbLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.kbbText}>KBB</Text>
-          </View>
         </View>
         
         <View style={styles.registerHeader}>
@@ -537,7 +521,7 @@ export const RegisterScreen: React.FC = () => {
             
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Şifreyi Doğrula</Text>
-              <View style={[
+              <View style={[ 
                 styles.inputContainer, 
                 (formErrors.confirmPassword || validationErrors.confirmPassword) ? styles.inputError : null
               ]}>
@@ -562,14 +546,15 @@ export const RegisterScreen: React.FC = () => {
               ) : validationErrors.confirmPassword ? (
                 <Text style={styles.errorText}>{validationErrors.confirmPassword}</Text>
               ) : null}
+              <View style={[styles.termsContainer, {marginVertical: 8}]}> 
+                <Text style={styles.termsText}>
+                  Kayıt olarak <Text style={styles.termsLink} onPress={handleTermsOfService}>Kullanım Şartları</Text>{' '}
+                  ve <Text style={styles.termsLink} onPress={handlePrivacyPolicy}>Gizlilik Politikası</Text>'nı kabul etmiş olursunuz
+                </Text>
+              </View>
             </View>
             
-            <View style={styles.termsContainer}>
-              <Text style={styles.termsText}>
-                Kayıt olarak <Text style={styles.termsLink} onPress={handleTermsOfService}>Kullanım Şartları</Text>{' '}
-                ve <Text style={styles.termsLink} onPress={handlePrivacyPolicy}>Gizlilik Politikası</Text>'nı kabul etmiş olursunuz
-              </Text>
-            </View>
+            {/* Kullanım Şartları metni yukarı taşındı */}
             
             <TouchableOpacity 
               style={[
@@ -594,6 +579,21 @@ export const RegisterScreen: React.FC = () => {
               <TouchableOpacity onPress={navigateToLogin}>
                 <Text style={styles.loginLink}>Giriş Yap</Text>
               </TouchableOpacity>
+            </View>
+            <View style={styles.divizyonContainer}>
+              <Image 
+                source={require('../../../assets/images/divizyon.png')} 
+                style={styles.divizyonLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.divizyonText}>Divizyon</Text>
+              <Text style={styles.partnerSeparator}> & </Text>
+              <Image 
+                source={require('../../../assets/kbb.png')} 
+                style={styles.kbbLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.kbbText}>KBB</Text>
             </View>
 
         
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerHeader: {
-    marginVertical: 5,
+    marginVertical: 0,
     position: 'relative',
   },
   registerTitle: {
@@ -638,6 +638,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.accent,
     marginBottom: 8,
+    textAlign: 'center',
   },
   registerSubtitle: {
     fontSize: 16,
@@ -708,7 +709,8 @@ const styles = StyleSheet.create({
     width: '0%',
   },
   termsContainer: {
-    marginVertical: 16,
+    marginTop: 0,
+    marginBottom: 0,
     alignItems: 'center',
   },
   termsText: {
@@ -727,7 +729,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 0,
     shadowColor: 'rgba(51, 134, 38, 0.4)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -747,7 +749,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 10,
   },
   loginQuestion: {
     fontSize: 14,
@@ -798,10 +800,10 @@ const styles = StyleSheet.create({
   divizyonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingRight: 10,
-    paddingTop: 8,
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 0,
+    width: '100%',
   },
   divizyonLogo: {
     width: 20,

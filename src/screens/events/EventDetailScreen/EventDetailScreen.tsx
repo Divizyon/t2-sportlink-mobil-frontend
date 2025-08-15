@@ -728,9 +728,7 @@ export const EventDetailScreen: React.FC = () => {
             </TouchableOpacity>
             
             <View style={styles.headerActions}>
-              <TouchableOpacity style={[styles.headerButton, styles.iconButton]} onPress={handleShareEvent}>
-                <Ionicons name="share-social-outline" size={20} color="white" />
-              </TouchableOpacity>
+              
               
               {isEventCreator && (
                 <TouchableOpacity style={[styles.headerButton, styles.iconButton]} onPress={handleEditEvent}>
