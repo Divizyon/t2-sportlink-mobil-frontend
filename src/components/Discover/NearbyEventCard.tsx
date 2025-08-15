@@ -6,49 +6,54 @@ import { useMapsStore } from '../../store/appStore/mapsStore';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { useEventStore } from '../../store/eventStore/eventStore';
 
-// Sport görselleri - doğru import path'leri
+
+// Sport görselleri - assets/sportImage altındaki tüm görselleri ekle
 const footballImage = require('../../../assets/sportImage/football.png');
 const basketballImage = require('../../../assets/sportImage/basketball.png');
 const tennisImage = require('../../../assets/sportImage/tennis.png');
 const volleyballImage = require('../../../assets/sportImage/volleyball.png');
-
+const walkImage = require('../../../assets/sportImage/walk.png');
 
 // Spor kategorilerine göre lokal görsel tanımları
 const sportImages: Record<string, any> = {
   futbol: footballImage,
+  football: footballImage,
   basketbol: basketballImage,
+  basketball: basketballImage,
   tenis: tennisImage,
+  tennis: tennisImage,
   voleybol: volleyballImage,
+  volleyball: volleyballImage,
+  yürüyüş: walkImage,
+  walk: walkImage,
   default: footballImage, // Default olarak futbol görseli
 };
- 
+
 // Spor kategorisini alarak görsel kaynağını döndüren yardımcı fonksiyon
 export const getSportImageSource = (sportName: string): ImageSourcePropType => {
   if (!sportName) return sportImages.default;
-  
   const sport = sportName.toLowerCase();
-  
+  if (sport.includes('yürü') || sport.includes('walk')) return sportImages.yürüyüş;
   if (sport.includes('futbol') || sport.includes('football')) return sportImages.futbol;
   if (sport.includes('basket')) return sportImages.basketbol;
   if (sport.includes('tenis') || sport.includes('tennis')) return sportImages.tenis;
-  if (sport.includes('voley') || sport.includes('volleyball')) return sportImages.voleybol;
-  
+  if (sport.includes('voley') || sport.includes('volley')) return sportImages.voleybol;
   return sportImages.default;
 };
 
-// Spor kategorisine göre tag rengini döndüren yardımcı fonksiyon
+  // Spor kategorisine göre tag rengini döndüren yardımcı fonksiyon
 export const getSportTagColor = (sportName: string): string => {
   if (!sportName) return '#2196F3';
   
   const sport = sportName.toLowerCase();
-  if (sport.includes('futbol')) return '#4CAF50';
-  if (sport.includes('basket')) return '#F44336';
+  if (sport.includes('yürü') || sport.includes('walk')) return '#479B6E';
+  if (sport.includes('futbol') || sport.includes('football')) return '#64BF77';
+  if (sport.includes('basket')) return '#E4843D';
+  if (sport.includes('yüz') || sport.includes('swim')) return '#27BCE7';
   if (sport.includes('tenis')) return '#FF9800';
   if (sport.includes('voleybol')) return '#9C27B0';
   return '#2196F3';
-};
-
-// Spor kategorisine göre icon adını döndüren yardımcı fonksiyon
+};// Spor kategorisine göre icon adını döndüren yardımcı fonksiyon
 // Ionicons'un kabul ettiği 'type' tiplerinden birini dönmeli
 export const getSportIcon = (
   sportName: string
@@ -223,21 +228,25 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const tagColor = getSportTagColor(event.sport.name);
   const sportIconName = getSportIcon(event.sport.name);
 
+  // KART TASARIMI: Üstte spor görseli, altında başlık, katılımcı, tarih, saat, lokasyon ve katıl butonu
   return (
     <>
       <TouchableOpacity
-        style={[styles.container, { backgroundColor: theme.colors.cardBackground }]}
+        style={[styles.container, { 
+          backgroundColor: theme.colors.cardBackground, 
+          borderColor: getSportTagColor(event.sport.name), 
+          borderWidth: 3 // Border kalınlığını artırdık
+        }]}
         onPress={onPress}
-        activeOpacity={0.7}
+        activeOpacity={0.85}
       >
         {/* Spor Kategori Resmi */}
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, { backgroundColor: '#E6F4EA' }]}> 
           {imageLoading && (
             <View style={styles.imageLoadingContainer}>
               <ActivityIndicator size="large" color={theme.colors.accent} />
             </View>
           )}
-          
           <Image 
             source={sportImage}
             style={styles.sportImage}
@@ -245,156 +254,122 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             onError={handleImageError}
             onLoad={handleImageLoad}
           />
-          
           {/* Spor İkonu (Resim yüklenemediğinde veya hata durumunda görünür) */}
           {imageError && (
             <View style={styles.iconFallbackContainer}>
               <Ionicons
                 name={sportIconName} 
                 size={48} 
-                color="white" 
+                color="#4CAF50" 
               />
             </View>
           )}
-          
-          {/* Spor Etiketi */}
-          <View 
-            style={[
-              styles.tag, 
-              { backgroundColor: tagColor }
-            ]}
-          >
-            <Text style={styles.tagText}>{event.sport.name}</Text>
-          </View>
         </View>
-        
         <View style={styles.contentContainer}>
-          {/* Etkinlik Başlığı */}
-          <Text 
-            style={[styles.title, { color: theme.colors.text }]} 
-            numberOfLines={1}
-          >
-            {event.title}
-          </Text>
-
-          {/* Oluşturucu */}
-          <View style={styles.infoRow}>
-            <Ionicons name="person-outline" size={16} color={theme.colors.textSecondary} />
-            <Text 
-              style={[styles.infoText, { color: theme.colors.textSecondary }]}
-              numberOfLines={1}
-            >
-              {event.creator.first_name} {event.creator.last_name}
+          {/* Etkinlik Başlığı ve Katılımcı Sayısı */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text style={[styles.title, { color: '#222', fontWeight: 'bold', fontSize: 17, flex: 1, marginRight: 8 }]} numberOfLines={1}>
+              {event.sport.name} Etkinliği
             </Text>
-          </View>
-
-          {/* Tarih ve Saat */}
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
-            <Text 
-              style={[styles.infoText, { color: theme.colors.textSecondary }]}
-              numberOfLines={1}
-            >
-              {formatEventDate(new Date(event.event_date))}, {formatEventTime(new Date(event.start_time))}
-            </Text>
-          </View>
-
-          {/* Konum */}
-          <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
-            <Text 
-              style={[styles.infoText, { color: theme.colors.textSecondary }]}
-              numberOfLines={1}
-            >
-              {event.location_name}
-            </Text>
-          </View>
-
-          {/* Mesafe */}
-          <View style={styles.infoRow}>
-            <Ionicons name="navigate-outline" size={16} color={theme.colors.textSecondary} />
-            {isLoadingDistance ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginLeft: 5 }} />
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Text 
-                  style={[styles.infoText, { color: theme.colors.textSecondary }]}
-                  numberOfLines={1}
-                >
-                  {distance || "Mesafe bilgisi yok"}
-                </Text>
-                {duration && (
-                  <Text 
-                    style={[styles.infoText, { color: theme.colors.textSecondary, marginLeft: 4, opacity: 0.7 }]}
-                    numberOfLines={1}
-                  >
-                    ({duration})
-                  </Text>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* Katılımcılar */}
-          <View style={styles.participantsRow}>
-            <Ionicons name="people-outline" size={16} color={theme.colors.textSecondary} />
-            <Text style={[styles.participantsText, { color: theme.colors.textSecondary }]}>
-              {event.participant_count}/{event.max_participants}
-            </Text>
-          </View>
-        </View>
-
-        {/* Katıl/İptal Butonu */}
-        <View style={styles.buttonContainer}>
-          {event.is_joined ? (
-            <TouchableOpacity 
-              style={[
-                styles.joinButton, 
-                { backgroundColor: theme.colors.success }
-              ]}
-              onPress={handleCancelJoin}
-              disabled={isJoining}
-            >
-              <Ionicons name="checkmark-circle-outline" size={16} color="white" style={styles.buttonIcon} />
-              <Text style={[styles.joinButtonText, { color: 'white' }]}>
-                Katıldınız
-              </Text>
-            </TouchableOpacity>
-          ) : isEventFull ? (
-            <View 
-              style={[
-                styles.joinButton, 
-                { backgroundColor: 'transparent', borderColor: theme.colors.textSecondary, borderWidth: 1 }
-              ]}
-            >
-              <Text style={[styles.joinButtonText, { color: theme.colors.textSecondary }]}>
-                Etkinlik Dolu
+            {/* Katılımcı sayısı badgesi - etkinlik adının sağında */}
+            <View style={{
+              backgroundColor: '#4A90E2',
+              borderRadius: 15,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+              <Ionicons name="people-outline" size={14} color="white" />
+              <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 4, fontSize: 12 }}>
+                {event.participant_count || 0}/{event.max_participants || 10}
               </Text>
             </View>
-          ) : (
-            <TouchableOpacity 
-              style={[
-                styles.joinButton, 
-                { backgroundColor: 'transparent', borderColor: theme.colors.accent, borderWidth: 1 }
-              ]}
-              onPress={handleJoinEvent}
-              disabled={isJoining}
-            >
-              {isJoining ? (
-                <ActivityIndicator size="small" color={theme.colors.accent} />
-              ) : (
-                <>
-                  <Ionicons name="add-circle-outline" size={16} color={theme.colors.accent} style={styles.buttonIcon} />
-                  <Text style={[styles.joinButtonText, { color: theme.colors.accent }]}>
-                    Katıl
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
+          </View>
+          
+          {/* Tarih */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Ionicons name="calendar-outline" size={16} color="#222" />
+            <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }}>
+              {formatEventDate(new Date(event.event_date))}
+            </Text>
+          </View>
+          
+          {/* Saat */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Ionicons name="time-outline" size={16} color="#222" />
+            <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }}>
+              {formatEventTime(new Date(event.start_time))}
+            </Text>
+          </View>
+          
+          {/* Lokasyon ve Katıl Butonu */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+              <Ionicons name="location-outline" size={16} color="#222" />
+              <Text style={{ color: '#222', marginLeft: 4, fontSize: 14 }} numberOfLines={1}>
+                {event.location_name && event.location_name.length > 15 
+                  ? event.location_name.substring(0, 15) + '...' 
+                  : event.location_name}
+              </Text>
+            </View>
+            
+            {/* Katıl Butonu - konum bilgisinin sağında */}
+            {event.is_joined ? (
+              <TouchableOpacity 
+                style={{ 
+                  borderWidth: 2, 
+                  borderColor: getSportTagColor(event.sport.name), 
+                  backgroundColor: getSportTagColor(event.sport.name), 
+                  borderRadius: 20, 
+                  paddingHorizontal: 12, 
+                  paddingVertical: 6, 
+                  flexDirection: 'row', 
+                  alignItems: 'center' 
+                }}
+                onPress={handleCancelJoin}
+                disabled={isJoining}
+              >
+                <Ionicons name="checkmark-circle-outline" size={14} color="white" style={{ marginRight: 2 }} />
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Katıl</Text>
+              </TouchableOpacity>
+            ) : isEventFull ? (
+              <View style={{ 
+                borderWidth: 2, 
+                borderColor: '#aaa', 
+                borderRadius: 20, 
+                paddingHorizontal: 12, 
+                paddingVertical: 6 
+              }}>
+                <Text style={{ color: '#aaa', fontWeight: 'bold', fontSize: 13 }}>Dolu</Text>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={{ 
+                  borderWidth: 2, 
+                  borderColor: getSportTagColor(event.sport.name), 
+                  borderRadius: 20, 
+                  paddingHorizontal: 12, 
+                  paddingVertical: 6, 
+                  flexDirection: 'row', 
+                  alignItems: 'center' 
+                }}
+                onPress={handleJoinEvent}
+                disabled={isJoining}
+              >
+                {isJoining ? (
+                  <ActivityIndicator size="small" color={getSportTagColor(event.sport.name)} />
+                ) : (
+                  <>
+                    <Ionicons name="add-circle-outline" size={14} color={getSportTagColor(event.sport.name)} style={{ marginRight: 2 }} />
+                    <Text style={{ color: getSportTagColor(event.sport.name), fontWeight: 'bold', fontSize: 13 }}>Katıl</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
-
       <ConfirmationModal
         visible={isModalVisible}
         title="Katılımı İptal Et"
@@ -423,13 +398,13 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
+    overflow: 'hidden',
   },
   imageContainer: {
     position: 'relative',
     width: '100%',
     height: 120,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+
     overflow: 'hidden',
   },
   imageLoadingContainer: {
@@ -454,7 +429,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: 8,
+    paddingBottom: 16,
   },
   tag: {
     position: 'absolute',

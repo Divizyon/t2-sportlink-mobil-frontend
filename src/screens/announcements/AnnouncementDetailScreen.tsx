@@ -55,7 +55,7 @@ export const useAnnouncementDetailStore = create<AnnouncementDetailState>((set) 
       // API yanıtını kontrol et
       if (response.success && response.data) {
         // API yanıtı announcement nesnesi içerebilir
-        const announcement = response.data.announcement || response.data;
+        const announcement = (response.data as any).announcement || response.data;
         console.log('Gelen duyuru detayı:', announcement);
         set({ currentAnnouncement: announcement, isLoading: false });
       } else {
@@ -233,8 +233,8 @@ export const AnnouncementDetailScreen: React.FC = () => {
   const getImageUrl = (): string | null => {
     if (!currentAnnouncement) return null;
     
-    // Önce slug'dan kontrol et
-    if (isImageUrl(currentAnnouncement.slug)) {
+    // Önce slug'dan kontrol et (slug alanı artık resim URL'si içeriyor)
+    if (currentAnnouncement.slug && isImageUrl(currentAnnouncement.slug)) {
       return currentAnnouncement.slug;
     }
     
@@ -342,21 +342,7 @@ export const AnnouncementDetailScreen: React.FC = () => {
                 <Text style={[styles.announcementContent, { color: theme.colors.text }]}>
                   {extractTextFromHtml(currentAnnouncement.content) || 'İçerik yüklenemedi.'}
                 </Text>
-                
-                {/* Debug bilgisi - Sadece geliştirme aşamasında göster */}
-                {__DEV__ && (
-                  <View style={styles.debugContainer}>
-                    <Text style={{color: 'gray', fontSize: 12, marginTop: 20}}>
-                      Duyuru ID: {currentAnnouncement.id}
-                    </Text>
-                    <Text style={{color: 'gray', fontSize: 12, marginTop: 4}}>
-                      Slug: {currentAnnouncement.slug ? 'Var' : 'Yok'}
-                    </Text>
-                    <Text style={{color: 'gray', fontSize: 12, marginTop: 4}}>
-                      İçerik Uzunluğu: {currentAnnouncement.content ? currentAnnouncement.content.length : 0} karakter
-                    </Text>
-                  </View>
-                )}
+          
               </View>
               
               {/* Kaynak Bölümü */}

@@ -30,7 +30,8 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPre
     return slug.startsWith('http') && (slug.includes('.jpg') || slug.includes('.jpeg') || slug.includes('.png') || slug.includes('.gif') || slug.includes('.webp'));
   };
 
-  const imageUrl = isImageUrl(announcement.slug) ? announcement.slug : null;
+  // Slug alanından resim URL'sini al
+  const imageUrl = announcement.slug && isImageUrl(announcement.slug) ? announcement.slug : null;
   
   return (
     <TouchableOpacity 
