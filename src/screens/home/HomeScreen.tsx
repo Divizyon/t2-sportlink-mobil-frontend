@@ -119,6 +119,9 @@ export const HomeScreen: React.FC = () => {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const footerOpacity = useState(new Animated.Value(0))[0];
   const [showLocationModal, setShowLocationModal] = useState(false);
+  // News modal için state
+  const [showNewsModal, setShowNewsModal] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<News | null>(null);
   
   // Lazy loading göstergesi için önceki durumu takip etmek için ref kullanıyoruz
   const wasNearEnd = React.useRef(false);
@@ -346,24 +349,10 @@ export const HomeScreen: React.FC = () => {
   };
 
   // Haber detayına git
+  // Haber detay modalını aç
   const handleNewsPress = (news: News) => {
-    // Hafif bir geribildirim efekti 
-    if (Platform.OS === 'ios') {
-      Animated.sequence([
-        Animated.timing(new Animated.Value(1), {
-          toValue: 0.95,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(new Animated.Value(0.95), {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-    
-    navigation.navigate('NewsDetail', { newsId: news.id });
+    setSelectedNews(news);
+    setShowNewsModal(true);
   };
 
   // Mesajlar sayfasına git
@@ -1072,6 +1061,82 @@ export const HomeScreen: React.FC = () => {
           </View>
         </Modal>
       )}
+
+      {/* Haber Detay Modalı */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={showNewsModal}
+        onRequestClose={() => setShowNewsModal(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'transparent' }}>
+          {/* Modal dışı alanı tıklayınca kapat */}
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setShowNewsModal(false)}
+          />
+          <View style={{
+            height: '60%',
+            width: '100%',
+            backgroundColor: 'rgba(255,255,255,0.85)',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            padding: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -3 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 10,
+            justifyContent: 'flex-start',
+          }}>
+            {selectedNews ? (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.colors.text, flex: 1 }}>
+                    {selectedNews.title}
+                  </Text>
+                  <TouchableOpacity
+                    style={{ marginLeft: 12 }}
+                    onPress={() => setShowNewsModal(false)}
+                  >
+                    <Ionicons name="close" size={28} color="#E53935" />
+                  </TouchableOpacity>
+                </View>
+                {selectedNews.image_url && (
+                  <Image
+                    source={{ uri: selectedNews.image_url }}
+                    style={{ width: '100%', height: 120, borderRadius: 12, marginBottom: 12 }}
+                    resizeMode="cover"
+                  />
+                )}
+                <Text style={{ fontSize: 13, color: theme.colors.textSecondary, marginBottom: 6 }}>
+                  {selectedNews.sport?.name || 'Genel'}
+                </Text>
+                <Text style={{ fontSize: 12, color: theme.colors.textSecondary, marginBottom: 6 }}>
+                  {new Date(selectedNews.created_at || new Date()).toLocaleDateString('tr-TR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </Text>
+                <Text style={{ fontSize: 15, color: theme.colors.text, marginBottom: 12 }}>
+                  {selectedNews.content}
+                </Text>
+                {selectedNews.author && (
+                  <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontStyle: 'italic' }}>
+                    {selectedNews.author}
+                  </Text>
+                )}
+              </ScrollView>
+            ) : (
+              <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                <Text style={{ color: theme.colors.textSecondary }}>Haber detayı bulunamadı.</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

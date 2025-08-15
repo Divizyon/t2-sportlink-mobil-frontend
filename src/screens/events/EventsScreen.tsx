@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useProfileStore, UserSportPreference } from '../../store/userStore/profileStore';
 import {
   View,
   StyleSheet,
@@ -112,61 +113,72 @@ export const EventsScreen: React.FC = () => {
     return filteredEvents;
   };
   
-  // Sıralanmış etkinlikler - En yeni oluşturulanlar önce gösterilir
+
+  // Kullanıcının spor tercihlerindeki skillLevel'e göre etkinlikleri sıralama
+  const userSportPreferences: UserSportPreference[] = useProfileStore(state => state.sportPreferences);
+
+  // SkillLevel öncelik tablosu
+  const skillLevelPriority: Record<string, number> = {
+    'professional': 4,
+    'advanced': 3,
+    'intermediate': 2,
+    'beginner': 1
+  };
+
   const sortedEvents = useMemo(() => {
-    // İlk olarak filtrelenecek etkinlikleri belirle
     let filteredEvents = [];
 
-    // Arama aktifse arama sonuçlarını kullan
     if (isSearchActive && searchResults.length > 0) {
       filteredEvents = [...searchResults];
     } else if (!events || events.length === 0) {
       return [];
     } else {
-      // Normal durumda tüm etkinlikleri kullan
       filteredEvents = [...events];
-      
-      // Spor ID'ye göre filtreleme
       if (activeSportId) {
         filteredEvents = filteredEvents.filter(event => event.sport_id === activeSportId);
       }
     }
-    
-    // Filtrelemeleri uygula
+
     filteredEvents = applyFilters(filteredEvents);
-    
-    // Status'a göre öncelik sırası: active > completed > canceled > draft
-    const statusPriority = {
-      'active': 1,
-      'completed': 2, 
-      'canceled': 3,
-      'draft': 4
-    };
-    
-    // Önce status'a göre, sonra tarihe göre sırala
+
+    // Kullanıcının spor tercihlerinde skillLevel varsa, etkinlikleri buna göre sırala
     return filteredEvents.sort((a, b) => {
-      // Önce status'a göre sırala
-      const statusA = statusPriority[a.status] || 5;
-      const statusB = statusPriority[b.status] || 5;
-      
-      if (statusA !== statusB) {
-        return statusA - statusB;
+      // Etkinliklerin sporId'sine göre kullanıcının skillLevel'ını bul
+      const prefA = userSportPreferences.find((pref: UserSportPreference) => pref.sportId === a.sport_id);
+      const prefB = userSportPreferences.find((pref: UserSportPreference) => pref.sportId === b.sport_id);
+
+      const skillA = prefA ? skillLevelPriority[prefA.skillLevel] : 0;
+      const skillB = prefB ? skillLevelPriority[prefB.skillLevel] : 0;
+
+      // Eğer ikisinde de skill yoksa, eski sıralama
+      if (skillA === 0 && skillB === 0) {
+        // Status'a göre öncelik sırası: active > completed > canceled > draft
+        const statusPriority = {
+          'active': 1,
+          'completed': 2, 
+          'canceled': 3,
+          'draft': 4
+        };
+        const statusA = statusPriority[a.status] || 5;
+        const statusB = statusPriority[b.status] || 5;
+        if (statusA !== statusB) {
+          return statusA - statusB;
+        }
+        if (a.status === 'active' || a.status === 'draft') {
+          const dateA = new Date(a.event_date).getTime();
+          const dateB = new Date(b.event_date).getTime();
+          return dateA - dateB;
+        } else {
+          const createdA = new Date(a.created_at).getTime();
+          const createdB = new Date(b.created_at).getTime();
+          return createdB - createdA;
+        }
       }
-      
-      // Aynı status'ta olanları tarihe göre sırala (yaklaşan etkinlikler önce)
-      if (a.status === 'active' || a.status === 'draft') {
-        // Aktif ve taslak etkinlikleri yaklaşan tarihe göre sırala
-        const dateA = new Date(a.event_date).getTime();
-        const dateB = new Date(b.event_date).getTime();
-        return dateA - dateB;
-      } else {
-        // Tamamlanan ve iptal edilen etkinlikleri oluşturulma tarihine göre sırala (yeni olanlar önce)
-        const createdA = new Date(a.created_at).getTime();
-        const createdB = new Date(b.created_at).getTime();
-        return createdB - createdA;
-      }
+
+      // SkillLevel'a göre büyükten küçüğe sırala
+      return skillB - skillA;
     });
-  }, [events, activeSportId, searchResults, isSearchActive]);
+  }, [events, activeSportId, searchResults, isSearchActive, userSportPreferences]);
 
   // Component mount edildiğinde etkinlikleri ve spor kategorilerini getir
   useEffect(() => {
