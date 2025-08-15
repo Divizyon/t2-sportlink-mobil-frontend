@@ -107,8 +107,20 @@ export const NearbyFacilities: React.FC<NearbyFacilitiesProps> = ({ onSeeAll }) 
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={24} color={theme.colors.error} />
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+          <Text style={{ fontSize: 48, textAlign: 'center' }}>🕵️‍♂️</Text>
+          <Text style={[styles.errorText, { color: theme.colors.text, fontSize: 16, fontWeight: 'bold' }]}>Araştırmaya devam ediyoruz, yakında bir tesis bulacağız!</Text>
+          <TouchableOpacity
+            style={{ marginTop: 16, backgroundColor: theme.colors.accent, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 }}
+            onPress={() => {
+              // Konum bilgisini mapsStore'dan al
+              const { lastLocation } = require('../../store/appStore/mapsStore').useMapsStore.getState();
+              if (lastLocation) {
+                fetchNearbyFacilities(lastLocation.latitude, lastLocation.longitude, selectedType || undefined);
+              }
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 15 }}>Araştır</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView

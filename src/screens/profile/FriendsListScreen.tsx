@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../../navigation/ProfileStack';
 import { Avatar } from '../../components/common/Avatar';
+import { friendsApi } from '../../api/friends/friendsApi';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'FriendsList'>;
 
@@ -69,10 +70,7 @@ export const FriendsListScreen: React.FC<Props> = ({ navigation }) => {
           onPress: async () => {
             setIsRemoving(true);
             try {
-              // Gerçek silme işlemi için API çağrısı
-              // (Bu özellik daha sonra eklenecek)
-              
-              // İşlem sonrası profil verilerini yenile
+              await friendsApi.removeFriend(friend.id);
               await fetchUserProfile();
             } catch (error) {
               console.error('Arkadaş kaldırma hatası:', error);

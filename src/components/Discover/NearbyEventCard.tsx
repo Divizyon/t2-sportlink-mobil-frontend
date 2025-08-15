@@ -48,6 +48,19 @@ export const getSportTagColor = (sportName: string): string => {
   return '#2196F3';
 };
 
+// Spor kategorisine göre kart çerçeve rengini döndüren yardımcı fonksiyon
+export const getSportBorderColor = (sportType: string): string => {
+  if (!sportType) return '#2196F3';
+  const type = sportType.toLowerCase();
+  if (type.includes('basket')) return '#479B6E'; // basketbol, basketball
+  if (type.includes('yüzme') || type.includes('swim')) return '#27BCE7'; // yüzme, swimming
+  if (type.includes('futbol') || type.includes('football')) return '#64BF77'; // futbol, football
+  if (type.includes('yürüyüş') || type.includes('walk')) return '#8EC2DC'; // yürüyüş, walking
+  if (type.includes('tenis') || type.includes('tennis')) return '#DF7352'; // tenis, tennis
+  if (type.includes('koşu') || type.includes('run')) return '#EF8359'; // koşu, running
+  return '#2196F3';
+};
+
 // Spor kategorisine göre icon adını döndüren yardımcı fonksiyon
 // Ionicons'un kabul ettiği 'type' tiplerinden birini dönmeli
 export const getSportIcon = (
@@ -223,10 +236,13 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   const tagColor = getSportTagColor(event.sport.name);
   const sportIconName = getSportIcon(event.sport.name);
 
+  // Kart çerçeve rengini spor türüne göre belirle
+  const borderColor = getSportBorderColor(event.sport.type);
+
   return (
     <>
       <TouchableOpacity
-        style={[styles.container, { backgroundColor: theme.colors.cardBackground }]}
+        style={[styles.container, { backgroundColor: theme.colors.cardBackground, borderWidth: 2, borderColor }]}
         onPress={onPress}
         activeOpacity={0.7}
       >

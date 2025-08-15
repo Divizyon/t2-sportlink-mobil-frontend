@@ -1,3 +1,22 @@
+import { sportIdToInfo } from '../../../constants/sportIdToInfo';
+// Spor ID'ye göre kart çerçeve rengini döndüren yardımcı fonksiyon
+const getSportBorderColor = (event: Event): string => {
+  // Öncelik: sport_id ile eşleşme
+  if (event.sport_id && sportIdToInfo[event.sport_id]) {
+    return sportIdToInfo[event.sport_id].color;
+  }
+  // sport.name veya sport.type ile fallback
+  const sportType = (event.sport as any)?.type || (event.sport as any)?.name;
+  if (!sportType) return '#2196F3';
+  const type = sportType.toLowerCase();
+  if (type.includes('basket')) return '#479B6E';
+  if (type.includes('yüzme') || type.includes('swim')) return '#27BCE7';
+  if (type.includes('futbol') || type.includes('football')) return '#64BF77';
+  if (type.includes('yürüyüş') || type.includes('walk')) return '#8EC2DC';
+  if (type.includes('tenis') || type.includes('tennis')) return '#DF7352';
+  if (type.includes('koşu') || type.includes('run')) return '#EF8359';
+  return '#2196F3';
+};
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +31,8 @@ interface NearbyEventCardProps {
 }
 
 export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress }) => {
+  // Kart çerçeve rengini spor ID veya türüne göre belirle
+  const borderColor = getSportBorderColor(event);
   const { theme } = useThemeStore();
   const { joinEvent } = useEventStore();
   
@@ -36,7 +57,7 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
   
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: theme.colors.card }]}
+      style={[styles.card, { backgroundColor: theme.colors.card, borderWidth: 2, borderColor }]}
       onPress={() => onPress(event)}
       activeOpacity={0.7}
     >

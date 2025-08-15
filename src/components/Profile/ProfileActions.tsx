@@ -115,13 +115,13 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
       </TouchableOpacity>
 
       {/* Banner image below logout */}
-      <View style={styles.bannerContainer}>
+      {/* <View style={styles.bannerContainer}>
         <Image 
           source={require('../../../assets/images/banner.png')} 
           style={styles.bannerImage}
           resizeMode="contain"
         />
-      </View>
+      </View> */}
     </View>
   );
 };

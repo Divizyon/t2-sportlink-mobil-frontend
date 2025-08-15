@@ -16,6 +16,7 @@ import { useEventStore } from '../../store/eventStore/eventStore';
 import { useAuthStore } from '../../store/userStore/authStore';
 import { Event } from '../../types/eventTypes/event.types';
 import { formatDate, formatTimeRange, isDatePassed } from '../../utils/dateUtils';
+import { getSportTagColor } from '../Discover/NearbyEventCard';
 
 const { width } = Dimensions.get('window');
 
@@ -50,6 +51,9 @@ export const EventCard: React.FC<EventCardProps> = ({
     sport: event.sport || { name: '', icon: '' },
     is_private: event.is_private || false
   };
+
+  // Sport color mapping for border, icon, and highlight
+  const sportColor = getSportTagColor(safeEvent.sport?.name);
   
   const isEventFull = safeEvent.participant_count >= safeEvent.max_participants;
   
@@ -255,11 +259,10 @@ export const EventCard: React.FC<EventCardProps> = ({
         styles.container, 
         { 
           backgroundColor: theme.colors.cardBackground || theme.colors.background,
-          borderColor: getBorderColor(safeEvent.status, safeEvent.event_date, safeEvent.is_private, theme.colors),
-          borderWidth: 2, // Çerçeveyi daha belirgin yapmak için 2 yaptık
-          shadowColor: safeEvent.is_private ? '#000000' : getBorderColor(safeEvent.status, safeEvent.event_date, safeEvent.is_private, theme.colors),
+          borderColor: sportColor,
+          borderWidth: 2,
+          shadowColor: safeEvent.is_private ? '#000000' : sportColor,
           shadowOpacity: safeEvent.is_private ? 0.15 : 0.1,
-          // Pasif veya tarihi geçmiş etkinlikler için opaklığı azalt
           opacity: shouldHighlight ? 0.8 : 1,
         },
         style
@@ -282,11 +285,11 @@ export const EventCard: React.FC<EventCardProps> = ({
       )}
       
       {/* Kategori/Spor Türü İkonu - Daha Belirgin */}
-      <View style={[styles.sportIconContainer, { backgroundColor: '#FF6B35' + '20' }]}>
+      <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '20' }]}> 
         <Ionicons 
           name={getSportIcon(safeEvent.sport)} 
           size={24} 
-          color="#FF6B35" 
+          color={sportColor} 
         />
       </View>
       
@@ -360,26 +363,24 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* Details - Daha Net Bilgiler */}
       <View style={styles.details}>
         <View style={styles.infoItem}>
-          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
-            <Ionicons name="calendar-outline" size={16} color="#FF6B35" />
+          <View style={[styles.iconContainer, { backgroundColor: sportColor + '15' }]}> 
+            <Ionicons name="calendar-outline" size={16} color={sportColor} />
           </View>
           <Text style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}>
             {formatDate(safeEvent.event_date)}
           </Text>
         </View>
-        
         <View style={styles.infoItem}>
-          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
-            <Ionicons name="time-outline" size={16} color="#FF6B35" />
+          <View style={[styles.iconContainer, { backgroundColor: sportColor + '15' }]}> 
+            <Ionicons name="time-outline" size={16} color={sportColor} />
           </View>
           <Text style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}>
             {formatTimeRange(safeEvent.start_time, safeEvent.end_time)}
           </Text>
         </View>
-        
         <View style={styles.infoItem}>
-          <View style={[styles.iconContainer, { backgroundColor: '#FF6B35' + '15' }]}>
-            <Ionicons name="location-outline" size={16} color="#FF6B35" />
+          <View style={[styles.iconContainer, { backgroundColor: sportColor + '15' }]}> 
+            <Ionicons name="location-outline" size={16} color={sportColor} />
           </View>
           <Text 
             style={[styles.infoText, { color: theme.colors.text, fontWeight: '600' }]}

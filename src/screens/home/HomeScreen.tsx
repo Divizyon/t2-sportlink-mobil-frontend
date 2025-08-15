@@ -556,9 +556,8 @@ export const HomeScreen: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'flex-end'
               }}>
-                <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                  Tümü <Ionicons name="chevron-forward" size={14} color={colors.accentDark} />
-                </Text>
+                
+                
               </View>
             </TouchableOpacity>
           </View>

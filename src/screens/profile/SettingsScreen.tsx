@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Image } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../store/appStore/themeStore';
@@ -94,6 +94,16 @@ export const SettingsScreen = () => {
           onPrivacyPolicy={handlePrivacyPolicy}
           onLogout={handleLogout}
         />
+        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 32 }}>
+          <Image
+            source={require('../../../assets/images/banner.png')}
+            style={{ width: 180, height: 90, resizeMode: 'contain', marginBottom: 8 }}
+          />
+          <Image
+            source={require('../../../assets/images/kbb.png')}
+            style={{ width: 80, height: 40, resizeMode: 'contain' }}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -106,4 +116,4 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   }
-}); 
+});
