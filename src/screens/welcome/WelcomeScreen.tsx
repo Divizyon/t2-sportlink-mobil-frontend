@@ -52,10 +52,9 @@ const WelcomeScreen: React.FC = () => {
                   </Text>
                   <Text style={styles.tagline}>Sporun sosyal hali</Text>
                 </View>
+                
               </View>
-            </View>
-
-            <View style={styles.buttonSection}>
+              <View style={styles.buttonSection}>
               <TouchableOpacity 
                 style={styles.signUpButton}
                 onPress={handleRegister}
@@ -69,7 +68,6 @@ const WelcomeScreen: React.FC = () => {
               >
                 <Text style={styles.loginText}>Giriş Yap</Text>
               </TouchableOpacity>
-              
               <View style={styles.footerContainer}>
                 <Text style={styles.versionText}>versiyon 0.0.1</Text>
                 <Text style={styles.copyrightText}>© 2025 SportLink</Text>
@@ -78,8 +76,13 @@ const WelcomeScreen: React.FC = () => {
                 </View>
               </View>
             </View>
+            </View>
+            
+
+            
           </View>
         </View>
+        
       </SafeAreaView>
     </ImageBackground>
   );
@@ -175,8 +178,9 @@ const styles = StyleSheet.create({
   },
   buttonSection: {
     width: '100%',
-    marginTop: 40,
-    justifyContent: 'flex-end',
+    marginTop: 100,
+    justifyContent: 'center',
+    
   },
   signUpButton: {
     backgroundColor: '#FFFFFF',
