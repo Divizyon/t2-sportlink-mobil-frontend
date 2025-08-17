@@ -724,7 +724,7 @@ export const EventDetailScreen: React.FC = () => {
           {/* Header */}
           <SafeAreaView style={styles.header}>
             <TouchableOpacity style={[styles.headerButton, styles.backBtn]} onPress={handleGoBack}>
-              <Ionicons name="chevron-back" size={24} color="white" />
+              <Ionicons name="chevron-back"  size={24} color="white" />
             </TouchableOpacity>
             
             <View style={styles.headerActions}>
@@ -760,7 +760,7 @@ export const EventDetailScreen: React.FC = () => {
               <View style={styles.heroInfoItem}>
                 <Ionicons name="time-outline" size={16} color="white" />
                 <Text style={styles.heroInfoText}>
-                  {formatTimeRange(currentEvent.start_time, currentEvent.end_time)}
+                  { formatTimeRange(currentEvent.start_time, currentEvent.end_time)}
                 </Text>
               </View>
             </View>
@@ -1146,7 +1146,7 @@ const styles = StyleSheet.create({
   sportBadgeText: {
     color: 'white',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   
   heroTitle: {
@@ -1158,11 +1158,15 @@ const styles = StyleSheet.create({
   },
   
   heroInfo: {
+    justifyContent: 'flex-end',
     flexDirection: 'row',
     gap: 20,
-    marginBottom: 16,
+    marginBottom: 8,
+    fontWeight: '700',
   },
   heroInfoItem: {
+    justifyContent: 'flex-end',
+    fontWeight: 'bold',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -1170,13 +1174,16 @@ const styles = StyleSheet.create({
   heroInfoText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    
   },
   
   badgeRow: {
+   justifyContent: 'flex-end',
+    fontWeight: 'bold',
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 8,
+    alignItems: 'center',
+    gap: 6,
   },
   
   statusBadge: {

@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: colors.accent,
+    color: colors.accentDark,
     marginBottom: 8,
   },
   welcomeSubtitle: {
