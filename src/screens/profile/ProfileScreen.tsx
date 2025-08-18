@@ -197,9 +197,6 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
               textSecondary: theme.colors.textSecondary,
               accent: theme.colors.accent
             }}
-            onEditSports={handleEditSports}
-            updateSportPreference={updateSportPreference}
-            removeSportPreference={removeSportPreference}
           />
         </View>
 
