@@ -1,5 +1,4 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
@@ -8,7 +7,11 @@
       "@env": ["src/types/env.d.ts"]
     },
     "typeRoots": ["./src/types", "./node_modules/@types"],
-    "types": ["node"]
+    "types": ["node", "react"],
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "esnext"
   },
   "include": [
     "**/*.ts",
