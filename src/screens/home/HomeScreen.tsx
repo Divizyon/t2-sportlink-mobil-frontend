@@ -429,24 +429,14 @@ export const HomeScreen: React.FC = () => {
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
       
       {/* Animasyonlu Header */}
-      <Animated.View style={[
-        styles.header, 
-        { 
-          backgroundColor: headerBgColor,
-          shadowOpacity: headerElevation.interpolate({
-            inputRange: [0, 5],
-            outputRange: [0, 0.2]
-          }),
-          borderBottomColor: theme.colors.border
-        }
-      ]}>
-       
-        
-        <Text style={[styles.logoText, { color: theme.colors.text }]}>
-          <Text style={{color: '#4CAF50'}}>Sport</Text>
-          <Text style={{color: '#2F4F4F'}}>Link</Text>
-        </Text>
-        
+      <Animated.View style={[styles.header, { backgroundColor: headerBgColor, shadowOpacity: headerElevation.interpolate({ inputRange: [0, 5], outputRange: [0, 0.2] }), borderBottomColor: theme.colors.border }]}> 
+        <View style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'row' }}>
+          <Image
+            source={require('../../../assets/icon.png')}
+            style={{ width: '100%', height: 40, marginLeft: -24 }}
+            resizeMode="cover"
+          />
+        </View>
         <View style={styles.headerButtons}>
          {/* Arkadaşlık İstekleri Butonu */}
          <TouchableOpacity 

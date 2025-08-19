@@ -68,10 +68,11 @@ const SplashScreen = () => {
           }
         ]}
       >
-        <Text style={styles.splashLogo}>
-          <Text style={[styles.sportText, { color: colors.accent }]}>Sport</Text>
-          <Text style={[styles.linkText, { color: colors.accentDark }]}>Link</Text>
-        </Text>
+          <Image
+            source={require('./assets/icon.png')}
+            style={{ width: 96, height: 96, marginBottom: 16 }}
+            resizeMode="contain"
+          />
         
         <Animated.Text 
           style={[

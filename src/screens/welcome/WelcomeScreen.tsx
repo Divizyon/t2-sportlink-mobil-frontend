@@ -9,6 +9,7 @@ import {
   Platform,
   StatusBar,
   ImageBackground,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -47,9 +48,10 @@ const WelcomeScreen: React.FC = () => {
             <View style={styles.topSection}>
               <View style={styles.logoSection}>
                 <View style={styles.logoContainer}>
-                  <Text style={styles.logoTitle}>
-                    <Text style={styles.sportText}>Sport</Text><Text style={styles.linkText}>Link</Text>
-                  </Text>
+                  <Image
+                    source={require('../../../assets/icon.png')}
+                    style={{ width: 300, height: 300, resizeMode: 'contain', marginBottom: 8 }}
+                  />
                   <Text style={styles.tagline}>Sporun sosyal hali</Text>
                 </View>
                 
@@ -245,4 +247,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default WelcomeScreen; 
+export default WelcomeScreen;
