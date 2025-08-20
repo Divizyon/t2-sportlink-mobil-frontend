@@ -1051,79 +1051,117 @@ export const HomeScreen: React.FC = () => {
 
       {/* Haber Detay Modalı */}
       <Modal
-        animationType="slide"
-        transparent={false}
-        visible={showNewsModal}
-        onRequestClose={() => setShowNewsModal(false)}
-      >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'transparent' }}>
-          {/* Modal dışı alanı tıklayınca kapat */}
-          <TouchableOpacity
-            style={{ flex: 1 }}
-            activeOpacity={1}
-            onPress={() => setShowNewsModal(false)}
-          />
-          <View style={{
-            height: '60%',
-            width: '100%',
-            backgroundColor: 'rgba(255,255,255,0.85)',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: 20,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -3 },
-            shadowOpacity: 0.2,
-            shadowRadius: 8,
-            elevation: 10,
-            justifyContent: 'flex-start',
-          }}>
-            {selectedNews ? (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.colors.text, flex: 1 }}>
-                    {selectedNews.title}
-                  </Text>
-                  <TouchableOpacity
-                    style={{ marginLeft: 12 }}
-                    onPress={() => setShowNewsModal(false)}
-                  >
-                    <Ionicons name="close" size={28} color="#E53935" />
-                  </TouchableOpacity>
-                </View>
-                {selectedNews.image_url && (
-                  <Image
-                    source={{ uri: selectedNews.image_url }}
-                    style={{ width: '100%', height: 120, borderRadius: 12, marginBottom: 12 }}
-                    resizeMode="cover"
-                  />
-                )}
-                <Text style={{ fontSize: 13, color: theme.colors.textSecondary, marginBottom: 6 }}>
-                  {selectedNews.sport?.name || 'Genel'}
-                </Text>
-                <Text style={{ fontSize: 12, color: theme.colors.textSecondary, marginBottom: 6 }}>
-                  {new Date(selectedNews.created_at || new Date()).toLocaleDateString('tr-TR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </Text>
-                <Text style={{ fontSize: 15, color: theme.colors.text, marginBottom: 12 }}>
-                  {selectedNews.content}
-                </Text>
-                {selectedNews.author && (
-                  <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontStyle: 'italic' }}>
-                    {selectedNews.author}
-                  </Text>
-                )}
-              </ScrollView>
-            ) : (
-              <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                <Text style={{ color: theme.colors.textSecondary }}>Haber detayı bulunamadı.</Text>
-              </View>
-            )}
+  animationType="slide"
+  transparent={true}
+  visible={showNewsModal}
+  onRequestClose={() => setShowNewsModal(false)}
+>
+  <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+    {/* Modal kapatma için dış alan */}
+    <TouchableOpacity
+      style={{ flex: 1 }}
+      activeOpacity={1}
+      onPress={() => setShowNewsModal(false)}
+    />
+    <View
+      style={{
+        height: '65%',
+        width: '100%',
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        elevation: 15,
+      }}
+    >
+      {selectedNews ? (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 30 }}
+        >
+          {/* Başlık + Kapat butonu */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              marginBottom: 16,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: 'bold',
+                color: theme.colors.text,
+                flex: 1,
+                marginRight: 8,
+              }}
+            >
+              {selectedNews.title}
+            </Text>
+            <TouchableOpacity onPress={() => setShowNewsModal(false)}>
+              <Ionicons name="close" size={28} color="#E53935" />
+            </TouchableOpacity>
           </View>
+
+          {/* Haber görseli */}
+          {selectedNews.image_url && (
+            <Image
+              source={{ uri: selectedNews.image_url }}
+              style={{
+                width: '100%',
+                height: 180,
+                borderRadius: 16,
+                marginBottom: 16,
+              }}
+              resizeMode="cover"
+            />
+          )}
+
+          {/* Kategori & Tarih */}
+          <Text style={{ fontSize: 13, color: theme.colors.textSecondary, marginBottom: 4 }}>
+            {selectedNews.sport?.name || 'Genel'}
+          </Text>
+          <Text style={{ fontSize: 12, color: theme.colors.textSecondary, marginBottom: 12 }}>
+            {new Date(selectedNews.created_at || new Date()).toLocaleDateString('tr-TR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </Text>
+
+          {/* İçerik */}
+          <Text style={{ fontSize: 16, lineHeight: 22, color: theme.colors.text, marginBottom: 12 }}>
+            {selectedNews.content}
+          </Text>
+
+          {/* Yazar */}
+          {selectedNews.author && (
+            <Text
+              style={{
+                fontSize: 13,
+                color: theme.colors.textSecondary,
+                fontStyle: 'italic',
+                marginTop: 8,
+              }}
+            >
+              {selectedNews.author}
+            </Text>
+          )}
+        </ScrollView>
+      ) : (
+        <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+          <Text style={{ color: theme.colors.textSecondary }}>Haber detayı bulunamadı.</Text>
         </View>
-      </Modal>
+      )}
+    </View>
+  </View>
+</Modal>
+
     </SafeAreaView>
   );
 };
