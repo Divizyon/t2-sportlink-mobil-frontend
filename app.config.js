@@ -8,6 +8,7 @@ export default {
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
+    newArchEnabled: true,
     splash: {
       image: './assets/splash.png',
       resizeMode: 'contain',
@@ -18,14 +19,28 @@ export default {
     ],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.deepsight.app'
+      bundleIdentifier: 'com.deepvision.sportlink'
     },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#ffffff'
       },
-      package: "com.deepsight.app"
+      package: "com.deepvision.sportlink",
+      googleServicesFile: './google-services.json',
+      permissions: [
+        'ACCESS_COARSE_LOCATION',
+        'ACCESS_FINE_LOCATION',
+        'RECEIVE_BOOT_COMPLETED',
+        'NOTIFICATIONS',
+        'VIBRATE',
+        'android.permission.INTERNET'
+      ],
+      config: {
+        googleMaps: {
+          apiKey: process.env.GOOGLE_MAPS_API_KEY || 'YOUR_ANDROID_API_KEY'
+        }
+      }
     },
     web: {
       favicon: './assets/favicon.png'
@@ -45,6 +60,14 @@ export default {
       }
     },
     plugins: [
+      'expo-font',
+      'expo-router',
+      [
+        'expo-location',
+        {
+          locationAlwaysAndWhenInUsePermission: 'Allow the app to use your location.'
+        }
+      ],
       [
         'expo-notifications',
         {
@@ -52,6 +75,16 @@ export default {
           color: '#4CB944',
         },
       ],
+      [
+        'expo-build-properties',
+        {
+          android: {
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            minSdkVersion: 24
+          }
+        }
+      ]
     ],
     notification: {
       icon: './assets/notification-icon.png',
@@ -61,5 +94,4 @@ export default {
       androidCollapsedTitle: '${title}',
     }
   },
-  newArchEnabled: true,
-}; 
+};

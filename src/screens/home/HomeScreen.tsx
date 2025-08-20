@@ -35,6 +35,7 @@ import * as Location from 'expo-location';
 import NearbyEventsComponent from '../../components/Shared/NearbyEventsComponent';
 import RecommendationReason from '../../components/Home/RecommendationReason/RecommendationReason';
 import { getSportImageSource } from '../../components/Discover/NearbyEventCard';
+import { DivizyonFooter } from '../../components/common';
 
 // Komponentler
 import SectionHeader from '../../components/Home/SectionHeader/SectionHeader';
@@ -888,50 +889,7 @@ export const HomeScreen: React.FC = () => {
             opacity: footerOpacity, // Animasyonlu opacity
           }}
         >
-          <Ionicons 
-            name="calendar-outline" 
-            size={16} 
-            color={colors.accentDark} 
-            style={{ marginRight: 4 }}
-          />
-          <Text style={{
-            fontSize: 14,
-            color: theme.colors.textSecondary,
-            fontWeight: '500',
-          }}>
-            {new Date().toLocaleDateString('tr-TR', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </Text>
-          <View style={{ 
-            height: 10, 
-            width: 1, 
-            backgroundColor: theme.colors.textSecondary + '40',
-            marginHorizontal: 8
-          }} />
-          <Text style={{
-            fontSize: 13,
-            color: theme.colors.textSecondary,
-            fontWeight: '400',
-          }}>
-            SportLink v{Constants.expoConfig?.version || '1.0.0'}
-          </Text>
-          <View style={{ 
-            height: 10, 
-            width: 1, 
-            backgroundColor: theme.colors.textSecondary + '40',
-            marginHorizontal: 8
-          }} />
-          <Text style={{
-            fontSize: 11,
-            color: theme.colors.textSecondary + '80',
-            fontWeight: '300',
-            fontStyle: 'italic',
-          }}>
-            Developed by Divizyon & KBB
-          </Text>
+          <DivizyonFooter />
         </Animated.View>
       </ScrollView>
       

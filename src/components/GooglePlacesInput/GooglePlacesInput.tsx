@@ -21,13 +21,35 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
       </Text>
       <GooglePlacesAutocomplete
         placeholder="Etkinliğin yapılacağı yeri ara"
-        onPress={(data, details = null) => {
-          if (details) {
-            onLocationSelect({
-              name: data.description,
-              latitude: details.geometry.location.lat,
-              longitude: details.geometry.location.lng
-            });
+        onPress={async (data, details = null) => {
+          try {
+            if (details?.geometry?.location) {
+              onLocationSelect({
+                name: data.description,
+                latitude: details.geometry.location.lat,
+                longitude: details.geometry.location.lng
+              });
+              return;
+            }
+
+            if (data.place_id) {
+              const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&fields=geometry,name,formatted_address&key=AIzaSyBF7lIsGMdoDsaIg2SVdUHbdVv7SOUruYQ`;
+              const resp = await fetch(url);
+              const json = await resp.json();
+              const loc = json?.result?.geometry?.location;
+              if (loc) {
+                onLocationSelect({
+                  name: data.description || json?.result?.name || 'Seçilen Konum',
+                  latitude: loc.lat,
+                  longitude: loc.lng,
+                });
+                return;
+              }
+            }
+
+            onLocationSelect({ name: data.description || 'Seçilen Konum', latitude: 0, longitude: 0 });
+          } catch (e) {
+            console.error('GooglePlacesInput onPress error:', e);
           }
         }}
         query={{
@@ -40,6 +62,7 @@ export const GooglePlacesInput: React.FC<GooglePlacesInputProps> = ({
           strictbounds: true, // Sadece belirtilen sınırlar içinde arama yapar
         }}
         fetchDetails={true}
+        GooglePlacesDetailsQuery={{ fields: 'geometry,name,formatted_address' }}
         enablePoweredByContainer={false}
         minLength={2}
         debounce={300}

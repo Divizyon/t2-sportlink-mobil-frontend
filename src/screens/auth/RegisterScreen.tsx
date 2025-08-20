@@ -23,6 +23,7 @@ import { useAuthStore } from '../../store/userStore/authStore';
 import { registerSchema, validateWithSchema } from '../../utils/validators/yupValidators';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors/colors';
+import { DivizyonFooter } from '../../components/common';
 
 const { width } = Dimensions.get('window');
 
@@ -580,24 +581,11 @@ export const RegisterScreen: React.FC = () => {
                 <Text style={styles.loginLink}>Giriş Yap</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.divizyonContainer}>
-              <Image 
-                source={require('../../../assets/images/divizyon.png')} 
-                style={styles.divizyonLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.divizyonText}>Divizyon</Text>
-              <Text style={styles.partnerSeparator}> & </Text>
-              <Image 
-                source={require('../../../assets/kbb.png')} 
-                style={styles.kbbLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.kbbText}>KBB</Text>
-            </View>
+           
 
         
           </View>
+          <DivizyonFooter containerStyle={{ marginTop: 16 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

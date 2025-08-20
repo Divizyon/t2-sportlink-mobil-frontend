@@ -264,3 +264,5 @@
 - [x] İkinci yüksek öncelikli iş tamamlandı: Profil Görüntüleme Endpoint Hatası
 - [x] Üçüncü yüksek öncelikli iş tamamlandı: Etkinlik Kartları Tasarımı
 - [x] Dördüncü yüksek öncelikli iş tamamlandı: Kayıt Şifre Alanı Temizlenmiyor Bug'u 
+- [x] Android prod build hatası giderildi (Expo SDK 52 / Gradle uyumu, expo-build-properties, plugin düzeltmeleri)
+- [x] EAS Android production build için proje hazırlandı (bağımlılıklar senkronize, prebuild başarılı)

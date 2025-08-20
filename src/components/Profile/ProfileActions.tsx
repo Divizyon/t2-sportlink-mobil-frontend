@@ -111,7 +111,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <View style={styles.partnersRow}>
             <View style={styles.partnerLogo}>
               <Image 
-                source={require('../../../assets/images/divizyon.png')} 
+                source={require('../../../assets/images/divizyon.jpg')} 
                 style={styles.divizyonLogo}
                 resizeMode="contain"
               />

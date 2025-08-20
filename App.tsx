@@ -119,7 +119,7 @@ const SplashScreen = () => {
             Developed by
           </Text>
           <Image 
-            source={require('./assets/images/divizyon.png')}
+            source={require('./assets/images/divizyon.jpg')}
             style={styles.divizyonIcon}
             resizeMode="contain"
           />

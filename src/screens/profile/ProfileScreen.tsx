@@ -20,6 +20,7 @@ import { SportPreferencesCard } from '../../components/Profile/SportPreferencesC
 import { FriendsCard } from '../../components/Profile/FriendsCard';
 import { LocationCard } from '../../components/Profile/LocationCard';
 import { Ionicons } from '@expo/vector-icons';
+import { BasketballLoader, DivizyonFooter } from '../../components/common';
 
 export const ProfileScreen: React.FC = ({ navigation }: any) => {
   // ...existing code...
@@ -119,11 +120,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
         <View style={styles.loadingContainer}>
-          <Image
-            source={require('../../../assets/loading/ball-toggle.gif')}
-            style={{ width: 120, height: 120 }}
-            resizeMode="contain"
-          />
+          <BasketballLoader size={120} />
         </View>
       </SafeAreaView>
     );
@@ -277,6 +274,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
           </View>
         )}
       </ScrollView>
+      <DivizyonFooter />
     </SafeAreaView>
   );
 };

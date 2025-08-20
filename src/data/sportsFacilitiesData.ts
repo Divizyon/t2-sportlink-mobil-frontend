@@ -14,7 +14,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: 37.901018,
     longitude: 32.468046,
     maps_url: "https://www.google.com/maps/search/?api=1&query=37.901018,32.468046",
-    image_url: null
+    image_url: "https://cdn0.selcuklu.bel.tr/selcuklu.bel.tr/NewsGallery/2025/01/02/55dd-09172015153520beyhekim_yuzme_havuzu_4_-_Kopya.JPG"
   },
   {
     sport: "Yüzme",
@@ -34,7 +34,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Celalettin%20Karatay%20Kapalı%20Yüzme%20Havuzu%20Karatay%20Konya",
-    image_url: null
+    image_url: "https://bahcehavuz.com/f/2023/05/Maxpora-Yuzme-Havuzu-%E2%80%93-Konya.jpg"
   },
 
   // TENİS KORTLARI
@@ -46,7 +46,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: 37.953802,
     longitude: 32.496222,
     maps_url: "https://www.google.com/maps/search/?api=1&query=37.953802,32.496222",
-    image_url: null
+    image_url: "https://cdn0.selcuklu.bel.tr/selcuklu.bel.tr/NewsGallery/2025/01/02/6e87-01272016130531tenis_kortu__1.jpg"
   },
   {
     sport: "Tenis",
@@ -56,7 +56,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Karatay%20Belediyesi%20Kapalı%20Tenis%20Kortu%20Konya",
-    image_url: null
+    image_url: "https://www.karatay.bel.tr/haber/resim1/13784/karatay-belediyesi-kapali-tenis-kortu-acildi.jpg-1500.jpg"
   },
   {
     sport: "Tenis",
@@ -66,7 +66,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Vole%20Tenis%20ve%20Spor%20Kulübü%20Konya",
-    image_url: null
+    image_url: "https://voletenis.com/wp-content/uploads/2019/02/WhatsApp-Image-2019-01-03-at-17.03.311-300x223.jpeg"
   },
 
   // BASKETBOL VE SALON SPORLARI
@@ -90,16 +90,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     maps_url: "https://www.google.com/maps/search/?api=1&query=Yenikent%20Spor%20Salonu%20Selçuklu%20Konya",
     image_url: "https://selcuklubelediyespor.com/wp-content/uploads/2025/04/02-yenikent-spor-salonu.jpeg"
   },
-  {
-    sport: "Basketbol/Salon Sporları",
-    name: "Karatay Spor ve Kongre Merkezi",
-    address: "Fetih Mah., Aslanlı Kışla Cd. 187, Karatay/Konya",
-    district: "Karatay",
-    latitude: null,
-    longitude: null,
-    maps_url: "https://www.google.com/maps/search/?api=1&query=Karatay%20Spor%20ve%20Kongre%20Merkezi%20Konya",
-    image_url: null
-  },
+
 
   // FUTBOL TESİSLERİ
   {
@@ -110,18 +101,9 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Yazır%20Halı%20Saha%20Selçuklu%20Konya",
-    image_url: null
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd5Gu8NegIbm6LosgELJLEU5cuhqtLK7nknQ&s"
   },
-  {
-    sport: "Futbol (Halı Saha)",
-    name: "Meram RTE Halı Saha",
-    address: "Büyükaymanas Mah., Alem Sk. No:12, Meram/Konya",
-    district: "Meram",
-    latitude: null,
-    longitude: null,
-    maps_url: "https://www.google.com/maps/search/?api=1&query=Meram%20RTE%20Halı%20Saha%20Konya",
-    image_url: null
-  },
+
   {
     sport: "Futbol (Stadyum/Amatör)",
     name: "Selçuklu Belediye Stadı",
@@ -130,7 +112,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: 37.8870147,
     longitude: 32.4545301,
     maps_url: "https://www.google.com/maps/search/?api=1&query=37.8870147,32.4545301",
-    image_url: null
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoQJomPnayAmzayDpIQujRTXXVN6ePzkZv8Q&s"
   },
 
   // FİTNESS MERKEZLERİ
@@ -142,7 +124,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Kent%20Plaza%20AVM%20GYMFIT%20Konya",
-    image_url: null
+    image_url: "https://www.gymfit.com.tr/frontend/images/slides/3633076318.jpg"
   },
   {
     sport: "Fitness",
@@ -152,7 +134,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Maxon%20Sports%20Club%20Konya",
-    image_url: null
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHwyjzSFhpcrfQI0jdeqEE86eIOp113LOg0w&s"
   },
 
   // DÖVÜŞ SPORLARI
@@ -164,18 +146,9 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Yolcu%20Jiu%20Jitsu%20MMA%20Konya",
-    image_url: null
+    image_url: "https://avatars.mds.yandex.net/get-altay/1583511/2a0000016ff5d8e45ca2144813aa6dc8c966/orig"
   },
-  {
-    sport: "Dövüş Sporları",
-    name: "Hasan Yıldız Taekwondo Spor Okulu",
-    address: "Selçuklu/Konya",
-    district: "Selçuklu",
-    latitude: null,
-    longitude: null,
-    maps_url: "https://www.google.com/maps/search/?api=1&query=Hasan%20Yıldız%20Taekwondo%20Konya",
-    image_url: null
-  },
+
 
   // OKÇULUK
   {
@@ -186,7 +159,7 @@ export const sportsFacilitiesData: SportsFacility[] = [
     latitude: null,
     longitude: null,
     maps_url: "https://www.google.com/maps/search/?api=1&query=Dutlu%20Millet%20Bahçesi%20Meram%20Konya",
-    image_url: null
+    image_url: "https://konyabulteni.com/wp-content/uploads/2021/08/okculuk_meram3-scaled.jpg"
   },
   {
     sport: "Okçuluk",

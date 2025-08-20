@@ -128,18 +128,49 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       <View style={styles.locationInputContainer}>
         <GooglePlacesAutocomplete
           placeholder="Etkinliğin yapılacağı yeri ara"
-          onPress={(data: GooglePlaceData, details: GooglePlaceDetail | null = null) => {
-            if (details) {
-              const locationData = {
-                name: data.description,
-                latitude: details.geometry.location.lat,
-                longitude: details.geometry.location.lng
-              };
-              
-              console.log('Seçilen konum:', JSON.stringify(locationData, null, 2));
-              setSelectedLocation(locationData);
-              setLocationInputText(data.description);
-              onLocationSelect(locationData);
+          onPress={async (data: GooglePlaceData, details: GooglePlaceDetail | null = null) => {
+            try {
+              if (details?.geometry?.location) {
+                const locationData = {
+                  name: data.description,
+                  latitude: details.geometry.location.lat,
+                  longitude: details.geometry.location.lng,
+                };
+                console.log('Seçilen konum (details):', JSON.stringify(locationData, null, 2));
+                setSelectedLocation(locationData);
+                setLocationInputText(data.description);
+                onLocationSelect(locationData);
+                return;
+              }
+
+              // Bazı cihazlarda details null dönebilir; place_id ile manuel sorgu yap
+              if (data.place_id) {
+                const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&fields=geometry,name,formatted_address&key=AIzaSyD5kDRgkklpeTkz-dbaW8LHc6ZHvW2kSmA`;
+                const resp = await fetch(url);
+                const json = await resp.json();
+                const loc = json?.result?.geometry?.location;
+                if (loc) {
+                  const locationData = {
+                    name: data.description || json?.result?.name || 'Seçilen Konum',
+                    latitude: loc.lat,
+                    longitude: loc.lng,
+                  };
+                  console.log('Seçilen konum (manual details):', JSON.stringify(locationData, null, 2));
+                  setSelectedLocation(locationData);
+                  setLocationInputText(locationData.name);
+                  onLocationSelect(locationData);
+                  return;
+                }
+              }
+
+              // Son çare: sadece isimle güncelle, koordinatlar 0
+              const fallback = { name: data.description || 'Seçilen Konum', latitude: 0, longitude: 0 };
+              setSelectedLocation(fallback);
+              setLocationInputText(fallback.name);
+              onLocationSelect(fallback);
+            } catch (e) {
+              console.error('Konum seçimi sırasında hata:', e);
+              Alert.alert('Hata', 'Konum detayları alınamadı. Lütfen tekrar deneyin.');
             }
           }}
           query={{
@@ -149,6 +180,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             types: ['establishment', 'geocode'],
           }}
           fetchDetails={true}
+          GooglePlacesDetailsQuery={{ fields: 'geometry,name,formatted_address' }}
           enablePoweredByContainer={false}
           minLength={2}
           textInputProps={{
