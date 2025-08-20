@@ -164,13 +164,8 @@ const AllNewsScreen: React.FC = () => {
         </Text>
         
         <View style={styles.newsFooter}>
-          <View style={styles.authorContainer}>
-            <Ionicons name="person-circle-outline" size={16} color={theme.colors.textSecondary} />
-            <Text style={[styles.authorText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-              {item.author || 'İsimsiz Yazar'}
-            </Text>
-          </View>
           
+
           <View style={styles.dateContainer}>
             <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
             <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
@@ -308,7 +303,6 @@ const AllNewsScreen: React.FC = () => {
           </Text>
           
           <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="options-outline" size={24} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -514,6 +508,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 12,
+    fontWeight: 'bold',
     marginLeft: 4,
   },
   loaderFooter: {

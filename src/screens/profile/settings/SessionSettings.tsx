@@ -524,7 +524,7 @@ const DeviceItem: React.FC<DeviceItemProps> = ({ device, onRevoke, theme }) => {
                 color: device.isCurrentDevice ? theme.colors.textSecondary : theme.colors.textSecondary + '80'
               }
             ]}>
-              {device.location}
+              {getCityFromLocation(device.location)}
             </Text>
           </View>
           
@@ -901,7 +901,7 @@ export const SessionSettings: React.FC = () => {
           </View>
         )}
         
-        {sortedDevices.map(device => (
+        {sortedDevices.filter(device => device.isCurrentDevice).map(device => (
           <DeviceItem 
             key={device.id}
             device={device}
@@ -1155,3 +1155,11 @@ const styles = StyleSheet.create({
     marginLeft: 3,
   },
 });
+
+// Şehir bilgisini almak için yardımcı fonksiyon
+const getCityFromLocation = (location: string): string => {
+  // Örnek: "İstanbul, Türkiye" veya "Ankara" gibi bir string varsa ilk kelimeyi al
+  if (!location || location === 'Bilinmiyor') return 'Bilinmiyor';
+  const parts = location.split(',');
+  return parts[0].trim();
+};

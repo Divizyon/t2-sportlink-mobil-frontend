@@ -13,7 +13,6 @@ interface ProfileActionsProps {
   isDarkMode: boolean; 
   onToggleTheme: () => void;
   onEditProfile: () => void;
-  onManageNotifications: () => void;
   onSessionHistory: () => void;
   onHelp: () => void;
   onTermsOfService: () => void;
@@ -26,7 +25,6 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   isDarkMode,
   onToggleTheme,
   onEditProfile,
-  onManageNotifications,
   onSessionHistory,
   onHelp,
   onTermsOfService,
@@ -44,17 +42,6 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
           <View style={styles.actionLeft}>
             <Ionicons name="person-outline" size={22} color={themeColors.accent} />
             <Text style={[styles.actionText, { color: themeColors.text }]}>Profili Düzenle</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionItem} 
-          onPress={onManageNotifications}
-        >
-          <View style={styles.actionLeft}>
-            <Ionicons name="notifications-outline" size={22} color={themeColors.accent} />
-            <Text style={[styles.actionText, { color: themeColors.text }]}>Bildirimler</Text>
           </View>
           <Ionicons name="chevron-forward" size={22} color={themeColors.textSecondary} />
         </TouchableOpacity>

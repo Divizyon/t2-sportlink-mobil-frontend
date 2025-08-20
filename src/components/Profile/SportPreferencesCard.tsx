@@ -53,6 +53,26 @@ const getSkillLevelText = (level: string): string => {
 	}
 };
 
+// Spor adına göre uygun emoji döndüren fonksiyon
+const getSportEmoji = (sportName: string): React.ReactNode => {
+  const map: { [key: string]: React.ReactNode } = {
+    'Futbol': <Text style={{ fontSize: 26 }}>⚽</Text>,
+    'Basketbol': <Text style={{ fontSize: 26 }}>🏀</Text>,
+    'Tenis': <Text style={{ fontSize: 26 }}>🎾</Text>,
+    'Voleybol': <Text style={{ fontSize: 26 }}>🏐</Text>,
+    'Atletizm': <Text style={{ fontSize: 26 }}>🏃</Text>,
+    'Yoga': <Text style={{ fontSize: 26 }}>🧘</Text>,
+    'Yüzme': <Text style={{ fontSize: 26 }}>🏊</Text>,
+    'Koşu': <Text style={{ fontSize: 26 }}>🏃</Text>,
+    'Golf': <Text style={{ fontSize: 26 }}>⛳</Text>,
+    'Bisiklet': <Text style={{ fontSize: 26 }}>🚴</Text>,
+    'Hentbol': <Text style={{ fontSize: 26 }}>🤾</Text>,
+    'Masa Tenisi': <Text style={{ fontSize: 26 }}>🏓</Text>,
+    // Diğer sporlar için ekleme yapılabilir
+  };
+  return map[sportName] || <Text style={{ fontSize: 26 }}>❓</Text>;
+};
+
 export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({ sportPreferences, themeColors }) => {
 	const [expanded, setExpanded] = useState(false);
 
@@ -69,7 +89,7 @@ export const SportPreferencesCard: React.FC<SportPreferencesCardProps> = ({ spor
 					shownPreferences.map((item) => (
 						<View key={item.sportId} style={styles.sportItem}>
 							<View style={styles.sportIconContainer}>
-								<Ionicons name="football-outline" size={26} color={themeColors.accent} />
+								{getSportEmoji(item.sportName)}
 							</View>
 							<View style={styles.sportInfo}>
 								<Text style={[styles.sportName, { color: themeColors.text }]}>{item.sportName}</Text>

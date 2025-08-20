@@ -49,11 +49,6 @@ export const SettingsScreen = () => {
     navigation.navigate('EditProfile');
   };
 
-  const handleManageNotifications = () => {
-    // TODO: Bildirim ayarları sayfasına yönlendir
-    navigation.navigate('NotificationSettings');
-  };
-
   const handleHelp = () => {
     navigation.navigate('Help');
   };
@@ -87,7 +82,6 @@ export const SettingsScreen = () => {
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
           onEditProfile={handleEditProfile}
-          onManageNotifications={handleManageNotifications}
           onSessionHistory={handleSessionHistory}
           onHelp={handleHelp}
           onTermsOfService={handleTermsOfService}
@@ -106,4 +100,4 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   }
-}); 
+});

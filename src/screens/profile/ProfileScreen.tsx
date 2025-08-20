@@ -142,7 +142,7 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
             <View style={styles.profileTopRow}>
               <View style={styles.avatarContainer}>
                 <Image
-                  source={userInfo.profilePicture ? { uri: userInfo.profilePicture } : require('../../../assets/icon.png')}
+                  source={userInfo.profilePicture ? { uri: userInfo.profilePicture } : require('../../../assets/pp.png')}
                   style={styles.avatar}
                 />
               </View>
@@ -171,11 +171,6 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
                 <Ionicons name="checkmark-done-outline" size={18} color={theme.colors.accent} />
                 <Text style={[styles.statValue, { color: theme.colors.text }]}>{stats?.participatedEventsCount || 0}</Text>
                 <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Katılım</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Ionicons name="star" size={18} color={theme.colors.accent} />
-                <Text style={[styles.statValue, { color: theme.colors.text }]}>{stats?.averageRating || 0}</Text>
-                <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Puan</Text>
               </View>
               <TouchableOpacity style={styles.statItem} onPress={handleViewFriends}>
                 <Ionicons name="people-outline" size={18} color={theme.colors.accent} />
