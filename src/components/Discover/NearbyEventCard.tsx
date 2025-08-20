@@ -254,6 +254,13 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
             onError={handleImageError}
             onLoad={handleImageLoad}
           />
+          {/* Katılımcı sayısı badgesi - sağ üst köşede */}
+          <View style={styles.participantsBadge}>
+            <Ionicons name="people-outline" size={14} color="white" />
+            <Text style={styles.participantsText}>
+              {event.participant_count || 0}/{event.max_participants || 10}
+            </Text>
+          </View>
           {/* Spor İkonu (Resim yüklenemediğinde veya hata durumunda görünür) */}
           {imageError && (
             <View style={styles.iconFallbackContainer}>
@@ -267,24 +274,10 @@ export const NearbyEventCard: React.FC<NearbyEventCardProps> = ({ event, onPress
         </View>
         <View style={styles.contentContainer}>
           {/* Etkinlik Başlığı ve Katılımcı Sayısı */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={[styles.title, { color: '#222', fontWeight: 'bold', fontSize: 17, flex: 1, marginRight: 8 }]} numberOfLines={1}>
-              {event.sport.name} Etkinliği
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={[styles.title, { color: '#222', fontWeight: 'bold', fontSize: 17, flex: 1 }]} numberOfLines={1}>
+              {event.title && event.title.length > 30 ? `${event.title.substring(0, 30)}...` : event.title || `${event.sport.name} Etkinliği`}
             </Text>
-            {/* Katılımcı sayısı badgesi - etkinlik adının sağında */}
-            <View style={{
-              backgroundColor: '#4A90E2',
-              borderRadius: 15,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}>
-              <Ionicons name="people-outline" size={14} color="white" />
-              <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 4, fontSize: 12 }}>
-                {event.participant_count || 0}/{event.max_participants || 10}
-              </Text>
-            </View>
           </View>
           
           {/* Tarih */}
@@ -404,8 +397,20 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     height: 120,
-
     overflow: 'hidden',
+  },
+  participantsBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#4A90E2',
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 1,
+    color: 'white',
   },
   imageLoadingContainer: {
     position: 'absolute',
@@ -466,6 +471,7 @@ const styles = StyleSheet.create({
   participantsText: {
     fontSize: 14,
     marginLeft: 8,
+    color: 'white',
   },
   buttonContainer: {
     width: '100%',

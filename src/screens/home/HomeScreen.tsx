@@ -433,7 +433,7 @@ export const HomeScreen: React.FC = () => {
         <View style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'row' }}>
           <Image
             source={require('../../../assets/icon.png')}
-            style={{ width: '100%', height: 40, marginLeft: -24 }}
+            style={{ width: '50%', height: 60, marginLeft: '-60%' }}
             resizeMode="cover"
           />
         </View>

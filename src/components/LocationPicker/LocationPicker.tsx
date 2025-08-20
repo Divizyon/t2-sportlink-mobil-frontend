@@ -53,7 +53,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   
   // Google Static Maps API URL oluştur
   const getMapImageUrl = (lat: number, lng: number): string => {
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=400x200&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=AIzaSyBF7lIsGMdoDsaIg2SVdUHbdVv7SOUruYQ`;
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=400x200&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=AIzaSyD5kDRgkklpeTkz-dbaW8LHc6ZHvW2kSmA`;
   };
 
   // Mevcut konumu almak için fonksiyon
@@ -143,7 +143,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             }
           }}
           query={{
-            key: "AIzaSyBF7lIsGMdoDsaIg2SVdUHbdVv7SOUruYQ",
+            key: "AIzaSyD5kDRgkklpeTkz-dbaW8LHc6ZHvW2kSmA",
             language: 'tr',
             components: 'country:tr',
             types: ['establishment', 'geocode'],

@@ -87,7 +87,7 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPre
             <Text 
               style={[styles.readMore, { color: theme.colors.primary }]}
             >
-              Detaylar
+              Görüntüle
             </Text>
             <Ionicons 
               name="chevron-forward" 

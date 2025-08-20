@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   buttonSection: {
-    width: '100%',
+    width: '60%',
     marginTop: 100,
     justifyContent: 'center',
     
