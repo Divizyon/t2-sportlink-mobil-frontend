@@ -222,6 +222,9 @@ export const CreateEventScreen: React.FC = () => {
     };
   });
 
+  // Konum state'i: inputtan veya otomatik seçimden gelen konumu tutmak için
+  const [locationState, setLocationState] = useState<{ name: string; latitude: number; longitude: number } | null>(null);
+
   // UI için ekstra state'ler
   const [isPrivate, setIsPrivate] = useState(false);
   const [invitationCode, setInvitationCode] = useState<string>('');
@@ -653,6 +656,7 @@ export const CreateEventScreen: React.FC = () => {
         
         <LocationPicker
           onLocationSelect={(location) => {
+            setLocationState(location);
             setFormData({
               ...formData,
               location_name: location.name,
@@ -663,13 +667,11 @@ export const CreateEventScreen: React.FC = () => {
           }}
           theme={theme}
           error={formErrors.location_name}
-          initialLocation={
-            formData.location_name ? {
-              name: formData.location_name,
-              latitude: formData.location_latitude,
-              longitude: formData.location_longitude
-            } : null
-          }
+          initialLocation={locationState || (formData.location_name ? {
+            name: formData.location_name,
+            latitude: formData.location_latitude,
+            longitude: formData.location_longitude
+          } : null)}
         />
         
         <InputField

@@ -70,7 +70,7 @@ const SplashScreen = () => {
       >
           <Image
             source={require('./assets/icon.png')}
-            style={{ width: 96, height: 96, marginBottom: 16 }}
+            style={{ width: 300, height: 300, marginBottom: 16 }}
             resizeMode="contain"
           />
         

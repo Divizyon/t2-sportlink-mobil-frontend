@@ -43,12 +43,13 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   const [locationInputText, setLocationInputText] = useState<string>(initialLocation?.name || '');
   
   // initialLocation değiştiğinde input değerini güncelle
+  // initialLocation değiştiğinde input değerini güncelle, sadece ilk render veya initialLocation değişirse
   useEffect(() => {
-    if (initialLocation) {
+    if (initialLocation && initialLocation.name) {
       setSelectedLocation(initialLocation);
       setLocationInputText(initialLocation.name);
     }
-  }, [initialLocation]);
+  }, [initialLocation?.name, initialLocation?.latitude, initialLocation?.longitude]);
   
   // Google Static Maps API URL oluştur
   const getMapImageUrl = (lat: number, lng: number): string => {
@@ -156,7 +157,8 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             value: locationInputText,
             onChangeText: (text) => {
               setLocationInputText(text);
-              if (text.length === 0 && selectedLocation) {
+              // Sadece kullanıcı manuel olarak inputu temizlerse konumu sıfırla
+              if (text.length === 0 && selectedLocation && selectedLocation.name !== '') {
                 clearLocation();
               }
             }
