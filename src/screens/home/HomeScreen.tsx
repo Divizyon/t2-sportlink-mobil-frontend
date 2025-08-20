@@ -794,10 +794,7 @@ export const HomeScreen: React.FC = () => {
                         flexDirection: 'row',
                         alignItems: 'center',
                       }}>
-                        <Ionicons name="person-outline" size={12} color={colors.accentDark} style={{ marginRight: 4 }} />
-                        <Text style={{ color: theme.colors.textSecondary, fontSize: 12, fontWeight: '500' }}>
-                          {newsItem.author || 'İsimsiz Yazar'}
-                        </Text>
+                        
                       </View>
                     </View>
                   </View>
@@ -1651,6 +1648,7 @@ const styles = StyleSheet.create({
   },
   horizontalNewsDate: {
     fontSize: 11,
+    fontWeight: 'bold',
   },
   horizontalNewsReadMore: {
     paddingHorizontal: 8,

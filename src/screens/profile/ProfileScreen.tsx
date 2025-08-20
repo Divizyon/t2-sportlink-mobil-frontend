@@ -108,6 +108,13 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
     navigation.navigate('FriendRequests');
   };
 
+    // Katılım etkinliklerine yönlendir
+    const handleViewParticipatedEvents = () => {
+      if (userInfo) {
+        navigation.navigate('UserEvents', { filter: 'participated', userId: userInfo.id, title: 'Katıldığım Etkinlikler' });
+      }
+    };
+
   if (isLoading && !refreshing && !userInfo) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
@@ -167,11 +174,11 @@ export const ProfileScreen: React.FC = ({ navigation }: any) => {
                 <Text style={[styles.statValue, { color: theme.colors.text }]}>{stats?.createdEventsCount || 0}</Text>
                 <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Oluşturulan</Text>
               </TouchableOpacity>
-              <View style={styles.statItem}>
+              <TouchableOpacity style={styles.statItem} onPress={handleViewParticipatedEvents}>
                 <Ionicons name="checkmark-done-outline" size={18} color={theme.colors.accent} />
                 <Text style={[styles.statValue, { color: theme.colors.text }]}>{stats?.participatedEventsCount || 0}</Text>
                 <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Katılım</Text>
-              </View>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.statItem} onPress={handleViewFriends}>
                 <Ionicons name="people-outline" size={18} color={theme.colors.accent} />
                 <Text style={[styles.statValue, { color: theme.colors.text }]}>{stats?.friendsCount || 0}</Text>
